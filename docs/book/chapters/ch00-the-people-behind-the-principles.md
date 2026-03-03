@@ -250,6 +250,28 @@ The `lint:strict` script in this project runs ESLint at zero-warnings tolerance.
 
 ---
 
+## Linus Torvalds and the Case for Immutable History (2005)
+
+**Linus Torvalds** created the Linux kernel in 1991, but that is not why he appears in this chapter. He appears because of what he built in April 2005, in roughly two weeks, out of necessity and irritation.
+
+The Linux kernel project had been using BitKeeper — a proprietary distributed version control system — under a free-use arrangement. When BitKeeper revoked that arrangement, the kernel team needed a replacement. Torvalds looked at the existing options, found all of them inadequate in different ways, and built Git instead.
+
+His requirements were specific and uncommon. The system had to be fast enough to handle the Linux kernel's patch velocity — thousands of commits from hundreds of contributors. It had to be distributed, meaning every developer had a full copy of the history, not a checkout of a central server. Most importantly, it had to make history *tamper-evident*: a commit's identifier had to be a cryptographic hash of its content and all of its ancestors. If you changed anything in the history, the hash changed. Corruption and silent alteration were detectable by construction.
+
+That last property is the one that matters for this book.
+
+When Chapter 5 describes the sprint archive as a "reconstructable trail," and when the governance model in Chapter 9 relies on sprint artifacts and QA reports as evidence, both of those claims depend on a substrate that Git provides invisibly: the history cannot be quietly rewritten. Every commit in this repository has an identifier that proves its content and ancestry. Every audit document, every completed sprint, every governance artifact is a node in an immutable chain. You can reconstruct exactly what was built, in what order, and what the state of the codebase was at each point.
+
+Torvalds's most quoted line is *"talk is cheap, show me the code."* This became shorthand for a particular engineering epistemology: claims without evidence are noise. The only unit of accountability is running, verifiable output. Every chapter in this book that ends with a command you can execute — `npm run typecheck`, `npm run lint:strict`, `npm run lhci:dev` — is practicing this principle. Assertions are not evidence. Passing gates are.
+
+He also understood that scale changes what tools need to do. A version control system for one person is a backup mechanism. A version control system for thousands of contributors on a safety-critical codebase is a trust infrastructure — a way for people who cannot see each other to build on each other's work with confidence. Git is trust infrastructure. So is the audit-to-sprint loop in Chapter 5, when it is practiced with discipline.
+
+**What frustrated him:** Version control systems that were slow, centralized, and incapable of operating at the velocity and scale required by a project as large as the Linux kernel — and the industry's apparent comfort with that limitation.
+
+Every `git log --oneline` in this project is a direct artifact of the system he built in two weeks to scratch his own itch.
+
+---
+
 ## Anthropic, Claude, and the Model Context Protocol (2023–2024)
 
 The most recent story in this book is still unfolding.
@@ -290,7 +312,7 @@ The deterministic tools described in Chapter 9 — TypeScript strict mode, ESLin
 
 ## The Thread
 
-Span the timeline. Hoare in 1965. Dijkstra in 1968. Knuth in 1968. Brooks in 1975. Liskov in 1987. Cunningham in 1992. The Gang of Four in 1994. Beck and Fowler in the late 1990s. Martin through the 2000s. Wiggins in 2011. Hejlsberg and Zakas in 2012–2013. Clark and *Import AI* from 2016. Anthropic and MCP in 2023.
+Span the timeline. Hoare in 1965. Dijkstra in 1968. Knuth in 1968. Brooks in 1975. Liskov in 1987. Cunningham in 1992. The Gang of Four in 1994. Beck and Fowler in the late 1990s. Martin through the 2000s. Torvalds and Git in 2005. Wiggins in 2011. Hejlsberg and Zakas in 2012–2013. Clark and *Import AI* from 2016. Anthropic and MCP in 2023.
 
 Six decades of practitioners observing failures, building vocabulary, and handing it forward.
 
@@ -320,7 +342,7 @@ This chapter is the foundation. The remaining chapters build on it in this order
 
 - **Chapters 1–4** (conceptual) establish the thesis: language is now part of the implementation surface, and named frameworks are the vocabulary for working with it precisely.
 - **Chapter 5** (method) presents the audit-to-sprint execution loop that converts concepts into verified outcomes — including the inquiry-based prompting technique (Phase Zero) that gathers expert-level context before a single sprint is written. Every implementation story in later chapters follows this loop.
-- **Chapters 6–9** (implementation frameworks) apply 12-Factor, GoF, observability, and governance in detail with concrete repository evidence. Chapter 9 in particular covers how TypeScript, ESLint, and Lighthouse function as a composite governance layer for AI-generated code — a pattern that Hejlsberg and Zakas made possible.
+- **Chapters 6–9** (implementation frameworks) apply 12-Factor, GoF, observability, and governance in detail with concrete repository evidence. Chapter 9 in particular covers how TypeScript, ESLint, and Lighthouse function as a composite governance layer for AI-generated code — a pattern that Hejlsberg and Zakas made possible. Torvalds's Git provides the immutable audit trail that makes the sprint archive in Chapter 5 trustworthy.
 - **Chapter 10** (case study) shows the full arc: from baseline scaffold to production-grade architecture, including what went wrong and how it was corrected.
 - **Chapters 11–12** (team and future) address how teams operate effectively with these methods and where the practice is heading. Chapter 11 introduces the CEO operating model: how inquiry-based prompting and layered quality verification enable you to build expert-grade systems in domains you do not personally master.
 - **Chapter 13** (architecture) explains MCP specifically: what it is, how this project uses it, and what to build next.
