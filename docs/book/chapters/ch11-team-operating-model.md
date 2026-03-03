@@ -87,16 +87,16 @@ Adopt lightweight rituals that preserve alignment without introducing heavy proc
 ## Core Rituals
 
 1. **Audit Review**  
-	Confirm findings, prioritize risks, and define scope boundaries.
+	Confirm findings, prioritize risks, and define scope boundaries. The audit review is where the team agrees on what the next sprint will address and — equally important — what it will not. Output: a prioritized findings list with severity assignments.
 
 2. **Sprint Kickoff**  
-	Convert findings into execution-ready acceptance criteria.
+	Convert findings into execution-ready acceptance criteria. The kickoff produces the sprint document: scope, invariants, acceptance checks, and validation commands. This document is the contract between the person who planned the work and the person (or model) who will execute it.
 
 3. **Validation Checkpoint**  
-	Enforce quality gates and examine regressions before declaring completion.
+	Enforce quality gates and examine regressions before declaring completion. Run `npm run quality` and `npm run lhci:dev`, review the outputs, and compare against the sprint's acceptance criteria. No narrative claims — only passing gates.
 
 4. **Archive Review**  
-	Preserve rationale, outcomes, and unresolved questions.
+	Preserve rationale, outcomes, and unresolved questions. Move completed sprint artifacts to the archive. Record what was decided, what was deferred, and what surprised the team. This artifact becomes the starting context for the next audit.
 
 These rituals are short but high-leverage when performed consistently.
 
@@ -114,7 +114,7 @@ Use this minimum handoff package between roles:
 - validation commands
 - artifact destination (where outcomes are recorded)
 
-When handoffs use this template, context transfer becomes deterministic.
+When handoffs use this template, context transfer becomes structured and predictable.
 
 ## Anti-Patterns
 - One person owning everything without explicit checkpoints.
@@ -139,7 +139,7 @@ Most teams find that explicit roles reduce rework even when they initially feel 
 - Do rituals produce durable artifacts?
 - Can new contributors understand what happened and why?
 
-## Diagram Prompt
-Create a swimlane diagram with roles (architecture lead, orchestration lead, verifier, operations steward) across sprint rituals (audit review, kickoff, validation, archive review), showing handoff artifacts at each checkpoint.
+## Reader Exercise: Swimlane Diagram
+Create a swimlane diagram with roles (architecture lead, orchestration lead, verifier, operations steward) across sprint rituals (audit review, kickoff, validation, archive review), showing handoff artifacts at each checkpoint. Then run one sprint using explicit role assignment and compare the result to a sprint without it.
 
-If yes, the operating model is strong enough to scale orchestration quality.
+When all five hold, the operating model is strong enough to scale orchestration quality.

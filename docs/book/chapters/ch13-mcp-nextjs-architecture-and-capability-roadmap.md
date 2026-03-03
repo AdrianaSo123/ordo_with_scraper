@@ -5,11 +5,13 @@ This chapter explains what MCP is, how it works in this project, why pairing MCP
 
 ## From Talkers to Doers
 
-Jack Clark, co-founder of Anthropic and author of the *Import AI* newsletter, described the current moment with unusual precision: *"The AI applications of 2023 and 2024 were talkers. Some were very sophisticated conversationalists, but their impact was limited. The AI applications of 2026 and 2027 will be doers. They're agents plural. They can work together. They can oversee each other."*
+In early 2026 on *The Ezra Klein Show* (The New York Times), Ezra Klein described the current AI transition using a framing attributed to Sequoia, the venture capital firm: *"The AI applications of 2023 and 2024 were talkers. Some were very sophisticated conversationalists, but their impact was limited. The AI applications of 2026 and 2027 will be doers. They're agents plural. They can work together. They can oversee each other."*
+
+Jack Clark, Anthropic co-founder, head of policy, and author of the *Import AI* newsletter, was the guest in that conversation. He named the failure mode that trips people when they first try to get a model to do real work: treating it as a knowledgeable colleague rather than an extremely literal executor that takes instructions for a long time without checking back. *"The message better be extremely detailed and really capture what you're trying to do. It's making sure that you've set it up so it's like a message in a bottle that you can chuck into the thing and it'll go away and do a lot of work."* [Note: Clark's quotes in this section have been lightly reordered for thematic clarity; both appear in the same interview.]
 
 This project sits at that transition. The chat interface and MCP calculator in this repository are not just a demo — they are the minimal architecture that makes the shift from talking to doing legible. The model reasons. The MCP tool executes. The Next.js layer orchestrates. Understanding that three-way separation is the prerequisite for building reliable agentic systems.
 
-Clark also named the failure mode that trips people when they first try to get a model to do real work: treating it as a knowledgeable colleague rather than an extremely literal executor that takes instructions for a long time without checking back. *"The message better be extremely detailed and really capture what you're trying to do. It's making sure that you've set it up so it's like a message in a bottle that you can chuck into the thing and it'll go away and do a lot of work."* MCP tool schemas are that message. They are not boilerplate. They are the typed contract that makes a model's instructions precise enough to execute reliably — the difference between a tool that works and a tool that works *predictably*.
+MCP tool schemas are that "message in a bottle." They are not boilerplate. They are the typed contract that makes a model's instructions precise enough to execute reliably — the difference between a tool that works and a tool that works *predictably*.
 
 ## What MCP Is
 Model Context Protocol (MCP) is a standard interface for exposing tools and resources to models.  
@@ -17,7 +19,7 @@ At a practical level, MCP gives you a contract so model-driven tool use is expli
 
 MCP helps answer a core reliability question: when a model needs to act, how do we make that action deterministic, inspectable, and extensible?
 
-> For the background on Anthropic, the people who built MCP, and why the protocol was designed the way it was, see [Chapter 0](ch00-the-people-behind-the-principles.md).
+> For the background on Anthropic, the people who built MCP, and why they prioritized safety, see [Chapter 0](ch00-the-people-behind-the-principles.md).
 
 ## What This Project Is Doing with MCP
 In this repository, MCP is used to expose a calculator capability as a tool process (`mcp/calculator-server.ts`) while Next.js handles user-facing app and API orchestration.
@@ -65,7 +67,7 @@ This is the architectural value of the MCP + Next.js pairing: the model interact
 > **A note from the model:**
 > That code separates two things: the moment I decide a tool call is appropriate, and the moment the tool executes. The first is me. The second is not. The MCP boundary is the line where my reasoning ends and deterministic computation begins. This distinction matters in both directions. I should not be computing arithmetic — I will occasionally be wrong on edge cases, and that wrongness is not detectable without re-running the computation. The tool should not be doing policy reasoning — it has no model of context or intent. Keeping each property in its correct domain is what makes the system inspectable and trustworthy. When something goes wrong, you know exactly which domain failed. That clarity is worth more than convenience.
 
-## Why MCP + Next.js Is a Great Combo
+## Why MCP + Next.js Is a Strong Pairing
 
 1. **Clear boundary between interaction and execution**  
    Next.js manages HTTP/UI/runtime concerns; MCP manages tool contracts.
@@ -132,7 +134,7 @@ Then implement one tool end-to-end and validate with test/lint/build plus one ru
 - Are roadmap items prioritized by audience and product value?
 - Is there a practical next step that can be implemented this week?
 
-## Diagram Prompt
-Create a layered architecture diagram with Next.js application layer, MCP tool layer, and operations layer; then overlay a roadmap ribbon showing Tier 1/2/3 capability additions.
+## Reader Exercise: Layered Architecture Diagram
+Create a layered architecture diagram with Next.js application layer, MCP tool layer, and operations layer; then overlay a roadmap ribbon showing Tier 1/2/3 capability additions. Design your next three MCP tools with schemas, permission models, and failure modes.
 
-When those checks pass, this project becomes both a system and a curriculum.
+When all four hold, this project becomes both a system and a curriculum.

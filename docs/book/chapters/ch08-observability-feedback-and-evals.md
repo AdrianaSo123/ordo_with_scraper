@@ -32,17 +32,19 @@ This repository demonstrates the stack in concrete form:
 This design keeps route logic focused while maintaining consistent signal behavior.
 
 ## Practical Lens
-Design observability to support both incident response and orchestration quality evolution.
+Design observability to support both incident response and orchestration quality evolution. The Observer pattern from [Chapter 7](ch07-gof-for-ai-native-systems.md) provides the structural foundation; this chapter defines how the signals those observers emit are aggregated, evaluated, and acted on. The governance gates in [Chapter 9](ch09-risk-safety-and-governance.md) consume these signals as enforcement inputs.
 
 ## Evals as Operational Feedback
+In this context, an "eval" is any repeatable measurement that assesses the quality of AI-assisted output against a defined standard. Evals are not limited to model benchmarks — they include runtime signal analysis, regression detection, and quality-gate verification.
+
 Evaluation loops should be tied to real runtime characteristics, not only synthetic benchmarks. A practical pattern:
 
-1. Capture structured runtime events.
-2. Define threshold-based alerts for regression classes.
-3. Feed recurring regressions into sprint planning.
+1. Capture structured runtime events (the signal stack above).
+2. Define threshold-based alerts for regression classes — for example, if provider error rate exceeds 5% or p95 latency crosses 3 seconds.
+3. Feed recurring regressions into sprint planning (see [Chapter 5](ch05-audit-to-sprint-loop.md) for the audit-to-sprint loop).
 4. Validate fixes with the same observability signals that exposed the issue.
 
-That closes the loop between observation and design improvement.
+That closes the loop between observation and design improvement. The eval is not a separate activity — it is the feedback mechanism that connects runtime behavior to the next iteration of implementation.
 
 ## Anti-Patterns
 - Logging without structure (hard to aggregate, harder to query).
@@ -66,7 +68,7 @@ Then document who owns each metric and what action triggers when thresholds are 
 - Do eval loops feed directly into execution planning?
 - Can new signal sinks be added without route rewrites?
 
-## Diagram Prompt
-Draw a closed-loop feedback diagram: runtime event emission -> aggregation/query -> threshold detection -> sprint backlog update -> implementation -> validation -> runtime re-measurement.
+## Reader Exercise: Feedback Loop Diagram
+Draw a closed-loop feedback diagram: runtime event emission -> aggregation/query -> threshold detection -> sprint backlog update -> implementation -> validation -> runtime re-measurement. Then define eight metrics for one of your workflows and assign ownership for each.
 
-If yes, observability is functioning as a true engineering feedback system.
+When all four hold, observability is functioning as a true engineering feedback system.

@@ -38,13 +38,13 @@ The directive produced an audit, a sprint plan, and phased implementation. The r
 ### Case 2: GoF
 The directive produced explicit pattern upgrades in runtime code: Observer event bus, Decorator-based provider wrappers, Chain of Responsibility for provider errors, and later Template Method + Facade for route lifecycle.
 
-### Case 3: Uncle Bob framing
-This shifted implementation toward SRP and module boundaries, reducing route-level monoliths and improving testability.
+### Case 3: Uncle Bob (Robert C. Martin) framing
+This shifted implementation toward SRP and module boundaries, reducing route-level monoliths and improving testability. The decomposition from a single route handler into `validation.ts`, `policy.ts`, `orchestrator.ts`, and `http-facade.ts` was driven directly by the SOLID audit sprint.
 
 In each case, the framework name accelerated orientation. In each successful case, validation gates and artifact discipline converted orientation into verified outcomes.
 
 ## Practical Lens
-Use framework names as a start condition, then immediately force local precision.
+Use framework names as a start condition, then immediately force local precision. When a sprint plan says "GoF refactor," the next sentence should specify which pattern, which files, and what acceptance criteria prove it worked. A framework name without local contract is ambition without accountability.
 
 ## Failure Modes
 - **Name-only prompting**: invokes a framework but gives no concrete boundaries.
@@ -59,8 +59,8 @@ Pick one named framework you often use and write:
 
 Execute both on a non-trivial task and compare correction load. You should see a large reduction in rework with the qualified version.
 
-## Diagram Prompt
-Create a side-by-side flow diagram: left side “name-only directive,” right side “name + scope + local interpretation + acceptance checks.” Show where ambiguity is removed.
+## Reader Exercise: Compression Comparison
+Create a side-by-side flow diagram: left side "name-only directive," right side "name + scope + local interpretation + acceptance checks." Show where ambiguity is removed. Then apply the 4-step contract pattern to one framework you use in your own work.
 
 ## Chapter Checklist
 - Does the chapter show why semantic compression is valuable?
@@ -68,3 +68,5 @@ Create a side-by-side flow diagram: left side “name-only directive,” right s
 - Does it tie framework claims to concrete repository outcomes?
 
 A framework name is a powerful shorthand. A framework name plus local contract is orchestration.
+
+The next chapter introduces the execution loop that puts these contracts into practice — the audit-to-sprint cycle that converts framework-level intent into verified, bounded implementation.

@@ -31,10 +31,10 @@ When model behavior and runtime settings interact, reproducibility depends on st
 Execute the app as one or more stateless processes. For LLM routes, this means no in-memory conversation state that survives process restarts. Session state belongs in the client or an external store — never in a module-level variable that disappears on redeploy.
 
 ### Port Binding (VII)
-Export services via port binding. Health and readiness endpoints make the application's contract explicit and independently verifiable, without relying on platform-specific mechanisms to expose the service.
+Export services via port binding. The application is a self-contained HTTP server that declares its own port — it does not depend on a runtime container injecting a web server on its behalf. In Next.js, this is the default: the framework binds to a port and serves requests directly. Health and readiness endpoints (`/api/health/live`, `/api/health/ready`) make the application's operational contract explicit and independently verifiable.
 
 ### Concurrency (VIII)
-Scale out via the process model, not by making individual processes larger. Streaming and API routes are inherently concurrent. Design for stateless horizontal scale rather than vertical scaling of a single stateful instance.
+Scale out via the process model, not by making individual processes larger. Streaming and API routes are inherently concurrent. For LLM applications, this means streaming responses must not hold exclusive per-process state that blocks other requests. If a long-running inference call ties up a process, other users wait. Design for stateless horizontal scale: each process handles any request independently, and multiple processes can run in parallel behind a load balancer.
 
 ### Disposability (IX)
 Streaming routes make shutdown semantics critical. Graceful drain behavior is no longer optional. A process that cannot stop cleanly will corrupt in-flight requests and make zero-downtime deployment impossible.
@@ -52,12 +52,12 @@ Run admin and management tasks as one-off processes in the same environment as p
 This repository implemented concrete 12-factor controls:
 
 - Config centralization and validation in `src/lib/config/env.ts`.
-- Build/release/run scripting in `package.json` and release-manifest scripts.
+- Build/release/run scripting in `package.json` and `scripts/generate-release-manifest.mjs`.
 - Health contracts through `/api/health/live` and `/api/health/ready`.
 - Graceful process lifecycle through `scripts/start-server.mjs`.
 - Observability and error taxonomy through route envelopes and structured events.
 - Admin one-off commands in `scripts/admin-*.ts`.
-- Environment parity profile via templates and container artifacts.
+- Environment parity profile via `Dockerfile`, `compose.yaml`, and env template parity checks.
 
 The important pattern is not any single file. It is the conversion of each factor into executable checks and repeatable commands.
 
@@ -73,11 +73,7 @@ For each factor, require three proofs:
 
 Without all three, compliance is incomplete.
 
-## Additional Evidence
-- Config hardening and compatibility handling were centralized in `src/lib/config/env.ts`.
-- Build-release-run separation and release metadata are encoded in `package.json` + `scripts/generate-release-manifest.mjs`.
-- Health/readiness and admin process scripts are implemented as executable operations, not just documentation.
-- Parity profile is backed by `Dockerfile`, `compose.yaml`, and env template parity checks.
+> The audit-to-sprint loop that structures how these factors were implemented is defined in [Chapter 5](ch05-audit-to-sprint-loop.md).
 
 ## Exercise
 Run a 12-factor mini-audit on one service in your organization:
@@ -88,8 +84,8 @@ Run a 12-factor mini-audit on one service in your organization:
 
 This exercise usually reveals whether your team treats operations as engineering or as policy.
 
-## Diagram Prompt
-Create a matrix diagram with 12-factor rows and three proof columns: implementation proof, command proof, artifact proof. Fill one concrete example per row.
+## Reader Exercise: 12-Factor Proof Matrix
+Create a matrix diagram with 12-factor rows and three proof columns: implementation proof, command proof, artifact proof. Fill one concrete example per row from your own system.
 
 ## Chapter Checklist
 - Is each factor mapped to concrete implementation and validation evidence?

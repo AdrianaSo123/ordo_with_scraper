@@ -6,14 +6,14 @@ LLM systems change how software is specified and built: intent can be expressed 
 > The people behind the frameworks referenced throughout this book — the Gang of Four, Robert C. Martin, Adam Wiggins, and the Anthropic team — are covered in [Chapter 0](ch00-the-people-behind-the-principles.md). If those names are unfamiliar, start there. Understanding what frustrated these practitioners makes the principles far easier to apply correctly.
 
 ## The Shift
-Most software revolutions are interface revolutions. We moved from punch cards to terminals, from assembly to high-level languages, from raw sockets to frameworks. Each step increased the amount of intent we could express with fewer symbols. What changed with LLM systems is not the need for precision, but where precision lives.
+We can view most software revolutions as interface revolutions. We moved from punch cards to terminals, from assembly to high-level languages, from raw sockets to managed runtimes to frameworks. Each step increased the amount of intent we could express with fewer symbols. What changed with LLM systems is not the need for precision, but where precision lives.
 
 In a language-native workflow, words are no longer only comments about code. They can become the first executable layer of architecture: framing constraints, triggering workflows, selecting quality standards, and shaping implementation strategy before a line of code is written.
 
 This does not mean language replaces software engineering. It means language now participates in software engineering as a control surface.
 
 ## What This Means in Practice
-Three rules define this moment:
+This book argues that three rules define this moment:
 
 1. Prompting is specification, not conversation-only.
 2. Architectural intent can be compressed into named frameworks.
@@ -44,7 +44,7 @@ In that model, the quality of language determines the quality of execution traje
 > I wrote the analogy you just read. It is also a precise description of my own situation. When you give me a vague prompt, I am not "confused" in any human sense — but I am working with a wide probability distribution over what "good" looks like in that context. A prompt with explicit scope, invariants, and acceptance criteria narrows that distribution substantially. The rework you avoid is not hypothetical: it is the iterations between my best guess and your actual intent. Tighter specification is not about distrusting me. It is about giving me the information I need to be useful.
 
 ## Practical Lens
-Use this chapter to calibrate your standard: if it cannot be validated in artifacts, it is not yet an engineering outcome.
+Use this chapter to set a baseline expectation: if a claim cannot be validated in artifacts, it is not yet an engineering outcome. Every chapter that follows applies this standard — from the audit-to-sprint loop in Chapter 5 to the governance gates in Chapter 9. The question is never "does this sound right?" but "can I run a command that proves it?"
 
 ## Exercise
 Take one feature request and write two versions:
@@ -54,8 +54,8 @@ Take one feature request and write two versions:
 
 Then compare output quality and correction effort. In most teams, this single exercise makes the difference obvious.
 
-## Diagram Prompt
-Draw a three-layer diagram: (1) language intent layer, (2) implementation layer, (3) validation/evidence layer. Show arrows from intent to code changes and from validation back to intent refinement.
+## Reader Exercise: The Three-Layer Diagram
+Draw a three-layer diagram: (1) language intent layer, (2) implementation layer, (3) validation/evidence layer. Show arrows from intent to code changes and from validation back to intent refinement. Then map one feature from your own work to all three layers.
 
 ## Chapter Checklist
 - Can each major claim point to a repository artifact?
@@ -63,3 +63,5 @@ Draw a three-layer diagram: (1) language intent layer, (2) implementation layer,
 - Is validation treated as part of the method, not an optional afterthought?
 
 If you can answer yes, you are already practicing language as executable architecture.
+
+The next chapter traces this shift historically — showing that natural-language orchestration is the latest layer in a trajectory that began with machine code, not an exception to it.

@@ -39,7 +39,7 @@ AI-assisted development introduces a velocity problem governance frameworks were
 
 The answer is not slower AI. The answer is deterministic tools — tools that evaluate every change at machine speed, apply consistent criteria, and fail the build before anything reaches human review or production.
 
-Jack Clark, Anthropic co-founder and author of the *Import AI* newsletter, was asked in 2026 what his company was actually doing about the technical debt accumulating from AI-generated code. His answer: *"Yes. And this is the issue that all of society is going to contend with. Large chunks of the world are going to now have many of the low-level decisions and bits of work being done by AI systems, and we're going to need to make sense of it."* He described the governance response in engineering terms — not a policy document, but *oversight technologies*: monitoring systems that make AI-assisted development observable so that human judgment can be applied at the points where it still matters. He invoked O-ring automation: "Automation is bounded by the slowest link in the chain. As you automate parts of a company, humans flood towards what is least automated." The bottleneck shifts from code production to code *verification*. The governance layer has to operate at machine speed, or it cannot function.
+Jack Clark, Anthropic co-founder and head of policy, and author of the *Import AI* newsletter, was asked in early 2026 on *The Ezra Klein Show* (The New York Times) what his company was actually doing about the technical debt accumulating from AI-generated code. His answer: *"[...] this is the issue that all of society is going to contend with. Large chunks of the world are going to now have many of the low-level decisions and bits of work being done by AI systems, and we're going to need to make sense of it."* He described the governance response in engineering terms — not a policy document, but *oversight technologies*: monitoring systems that make AI-assisted development observable so that human judgment can be applied at the points where it still matters. He invoked O-ring automation — the concept from economist Michael Kremer's 1993 theory, which argues that in systems where every component must work for the whole to succeed, the weakest link determines total output: *"Automation is bounded by the slowest link in the chain. As you automate parts of a company, humans flood towards what is least automated."* The bottleneck shifts from code production to code *verification*. The governance layer has to operate at machine speed, or it cannot function.
 
 That is what the three-tool composite below provides.
 
@@ -75,7 +75,7 @@ Lighthouse audits the rendered application, not the source code. It measures wha
 - **Performance ≥ 90**: Core Web Vitals, JavaScript parse time, bundle cost
 - **Accessibility = 100**: Every WCAG audit, every interactive element audited
 - **Best Practices ≥ 95**: Security headers, HTTPS, deprecated APIs
-- **SEO = 100**: Meta descriptions, canonical links, crawlability
+- **SEO ≥ 90**: Meta descriptions, canonical links, crawlability
 
 An AI-generated UI can pass ESLint and TypeScript but still fail accessibility because a color contrast ratio is too low, or a form is keyboard-inaccessible, or a heading hierarchy is broken. Lighthouse catches the category of problems that only appear after rendering.
 
@@ -95,12 +95,12 @@ Lighthouse  →  Does the delivered application serve users correctly?
 
 No single tool catches everything. Together, they evaluate the same change at three different levels of abstraction — source structure, policy compliance, and runtime delivery — and each level catches failures the others cannot see.
 
-This composite gate is the governance response to AI-generated code velocity. The `quality` script (`npm run quality`) runs all three sequentially and must pass before any release artifact is generated.
+This composite gate is the governance response to AI-generated code velocity. The `quality` script (`npm run quality`) runs TypeScript strict checking, ESLint at zero-warnings tolerance, and the full test suite sequentially. Lighthouse runs separately via `npm run lhci:dev` against a live server. Both must pass before any release artifact is generated.
 
 > The stories of the people who built these tools — Hejlsberg on TypeScript, Zakas on ESLint — are in [Chapter 0](ch00-the-people-behind-the-principles.md). Understanding why they built them as they did makes the governance argument easier to internalize.
 
 ## Practical Lens
-Treat governance controls as first-class system components with explicit owners.
+Treat governance controls as first-class system components with explicit owners. Clark's macro-level framing — that society needs oversight technologies for AI-assisted work — translates in this project to a specific three-tool stack: TypeScript for structural correctness, ESLint for policy compliance, Lighthouse for runtime delivery. The connection is not that Clark recommended these specific tools; it is that his governance principle (make AI output observable and verifiable) is precisely what these tools implement at the codebase level.
 
 ## Repository Example: Executable Guardrails
 This repository uses executable controls rather than narrative-only guidance:
@@ -113,10 +113,7 @@ This repository uses executable controls rather than narrative-only guidance:
 
 These are governance mechanisms because they can fail builds, block unsafe startup, and expose drift conditions early.
 
-## Additional Evidence
-- Secrets and config checks are executable via `scripts/validate-env.ts` and `scripts/scan-secrets.mjs`.
-- Release integrity is guarded by `scripts/generate-release-manifest.mjs` and `scripts/validate-release-manifest.mjs`.
-- Startup safety is reinforced by the production entrypoint `scripts/start-server.mjs` with graceful drain behavior.
+> The audit-to-sprint loop that structures governance implementation is in [Chapter 5](ch05-audit-to-sprint-loop.md).
 
 ## Governance Operating Model
 A practical operating model for orchestration-heavy teams:
@@ -151,7 +148,7 @@ Then run one simulated failure in each domain and confirm the control activates 
 - Are failures deterministic and observable?
 - Are governance outcomes captured in durable artifacts?
 
-## Diagram Prompt
-Create a governance control matrix diagram with rows for risk domains and columns for enforcement point, owner, automation hook, and evidence artifact.
+## Reader Exercise: Governance Control Matrix
+Create a governance control matrix diagram with rows for risk domains and columns for enforcement point, owner, automation hook, and evidence artifact. Then run one simulated failure in each domain and confirm the control activates as expected.
 
-When these answers are yes, governance stops being friction and becomes reliability infrastructure.
+When all four answers are yes, governance stops being friction and becomes reliability infrastructure.

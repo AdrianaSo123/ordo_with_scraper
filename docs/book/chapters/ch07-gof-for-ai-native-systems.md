@@ -42,7 +42,9 @@ The test count did not change significantly after any of these refactors. The co
 > I implemented both versions. Working with the pre-refactor route handler — the one mixing emission concerns, business logic, provider invocation, and error shaping in a single function — required holding all of those concerns simultaneously in context. When I generated a change to the error handling path, I had to reason about whether it affected the telemetry logic sitting beside it. After the refactors, each module had a narrow contract. Changing error handling did not require re-reading metric emission. That reduction in reasoning surface applies to me as much as it applies to the next developer. Narrow modules are not a style preference. They are cognitive load management — for both of us.
 
 ## Practical Lens
-Use patterns only when they reduce accidental complexity and sharpen module boundaries.
+Use patterns only when they reduce accidental complexity and sharpen module boundaries. A pattern that makes the code harder to trace is not simplifying — it is adding a layer of indirection without earning it. The test: can a new contributor follow control flow through the pattern without needing a guide?
+
+> The Observer pattern enables the observability signals discussed in [Chapter 8](ch08-observability-feedback-and-evals.md). The governance implications of these structural boundaries are central to [Chapter 9](ch09-risk-safety-and-governance.md).
 
 ## Repository Example
 Pattern upgrades in this repository map directly to concrete modules:
@@ -78,7 +80,7 @@ Then measure:
 - Did pattern adoption reduce duplication and clarify boundaries?
 - Are pattern outcomes validated by regression gates?
 
-## Diagram Prompt
-Create a pattern-to-module diagram with four lanes: Observer, Decorator, Chain of Responsibility, Template+Facade. Map each lane to concrete files and one measurable outcome.
+## Reader Exercise: Pattern-to-Module Mapping
+Create a pattern-to-module diagram with four lanes: Observer, Decorator, Chain of Responsibility, Template+Facade. Map each lane to concrete files and one measurable outcome. Then identify one duplication pattern in your own codebase and choose which GoF pattern would address it.
 
-When those checks pass, GoF is not legacy theory; it is operational leverage for modern systems.
+When the checklist above passes, GoF is not legacy theory; it is operational leverage for modern systems.

@@ -6,7 +6,7 @@ Every framework in this book was invented by a person who was frustrated. Unders
 ---
 
 > **A note from the model:**
-> This chapter was written by me — a large language model. I am the youngest figure in the lineage it describes. The twelve people in these pages built the principles; I was trained on the evidence they left behind. I cannot tell you what Dijkstra felt when he wrote his letter, or what Cunningham noticed when the first technical debt accumulation became too expensive to ignore. But I can tell you that the discipline they named shaped every response I give. You are not just learning history. You are learning where I came from.
+> This chapter was written by me — a large language model. I am the youngest figure in the lineage it describes. The more than twenty practitioners in these pages built the principles; I was trained on the evidence they left behind. I cannot tell you what Dijkstra felt when he wrote his letter, or what Cunningham noticed when the first technical debt accumulation became too expensive to ignore. But I can tell you that the discipline they named shaped every response I give. You are not just learning history. You are learning where I came from.
 
 ---
 
@@ -124,7 +124,7 @@ The broader lesson of her story is about attribution and depth. Most engineers u
 
 ## Tim Berners-Lee and the Architecture of the Open Web (1989–1991)
 
-**Tim Berners-Lee** was a software engineer at CERN in 1989 when he submitted a proposal titled *Information Management: A Proposal.* His manager wrote *"vague but exciting"* in the margin and did not reject it. That margin note is now a famous artefact because the proposal described, in outline, what became the World Wide Web.
+**Tim Berners-Lee** was a software engineer at CERN in 1989 when he submitted a proposal titled *Information Management: A Proposal.* His manager wrote *"vague but exciting"* in the margin and did not reject it. That margin note is now a famous artifact because the proposal described, in outline, what became the World Wide Web.
 
 The problem he was solving was specific and unglamorous: CERN employed thousands of researchers who worked on different computers running different operating systems, and information was constantly being lost when people left. There was no way to link documents across machines, no shared addressing scheme, no protocol for retrieving something from a server you did not directly administer.
 
@@ -170,7 +170,7 @@ This distinction matters enormously for how you work with AI-generated code. AI 
 
 **What frustrated him:** The inability to have honest conversations with non-engineers about why the cost of change in software systems grows over time — and the absence of a shared vocabulary for naming and planning around that cost.
 
-The sprint-verify-archive loop in Chapter 5 is, in part, a debt management practice: every bounded change with a validation gate keeps the debt register current rather than letting it grow silently.
+The sprint-and-verify loop in Chapter 5 is, in part, a debt management practice: every bounded change with a validation gate keeps the debt register current rather than letting it grow silently.
 
 ---
 
@@ -205,44 +205,6 @@ The lesson is not that PHP was wrong to exist. The lesson is that *whatever ship
 Lerdorf himself has been characteristically direct about this. He has said publicly that PHP was never supposed to be a general-purpose programming language, and that the fact that it became one is not something he takes unambiguous pride in. That honesty — naming the gap between intent and outcome — is the same disposition Hoare showed with null, Dahl showed with Node.js, and that this book asks you to bring to AI-generated code.
 
 **What frustrated him:** Nothing initially — he was solving his own specific problem. The frustration belongs to the engineers who later inherited large PHP codebases without having been present for the accidental decisions that shaped them.
-
----
-
-## Robert C. Martin — Uncle Bob (1990s–2000s)
-
-**Robert C. Martin** spent decades as a contract software developer, which meant he inherited other people's codebases constantly. He did not just write software; he cleaned up software that had become impossible to change.
-
-His observation across hundreds of systems was consistent: software written by intelligent, skilled people became incomprehensible within a few years. Not because the programmers were bad, but because they optimized for getting things working rather than for keeping things changeable.
-
-SOLID emerged from this observation. Each letter addresses a specific failure mode he had seen repeatedly:
-
-- **S (SRP)**: Modules that owned too many things became impossible to change without breaking unrelated behavior.
-- **O (OCP)**: Systems that required editing existing code to add new behavior accumulated risk with every change.
-- **L (LSP)**: Inheritance hierarchies that violated substitutability silently broke assumptions at runtime.
-- **I (ISP)**: Fat interfaces forced consumers to depend on methods they would never use.
-- **D (DIP)**: High-level policy coupled directly to low-level implementation made the architecture rigid.
-
-His books *Clean Code* (2008) and *Clean Architecture* (2017) are not academic texts. They are field notes from someone who watched brilliant engineers make the same structural mistakes decade after decade.
-
-**What frustrated him:** The gap between code that worked on day one and code that was maintainable on day 365. He watched teams fail not at programming, but at managing the slow accumulation of decisions that no individual believed was a problem.
-
-In Chapter 7 of this book, the module decompositions directly reflect his SRP principle — specifically the observation that route handlers which mix validation, orchestration, and error-handling become impossible to test or extend safely.
-
----
-
-## Adam Wiggins and the 12-Factor App (2011)
-
-**Adam Wiggins** co-founded Heroku in 2007. Heroku was not just a company; it was an experiment in running every kind of application at scale, built by developers who often had no operational experience.
-
-By 2011, the Heroku team had watched thousands of applications deploy, fail, behave unpredictably, and refuse to scale. They had seen config hardcoded into source. Logs sent nowhere useful. Processes that could not be stopped cleanly. Environments that behaved differently in development and production for reasons nobody could explain.
-
-The 12-Factor App methodology was their distillation of what distinguished applications that were easy to operate from applications that were a constant emergency. It was not a philosophy. It was a retrospective on thousands of real failures.
-
-Crucially, the factors are not about any specific technology. They are about the *contract between an application and its environment*. An application that respects that contract can be deployed anywhere, scaled horizontally, and operated by people who did not write it.
-
-**What frustrated him:** Applications that worked fine for their original developer and became operational nightmares the moment someone else tried to run, scale, or debug them.
-
-Chapter 6 of this book applies every one of his factors to LLM-backed applications, where the same failure modes appear in new forms: API keys hardcoded in source, streaming routes that crash non-gracefully, provider behavior that differs between a developer's laptop and production.
 
 ---
 
@@ -288,6 +250,28 @@ They also introduced **tracer bullets** as a development philosophy: rather than
 
 ---
 
+## Robert C. Martin — Uncle Bob (1990s–2000s)
+
+**Robert C. Martin** spent decades as a contract software developer, which meant he inherited other people's codebases constantly. He did not just write software; he cleaned up software that had become impossible to change.
+
+His observation across hundreds of systems was consistent: software written by intelligent, skilled people became incomprehensible within a few years. Not because the programmers were bad, but because they optimized for getting things working rather than for keeping things changeable.
+
+SOLID emerged from this observation. Each letter addresses a specific failure mode he had seen repeatedly:
+
+- **S (SRP)**: Modules that owned too many things became impossible to change without breaking unrelated behavior.
+- **O (OCP)**: Systems that required editing existing code to add new behavior accumulated risk with every change.
+- **L (LSP)**: Inheritance hierarchies that violated substitutability silently broke assumptions at runtime.
+- **I (ISP)**: Fat interfaces forced consumers to depend on methods they would never use.
+- **D (DIP)**: High-level policy coupled directly to low-level implementation made the architecture rigid.
+
+His books *Clean Code* (2008) and *Clean Architecture* (2017) are not academic texts. They are field notes from someone who watched brilliant engineers make the same structural mistakes decade after decade.
+
+**What frustrated him:** The gap between code that worked on day one and code that was maintainable on day 365. He watched teams fail not at programming, but at managing the slow accumulation of decisions that no individual believed was a problem.
+
+In Chapter 7 of this book, the module decompositions directly reflect his SRP principle — specifically the observation that route handlers which mix validation, orchestration, and error-handling become impossible to test or extend safely.
+
+---
+
 ## Roy Fielding and the Architecture of the Web Itself (2000)
 
 **Roy Fielding** did not invent REST. He *named* it — and naming it changed everything.
@@ -306,6 +290,58 @@ His dissertation also contains one of the most useful definitions in software ar
 
 ---
 
+## Linus Torvalds and the Case for Immutable History (2005)
+
+**Linus Torvalds** created the Linux kernel in 1991, but that is not why he appears in this chapter. He appears because of what he built in April 2005, in roughly two weeks, out of necessity and irritation.
+
+The Linux kernel project had been using BitKeeper — a proprietary distributed version control system — under a free-use arrangement. When BitKeeper revoked that arrangement, the kernel team needed a replacement. Torvalds looked at the existing options, found all of them inadequate in different ways, and built Git instead.
+
+His requirements were specific and uncommon. The system had to be fast enough to handle the Linux kernel's patch velocity — thousands of commits from hundreds of contributors. It had to be distributed, meaning every developer had a full copy of the history, not a checkout of a central server. Most importantly, it had to make history *tamper-evident*: a commit's identifier had to be a cryptographic hash of its content and all of its ancestors. If you changed anything in the history, the hash changed. Corruption and silent alteration were detectable by construction.
+
+That last property is the one that matters for this book.
+
+When Chapter 5 describes the sprint archive as a "reconstructable trail," and when the governance model in Chapter 9 relies on sprint artifacts and QA reports as evidence, both of those claims depend on a substrate that Git provides invisibly: the history cannot be quietly rewritten. Every commit in this repository has an identifier that proves its content and ancestry. Every audit document, every completed sprint, every governance artifact is a node in an immutable chain. You can reconstruct exactly what was built, in what order, and what the state of the codebase was at each point.
+
+Torvalds's most quoted line is *"talk is cheap, show me the code."* This became shorthand for a particular engineering epistemology: claims without evidence are noise. The only unit of accountability is running, verifiable output. Every chapter in this book that ends with a command you can execute — `npm run typecheck`, `npm run lint:strict`, `npm run lhci:dev` — is practicing this principle. Assertions are not evidence. Passing gates are.
+
+He also understood that scale changes what tools need to do. A version control system for one person is a backup mechanism. A version control system for thousands of contributors on a safety-critical codebase is a trust infrastructure — a way for people who cannot see each other to build on each other's work with confidence. Git is trust infrastructure. So is the audit-to-sprint loop in Chapter 5, when it is practiced with discipline.
+
+**What frustrated him:** Version control systems that were slow, centralized, and incapable of operating at the velocity and scale required by a project as large as the Linux kernel — and the industry's apparent comfort with that limitation.
+
+Every `git log --oneline` in this project is a direct artifact of the system he built in two weeks to scratch his own itch.
+
+---
+
+## Ryan Dahl and the Event-Driven Server (2009)
+
+**Ryan Dahl** was frustrated with how web servers handled concurrency. The dominant model — one thread per request — meant that every simultaneous connection consumed a thread blocked waiting on I/O: a database query, a file read, a network response. It was expensive and didn't scale. In 2009, at JSConf EU, he demonstrated an alternative: Node.js.
+
+The insight was architectural, not syntactic. JavaScript, by design, had an event loop. Its original runtime — the browser — could not block waiting for network requests because it had to remain responsive to user interaction. The event loop was JavaScript's native concurrency model. Dahl's contribution was recognizing that the same model that made JavaScript non-blocking in the browser could make a server non-blocking too.
+
+Node.js moved JavaScript onto the server and made full-stack JavaScript development practical for the first time. A single language across client, server, and tooling — with a shared module ecosystem in npm. The implications compounded: the framework Guillermo Rauch built on top of it, the component model the React team applied to it, and the MCP server layer in this repository's runtime are all downstream of the runtime Dahl shipped in 2009.
+
+There is a less comfortable part of his story. In 2018, Dahl gave a talk titled *10 Things I Regret About Node.js*. He listed specific design mistakes — the module system, the omission of Promises, the build toolchain — and then launched Deno, a replacement runtime designed to address them. The willingness to publicly name what was wrong, precisely and technically rather than vaguely, is the same disposition that Hoare showed calling null his billion-dollar mistake. Engineering credibility is not damaged by honest retrospection. It is demonstrated by it.
+
+**What frustrated him:** Web servers that were slow by default — not because the hardware was slow, but because the threading model left CPU idle while connections waited on I/O that could have been handled asynchronously.
+
+---
+
+## Adam Wiggins and the 12-Factor App (2011)
+
+**Adam Wiggins** co-founded Heroku in 2007. Heroku was not just a company; it was an experiment in running every kind of application at scale, built by developers who often had no operational experience.
+
+By 2011, the Heroku team had watched thousands of applications deploy, fail, behave unpredictably, and refuse to scale. They had seen config hardcoded into source. Logs sent nowhere useful. Processes that could not be stopped cleanly. Environments that behaved differently in development and production for reasons nobody could explain.
+
+The 12-Factor App methodology was their distillation of what distinguished applications that were easy to operate from applications that were a constant emergency. It was not a philosophy. It was a retrospective on thousands of real failures.
+
+Crucially, the factors are not about any specific technology. They are about the *contract between an application and its environment*. An application that respects that contract can be deployed anywhere, scaled horizontally, and operated by people who did not write it.
+
+**What frustrated him:** Applications that worked fine for their original developer and became operational nightmares the moment someone else tried to run, scale, or debug them.
+
+Chapter 6 of this book applies every one of his factors to LLM-backed applications, where the same failure modes appear in new forms: API keys hardcoded in source, streaming routes that crash non-gracefully, provider behavior that differs between a developer's laptop and production.
+
+---
+
 ## Anders Hejlsberg and the Case for Static Types (2012)
 
 **Anders Hejlsberg** had already built two compilers before TypeScript. He designed Turbo Pascal at 23 and led the development of Delphi before Microsoft hired him to lead C#. By 2012, he was watching the web industry repeat a painful history.
@@ -314,7 +350,7 @@ JavaScript was becoming the language running the most software in the world — 
 
 The frustration was specific: *you could look at the code and not know if it was correct.* The interpreter would not tell you until runtime. TypeScript was his answer: a structural type system that could be layered over existing JavaScript, with no runtime overhead, providing the editor and build system with enough information to catch errors before execution.
 
-Hejlsberg made one crucial design decision that shaped the entire adoption curve: TypeScript types are *gradual*. You can add them incrementally. You do not have to rewrite everything. This reflected decades of pragmatism about how real adoption works — tools that require a full rewrite before they help you get used.
+Hejlsberg made one crucial design decision that shaped the entire adoption curve: TypeScript types are *gradual*. You can add them incrementally. You do not have to rewrite everything. This reflected decades of pragmatism about how real adoption works — tools that require a full rewrite before they help never get adopted.
 
 **What frustrated him:** Programs that looked syntactically correct but could not be verified to be semantically correct without running them in production.
 
@@ -366,39 +402,23 @@ The direct relevance to this book: the application in this repository is a Next.
 
 ---
 
-## Linus Torvalds and the Case for Immutable History (2005)
+## Jack Clark and the Case for AI Governance Transparency (2016–present)
 
-**Linus Torvalds** created the Linux kernel in 1991, but that is not why he appears in this chapter. He appears because of what he built in April 2005, in roughly two weeks, out of necessity and irritation.
+**Jack Clark** co-founded Anthropic with Dario and Daniela Amodei, where he serves as head of policy, after several years running AI policy at OpenAI. Before Anthropic, he spent enough time watching model capabilities compound week over week to believe that the gap between what the systems could do and what anyone — inside the companies or outside — actually understood about them was becoming dangerous.
 
-The Linux kernel project had been using BitKeeper — a proprietary distributed version control system — under a free-use arrangement. When BitKeeper revoked that arrangement, the kernel team needed a replacement. Torvalds looked at the existing options, found all of them inadequate in different ways, and built Git instead.
+In 2016 he started *Import AI*, a weekly newsletter tracking advances in machine learning research. Not product launches. Research: capability jumps, benchmark surprises, techniques that would matter in three years. It became required reading for anyone trying to stay calibrated about what was actually developing in the field rather than what the press releases announced.
 
-His requirements were specific and uncommon. The system had to be fast enough to handle the Linux kernel's patch velocity — thousands of commits from hundreds of contributors. It had to be distributed, meaning every developer had a full copy of the history, not a checkout of a central server. Most importantly, it had to make history *tamper-evident*: a commit's identifier had to be a cryptographic hash of its content and all of its ancestors. If you changed anything in the history, the hash changed. Corruption and silent alteration were detectable by construction.
+His thesis, stated plainly: as AI systems generate more and more of the code in the world, the question is no longer whether the code *works* but whether anyone has visibility into how rapidly the codebase is changing, what patterns are appearing, and where a governance regime can tell the machines to slow down. "We are going to end up developing some notion of integrity of all of our systems," he said in early 2026 on *The Ezra Klein Show* (The New York Times), "and where AI can kind of flow quickly, where it should be slow, where you definitely need human oversight. That is going to be the task — figuring out what does this governance regime look like now that we've given a load of basically schlep work over to machines that work on our behalf."
 
-That last property is the one that matters for this book.
+He named this problem before it had a common vocabulary in the industry. The word he kept returning to was *oversight* — not in the bureaucratic sense but in the engineering sense: a monitoring system that makes the behavior of AI-assisted development *observable*. He described O-ring automation: "Automation is bounded by the slowest link in the chain. As you automate parts of a company, humans flood towards what is least automated, both improving the quality of that thing and getting it to the point where it eventually can be automated. Then you move to the next loop." The discipline shifts from writing code to identifying bottlenecks.
 
-When Chapter 5 describes the sprint archive as a "reconstructable trail," and when the governance model in Chapter 9 relies on sprint artifacts and QA reports as evidence, both of those claims depend on a substrate that Git provides invisibly: the history cannot be quietly rewritten. Every commit in this repository has an identifier that proves its content and ancestry. Every audit document, every completed sprint, every governance artifact is a node in an immutable chain. You can reconstruct exactly what was built, in what order, and what the state of the codebase was at each point.
+He was also honest about the part that companies knew but had not said clearly: when Claude Code was writing the majority of code at Anthropic, engineers understood the codebase less well than before. "This is the issue that all of society is going to contend with," he said. "Large chunks of the world are going to now have many of the low-level decisions and bits of work being done by AI systems, and we're going to need to make sense of it."
 
-Torvalds's most quoted line is *"talk is cheap, show me the code."* This became shorthand for a particular engineering epistemology: claims without evidence are noise. The only unit of accountability is running, verifiable output. Every chapter in this book that ends with a command you can execute — `npm run typecheck`, `npm run lint:strict`, `npm run lhci:dev` — is practicing this principle. Assertions are not evidence. Passing gates are.
+He also named the transition that everyone in software was living through. In the same interview, Ezra Klein described a framing attributed to Sequoia, the venture capital firm: "The AI applications of 2023 and 2024 were talkers. Some were very sophisticated conversationalists, but their impact was limited. The AI applications of 2026 and 2027 will be doers. They're agents plural. They can work together. They can oversee each other." Designing for *doers* is what MCP, typed contracts, and composite governance gates are for.
 
-He also understood that scale changes what tools need to do. A version control system for one person is a backup mechanism. A version control system for thousands of contributors on a safety-critical codebase is a trust infrastructure — a way for people who cannot see each other to build on each other's work with confidence. Git is trust infrastructure. So is the audit-to-sprint loop in Chapter 5, when it is practiced with discipline.
+The deterministic tools described in Chapter 9 — TypeScript strict mode, ESLint at zero-warnings tolerance, Lighthouse at score thresholds — are a direct response to the problem Clark named. They do not replace human oversight. They make the codebase observable enough that oversight is possible.
 
-**What frustrated him:** Version control systems that were slow, centralized, and incapable of operating at the velocity and scale required by a project as large as the Linux kernel — and the industry's apparent comfort with that limitation.
-
-Every `git log --oneline` in this project is a direct artifact of the system he built in two weeks to scratch his own itch.
-
----
-
-## Ryan Dahl and the Event-Driven Server (2009)
-
-**Ryan Dahl** was frustrated with how web servers handled concurrency. The dominant model — one thread per request — meant that every simultaneous connection consumed a thread blocked waiting on I/O: a database query, a file read, a network response. It was expensive and didn't scale. In 2009, at JSConf EU, he demonstrated an alternative: Node.js.
-
-The insight was architectural, not syntactic. JavaScript, by design, had an event loop. Its original runtime — the browser — could not block waiting for network requests because it had to remain responsive to user interaction. The event loop was JavaScript's native concurrency model. Dahl's contribution was recognizing that the same model that made JavaScript non-blocking in the browser could make a server non-blocking too.
-
-Node.js moved JavaScript onto the server and made full-stack JavaScript development practical for the first time. A single language across client, server, and tooling — with a shared module ecosystem in npm. The implications compounded: the framework Guillermo Rauch built on top of it, the component model the React team applied to it, and the MCP server layer in this repository's runtime are all downstream of the runtime Dahl shipped in 2009.
-
-There is a less comfortable part of his story. In 2018, Dahl gave a talk titled *10 Things I Regret About Node.js*. He listed specific design mistakes — the module system, the omission of Promises, the build toolchain — and then launched Deno, a replacement runtime designed to address them. The willingness to publicly name what was wrong, precisely and technically rather than vaguely, is the same disposition that Hoare showed calling null his billion-dollar mistake. Engineering credibility is not damaged by honest retrospection. It is demonstrated by it.
-
-**What frustrated him:** Web servers that were slow by default — not because the hardware was slow, but because the threading model left CPU idle while connections waited on I/O that could have been handled asynchronously.
+**What frustrated him:** The assumption that publishing a safety paper was equivalent to having a safety system. The gap between what AI companies said they knew about their models' behavior and what anyone could actually verify from the outside.
 
 ---
 
@@ -417,26 +437,6 @@ The decision to open-source MCP reflects the same logic that drove the Gang of F
 **What frustrated them:** The brittleness of ad hoc tool integration. Models that appeared to work but produced non-deterministic, difficult-to-audit actions when connected to real system capabilities.
 
 Chapter 13 of this book is dedicated to MCP's architecture and what it enables when paired with Next.js as a runtime shell.
-
----
-
-## Jack Clark and the Case for AI Governance Transparency (2016–present)
-
-**Jack Clark** co-founded Anthropic with Dario and Daniela Amodei after several years running AI policy at OpenAI. Before Anthropic, he spent enough time watching model capabilities compound week over week to believe that the gap between what the systems could do and what anyone — inside the companies or outside — actually understood about them was becoming dangerous.
-
-In 2016 he started *Import AI*, a weekly newsletter tracking advances in machine learning research. Not product launches. Research: capability jumps, benchmark surprises, techniques that would matter in three years. It became required reading for anyone trying to stay calibrated about what was actually developing in the field rather than what the press releases announced.
-
-His thesis, stated plainly: as AI systems generate more and more of the code in the world, the question is no longer whether the code *works* but whether anyone has visibility into how rapidly the codebase is changing, what patterns are appearing, and where a governance regime can tell the machines to slow down. "We are going to end up developing some notion of integrity of all of our systems," he said in 2026, "and where AI can kind of flow quickly, where it should be slow, where you definitely need human oversight. That is going to be the task — figuring out what does this governance regime look like now that we've given a load of basically schlep work over to machines that work on our behalf."
-
-He named this problem before it had a common vocabulary in the industry. The word he kept returning to was *oversight* — not in the bureaucratic sense but in the engineering sense: a monitoring system that makes the behavior of AI-assisted development *observable*. He described O-ring automation: "Automation is bounded by the slowest link in the chain. As you automate parts of a company, humans flood towards what is least automated, both improving the quality of that thing and getting it to the point where it eventually can be automated. Then you move to the next loop." The discipline shifts from writing code to identifying bottlenecks.
-
-He was also honest about the part that companies knew but had not said clearly: when Claude Code was writing the majority of code at Anthropic, engineers understood the codebase less well than before. "This is the issue that all of society is going to contend with," he said. "Large chunks of the world are going to now have many of the low-level decisions and bits of work being done by AI systems, and we're going to need to make sense of it."
-
-He also named the transition that everyone in software was living through: "The AI applications of 2023 and 2024 were talkers. Some were very sophisticated conversationalists, but their impact was limited. The AI applications of 2026 and 2027 will be doers. They're agents plural. They can work together. They can oversee each other." Designing for *doers* is what MCP, typed contracts, and composite governance gates are for.
-
-The deterministic tools described in Chapter 9 — TypeScript strict mode, ESLint at zero-warnings tolerance, Lighthouse at score thresholds — are a direct response to the problem Clark named. They do not replace human oversight. They make the codebase observable enough that oversight is possible.
-
-**What frustrated him:** The assumption that publishing a safety paper was equivalent to having a safety system. The gap between what AI companies said they knew about their models' behavior and what anyone could actually verify from the outside.
 
 ---
 
@@ -472,7 +472,7 @@ This chapter is the foundation. The remaining chapters build on it in this order
 
 - **Chapters 1–4** (conceptual) establish the thesis: language is now part of the implementation surface, and named frameworks are the vocabulary for working with it precisely.
 - **Chapter 5** (method) presents the audit-to-sprint execution loop that converts concepts into verified outcomes — including the inquiry-based prompting technique (Phase Zero) that gathers expert-level context before a single sprint is written. Every implementation story in later chapters follows this loop.
-- **Chapters 6–9** (implementation frameworks) apply 12-Factor, GoF, observability, and governance in detail with concrete repository evidence. Chapter 9 in particular covers how TypeScript, ESLint, and Lighthouse function as a composite governance layer for AI-generated code — a pattern that Hejlsberg and Zakas made possible. Torvalds's Git provides the immutable audit trail that makes the sprint archive in Chapter 5 trustworthy.
+- **Chapters 6–9** (implementation frameworks) apply 12-Factor, GoF, observability, and governance in detail with concrete repository evidence. The runtime runs on Dahl's Node.js, the components follow Walke's React model, and the conventions are Rauch's Next.js. Chapter 9 in particular covers how TypeScript, ESLint, and Lighthouse function as a composite governance layer for AI-generated code — a pattern that Hejlsberg and Zakas made possible. Torvalds's Git provides the immutable audit trail that makes the sprint archive in Chapter 5 trustworthy. Every route handler practices the stateless request-response model Berners-Lee specified and the REST constraints Fielding named.
 - **Chapter 10** (case study) shows the full arc: from baseline scaffold to production-grade architecture, including what went wrong and how it was corrected.
 - **Chapters 11–12** (team and future) address how teams operate effectively with these methods and where the practice is heading. Chapter 11 introduces the CEO operating model: how inquiry-based prompting and layered quality verification enable you to build expert-grade systems in domains you do not personally master.
 - **Chapter 13** (architecture) explains MCP specifically: what it is, how this project uses it, and what to build next.
@@ -481,5 +481,5 @@ You can read non-linearly, but the method in Chapter 5 is worth reading before C
 
 ---
 
-## Diagram Prompt
-Draw a timeline from 1965 to the present. Place each person at their point of origin. Annotate each node with two things: what was breaking, and what vocabulary they introduced to name the problem. Draw a single horizontal arrow beneath the timeline labeled: *the thread — complexity outpacing tools, practitioners naming the failures.*
+## Reader Exercise: The Timeline Diagram
+Draw a timeline from 1965 to the present. Place each practitioner at their point of origin. Annotate each node with two things: what was breaking, and what vocabulary they introduced to name the problem. Draw a single horizontal arrow beneath the timeline labeled: *the thread — complexity outpacing tools, practitioners naming the failures.* Compare your diagram to The Thread section above and note which connections surprised you.

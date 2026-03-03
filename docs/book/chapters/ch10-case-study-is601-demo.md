@@ -84,10 +84,10 @@ These failures are not embarrassments. They are the expected output of running s
 6. GoF passes adding Observer/Decorator/Chain and Template/Facade structures.
 
 ## Lessons from the Process
-1. High-level directives become reliable only when converted into sprint-scale acceptance criteria.
-2. Architecture quality grows faster when operational quality is improved in parallel.
-3. Pattern refactors are safer after strong regression gates are in place.
-4. Durable artifacts reduce context loss across long, multi-phase execution.
+1. **High-level directives become reliable only when converted into sprint-scale acceptance criteria.** A directive like "apply 12-Factor" is meaningless until it becomes "centralize config in `env.ts` with startup validation, passing `npm run typecheck`." The conversion is the work.
+2. **Architecture quality grows faster when operational quality is improved in parallel.** Structural refactors are safer when health endpoints, graceful shutdown, and release integrity are already in place. Build the operational floor before reshaping the rooms.
+3. **Pattern refactors are safer after strong regression gates are in place.** The GoF passes in Phase 4 would have been riskier without the test coverage and CI gates established in Phases 2 and 3. Order matters.
+4. **Durable artifacts reduce context loss across long, multi-phase execution.** Each sprint's QA report became the starting context for the next sprint's audit. Without those artifacts, every session would have started from scratch.
 
 ## Repository Evidence
 - 12-factor completion evidence: `sprints/completed/QA-AUDIT-12FACTOR.md`
@@ -109,7 +109,7 @@ For each phase, require one evidence artifact and one validation command set.
 - Are maturity claims backed by concrete artifacts?
 - Can the process be reused by another team without hidden context?
 
-## Diagram Prompt
-Draw a phase timeline diagram with four bands: feature delivery, structural cleanup, 12-factor hardening, and GoF refactors. Annotate each band with one artifact and one validation gate.
+## Reader Exercise: Phase Timeline
+Draw a phase timeline diagram with four bands: feature delivery, structural cleanup, 12-factor hardening, and GoF refactors. Annotate each band with one artifact and one validation gate from your own project.
 
-If yes, this case study functions as method, not just story.
+When all three hold, this case study functions as method, not just story.

@@ -11,22 +11,25 @@ Future-thinking in this domain should avoid two traps:
 
 A useful forecast is one that starts from present evidence and extends along visible trajectories.
 
+> **A note from the model:**
+> I am trained on a snapshot of the world. My predictions about the future of AI-assisted engineering are extrapolations from patterns I observed in training data, not information about what has actually happened since. Treat the forecasts below as structured hypotheses grounded in current trajectories — not as insider knowledge. The near-term predictions are more reliable than the long-term ones, and the reader should apply proportionally more skepticism as the time horizon extends.
+
 ## Three-Horizon View
 
-### Near Term (0-2 years)
-- Prompt contracts become standardized engineering artifacts.
-- Repository-integrated QA loops become default for AI-assisted development.
-- Pattern-aware orchestration prompts become team playbooks.
+### Near Term (0–2 years)
+- Prompt contracts are likely to become standardized engineering artifacts, comparable to API specifications.
+- Repository-integrated QA loops are likely to become default for AI-assisted development.
+- Pattern-aware orchestration prompts are likely to become team playbooks.
 
-### Mid Term (2-5 years)
-- Tooling will generate structured orchestration plans from high-level intent.
-- Continuous eval systems will attach to delivery pipelines.
-- Language-driven architecture review becomes routine during planning phases.
+### Mid Term (2–5 years)
+- Tooling will likely generate structured orchestration plans from high-level intent.
+- Continuous eval systems will likely attach to delivery pipelines.
+- Language-driven architecture review may become routine during planning phases.
 
 ### Long Term (5+ years)
-- Intent compilers may translate natural-language contracts into executable pipeline graphs.
-- Verification systems will become increasingly autonomous but still human-governed.
-- Team operating models will blend architecture, orchestration, and operations into tighter loops.
+- Intent compilers — tools that translate natural-language contracts into executable pipeline graphs, analogous to how traditional compilers translate high-level code into machine instructions — may emerge as a distinct tooling category.
+- Verification systems will likely become increasingly autonomous but still human-governed.
+- Team operating models will likely blend architecture, orchestration, and operations into tighter loops.
 
 None of these horizons remove core engineering principles; they increase the cost of weak process.
 
@@ -41,10 +44,6 @@ This repository already shows early forms of future patterns:
 - Operational controls encoded as executable scripts and checkable artifacts.
 
 This is not speculative. It is a present-day prototype of language-native engineering workflow.
-
-## Additional Evidence
-- This project already demonstrates a proto-intent compiler pattern: named framework prompt -> sprint plan -> implementation -> validation evidence.
-- The next increment is formalizing these transitions into generated quality scorecards and automated doc synchronization.
 
 ## Strategic Recommendations
 1. Treat orchestration prompts as versioned artifacts.
@@ -69,8 +68,8 @@ Attach measurable success signals to each item.
 - Are recommendations actionable now?
 - Is the human role explicitly preserved in governance and verification?
 
-## Diagram Prompt
-Draw a three-horizon roadmap with near, mid, and long-term lanes. For each lane, attach one capability milestone, one verification milestone, and one team-operating-model milestone.
+## Reader Exercise: Three-Horizon Roadmap
+Draw a three-horizon roadmap with near, mid, and long-term lanes. For each lane, attach one capability milestone, one verification milestone, and one team-operating-model milestone. Ground each entry in evidence from your current project.
 
-Future-proofing in AI-native engineering is less about predicting models and more about building resilient execution systems.
+When all four hold, future-proofing in AI-native engineering is less about predicting models and more about building resilient execution systems.
 

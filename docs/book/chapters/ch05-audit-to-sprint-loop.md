@@ -50,19 +50,19 @@ A video rendering system built this way does not require you to be a codec engin
 ## The Five-Stage Loop
 
 1. **Audit**  
-	Identify architectural and operational gaps with explicit findings.
+	Identify architectural and operational gaps with explicit findings. The audit is not a vague assessment — it is a structured review that names specific problems, cites evidence, and assigns severity. In this repository, the 12-Factor audit and GoF audit each produced a findings document with concrete gap descriptions.
 
 2. **Plan**  
-	Convert findings into sprint-sized units with acceptance criteria and sequence.
+	Convert findings into sprint-sized units with acceptance criteria and sequence. Each sprint should be small enough to complete and verify in one session. The plan names what will change, what must not change (invariants), and how completion will be measured.
 
 3. **Execute**  
-	Implement one sprint at a time, preserving focus and minimizing cross-sprint drift.
+	Implement one sprint at a time, preserving focus and minimizing cross-sprint drift. Resist the temptation to fix adjacent problems during execution — side-fixes bypass the plan, skip verification, and introduce untracked changes.
 
 4. **Verify**  
-	Run objective gates and collect evidence artifacts.
+	Run objective gates and collect evidence artifacts. In this project, verification means running `npm run typecheck`, `npm run lint:strict`, and `npm test` at minimum. The results are the evidence, not the narrative claim that "everything works."
 
 5. **Archive**  
-	Record outcome, move artifacts, and leave a reconstructable trail.
+	Record outcome, move artifacts, and leave a reconstructable trail. Completed sprints move to `sprints/completed/` with their QA reports. This archive is not documentation for its own sake — it is the literal context that future sessions (human or AI) will need to understand what happened and why.
 
 This is not ceremony for its own sake. It is memory architecture for complex change.
 
@@ -109,8 +109,8 @@ Take one active architectural concern and run a miniature loop:
 
 Repeat once. By the second cycle, your team will feel the reduction in ambiguity.
 
-## Diagram Prompt
-Draw the five-stage loop (Audit -> Plan -> Execute -> Verify -> Archive) and annotate each stage with one concrete repository artifact path.
+## Reader Exercise: The Loop Diagram
+Draw the five-stage loop (Audit -> Plan -> Execute -> Verify -> Archive) and annotate each stage with one concrete repository artifact path from your own project. Then trace one real change through all five stages.
 
 ## Chapter Checklist
 - Are all five stages present and operationalized?
