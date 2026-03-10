@@ -184,7 +184,7 @@ export const ChatContainer: React.FC<Props> = ({
       <div className="relative flex-1 min-h-0 flex flex-col w-full overflow-hidden">
         {/* Nuanced Background Branding */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden opacity-[0.03] dark:opacity-[0.02]">
-          <div className="text-[20rem] sm:text-[30rem] lg:text-[40rem] font-bold leading-none select-none tracking-tighter">O</div>
+          <div className="text-[15rem] sm:text-[22rem] lg:text-[30rem] font-bold leading-none select-none tracking-tighter">O</div>
         </div>
         
         {/* SCROLL AREA: Flex-basis based scroll power */}

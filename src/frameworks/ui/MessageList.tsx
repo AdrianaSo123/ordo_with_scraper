@@ -13,13 +13,13 @@ interface MessageListProps {
 }
 
 const BrandHeader = () => (
-  <div className="flex flex-col items-center justify-center pt-6 sm:pt-10 pb-3 sm:pb-4 px-3 sm:px-4 text-center space-y-3 sm:space-y-4 animate-in fade-in slide-in-from-top-4 duration-1000 ease-out fill-mode-both">
+  <div className="flex flex-col items-center justify-center pt-4 sm:pt-8 pb-2 sm:pb-3 px-3 sm:px-4 text-center space-y-2 sm:space-y-3 animate-in fade-in slide-in-from-top-4 duration-1000 ease-out fill-mode-both">
     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent-color)]/10 border border-[var(--accent-color)]/20 text-[var(--accent-color)] text-[10px] font-bold uppercase tracking-widest brand-pulse">
       <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-color)]" />
       System Operational
     </div>
     
-    <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight leading-tight text-[var(--foreground)] balance">
+    <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight leading-tight text-[var(--foreground)] balance">
       Product Development <br />
       <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--accent-color)] to-[var(--accent-color)]/60">
         in the AI Era.
@@ -55,7 +55,7 @@ export const MessageList: React.FC<MessageListProps> = React.memo(({
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl flex flex-col gap-5 sm:gap-8 pb-4">
+    <div className="mx-auto w-full max-w-3xl flex flex-col gap-4 sm:gap-6 pb-4">
       {/* Show the grand brand header at the start of the conversation */}
       {messages.length <= 2 && !searchQuery && <BrandHeader />}
 
@@ -77,7 +77,7 @@ export const MessageList: React.FC<MessageListProps> = React.memo(({
             !isSending &&
             index === messages.length - 1 &&
             dynamicSuggestions.length > 0 && (
-              <div className="ms-12 mt-3 mb-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
+              <div className="ms-12 mt-2 mb-1 animate-in fade-in slide-in-from-bottom-2 duration-500">
                 <SuggestionChips
                   suggestions={dynamicSuggestions}
                   onSend={onSuggestionClick}
@@ -99,7 +99,7 @@ MessageList.displayName = "MessageList";
 const UserBubble = React.memo<{ content: PresentedMessage }>(({ content }) => {
   return (
     <div className="flex flex-col items-end gap-1.5 px-1 sm:px-2 md:px-0 w-full hover:-translate-y-0.5 transition-transform duration-300">
-      <div className="max-w-[90%] md:max-w-[75%] bg-[var(--accent-color)] text-[var(--accent-foreground)] rounded-2xl rounded-tr-sm px-4 sm:px-5 py-3 sm:py-3.5 text-sm sm:text-[15px] leading-relaxed shadow-sm border border-black/5">
+      <div className="max-w-[90%] md:max-w-[75%] bg-[var(--accent-color)] text-[var(--accent-foreground)] rounded-2xl rounded-tr-sm px-4 sm:px-5 py-2.5 sm:py-3 text-[13px] sm:text-sm leading-relaxed shadow-sm border border-black/5">
         <ErrorBoundary name="UserBubble">
           <RichContentRenderer content={content.content} />
         </ErrorBoundary>
@@ -149,7 +149,7 @@ const AssistantBubble = React.memo<{
 
       {/* Borderless Content Area */}
       <div className={`flex flex-col gap-1.5 max-w-[95%] sm:max-w-[90%] w-full ${isInitialGreeting ? "pt-1" : ""}`}>
-        <div className="text-[15px] leading-[1.75] text-[var(--foreground)] relative">
+        <div className="text-[13px] sm:text-sm leading-relaxed text-[var(--foreground)] relative">
           <ErrorBoundary name="AssistantBubble">
             {isInitialGreeting ? (
               <div className="relative">

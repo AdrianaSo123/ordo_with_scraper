@@ -302,7 +302,7 @@ export function AssistantBubble({
         </svg>
       </div>
       <div className="flex flex-col gap-1.5 max-w-[85%] sm:max-w-[80%] w-full">
-        <div className="border border-[var(--border-color)] rounded-[1.25rem] rounded-bl-[0.25rem] px-6 py-4.5 text-[15px] leading-[1.7] shadow-sm bg-[var(--surface)] transition-all hover:shadow-md">
+        <div className="border border-[var(--border-color)] rounded-[1.25rem] rounded-bl-[0.25rem] px-4 sm:px-5 py-3 sm:py-3.5 text-[13px] sm:text-sm leading-relaxed shadow-sm bg-[var(--surface)] transition-all hover:shadow-md">
           <PartList
             parts={parts || []}
             fallbackText={content}

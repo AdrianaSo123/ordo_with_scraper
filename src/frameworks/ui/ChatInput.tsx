@@ -143,7 +143,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           onChange={(e) => onChange(e.target.value, e.target.selectionStart)}
           onKeyDown={handleKeyDown}
           placeholder="Ask anything…"
-          className="w-full bg-transparent px-3 sm:px-4 py-2 text-sm sm:text-[15px] leading-tight outline-none resize-none min-h-[40px] max-h-[240px] overflow-y-auto placeholder:text-[var(--foreground)]/50 font-normal text-[var(--foreground)]"
+          className="w-full bg-transparent px-3 sm:px-4 py-2 text-[13px] sm:text-sm leading-tight outline-none resize-none min-h-[40px] max-h-[240px] overflow-y-auto placeholder:text-[var(--foreground)]/50 font-normal text-[var(--foreground)]"
         />
 
         <div className="flex items-center justify-between px-1 pb-1">

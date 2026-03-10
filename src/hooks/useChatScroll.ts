@@ -7,23 +7,36 @@ export function useChatScroll<T>(dep: T): {
   handleScroll: () => void;
 } {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const lastScrollTime = useRef<number>(0);
   const [isAtBottom, setIsAtBottom] = useState(true);
+  // Track whether the user deliberately scrolled away from the bottom
+  const userScrolledUp = useRef(false);
+  const prevScrollTop = useRef(0);
+
+  const checkIfAtBottom = useCallback(() => {
+    if (!scrollRef.current) return true;
+    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+    return scrollHeight - scrollTop - clientHeight < 150;
+  }, []);
 
   const handleScroll = useCallback(() => {
     if (!scrollRef.current) return;
-    
-    // Throttle scroll events to max once per 50ms
-    const now = Date.now();
-    if (now - lastScrollTime.current < 50) return;
-    lastScrollTime.current = now;
 
-    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
-    // 100px tolerance for deciding if we're at the bottom.
-    // This allows smooth scrolling to not be instantly interrupted by minor pixel differences.
-    const atBottom = scrollHeight - scrollTop - clientHeight < 100;
+    const { scrollTop } = scrollRef.current;
+    const atBottom = checkIfAtBottom();
+
+    // Detect deliberate upward scroll (scrollTop decreased by more than a small threshold)
+    if (scrollTop < prevScrollTop.current - 10) {
+      userScrolledUp.current = true;
+    }
+
+    // Reset when user reaches the bottom again
+    if (atBottom) {
+      userScrolledUp.current = false;
+    }
+
+    prevScrollTop.current = scrollTop;
     setIsAtBottom(atBottom);
-  }, []);
+  }, [checkIfAtBottom]);
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
     if (scrollRef.current) {
@@ -31,24 +44,26 @@ export function useChatScroll<T>(dep: T): {
         top: scrollRef.current.scrollHeight,
         behavior,
       });
+      userScrolledUp.current = false;
       setIsAtBottom(true);
     }
   }, []);
 
+  // Auto-scroll when content changes, unless the user deliberately scrolled up
   useEffect(() => {
-    if (isAtBottom) {
-      // Small timeout to allow DOM to update after React state changes (like appending messages)
-      const timer = setTimeout(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTo({
-            top: scrollRef.current.scrollHeight,
-            behavior: "smooth",
-          });
-        }
-      }, 50);
-      return () => clearTimeout(timer);
-    }
-  }, [dep, isAtBottom]);
+    if (userScrolledUp.current) return;
+
+    // requestAnimationFrame ensures the DOM has painted the new content
+    const raf = requestAnimationFrame(() => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollTo({
+          top: scrollRef.current.scrollHeight,
+          behavior: "smooth",
+        });
+      }
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [dep]);
 
   return { scrollRef, isAtBottom, scrollToBottom, handleScroll };
 }
