@@ -71,18 +71,18 @@ export function SuggestionChips({
   onSend: (text: string) => void;
 }) {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-2">
       <p className="text-[10px] uppercase tracking-widest opacity-70 font-semibold px-1">
         Continue exploring
       </p>
-      <div className="flex flex-wrap gap-2.5">
+      <div className="flex overflow-x-auto gap-2 flex-nowrap pb-1 scrollbar-none">
         {suggestions.map((s, i) => (
           <button
             key={s}
             type="button"
             onClick={() => onSend(s)}
             style={{ animationDelay: `${i * 60}ms` }}
-            className="group flex items-center gap-2 rounded-full border border-[var(--border-color)] bg-[var(--surface-muted)] hover:bg-[var(--accent-color)] hover:text-[var(--accent-foreground)] hover:border-[var(--accent-color)] px-4 py-2 text-xs font-semibold transition-all duration-200 active:scale-95 hover:shadow-md animate-in fade-in slide-in-from-bottom-1 focus-ring"
+            className="shrink-0 group flex items-center gap-2 rounded-full border border-[var(--border-color)] bg-[var(--surface-muted)] hover:bg-[var(--accent-color)] hover:text-[var(--accent-foreground)] hover:border-[var(--accent-color)] px-3 py-1.5 text-xs font-semibold transition-all duration-200 active:scale-95 hover:shadow-md animate-in fade-in slide-in-from-bottom-1 focus-ring"
           >
             {s}
             <svg

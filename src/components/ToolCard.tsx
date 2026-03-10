@@ -12,6 +12,7 @@ export interface ToolCardProps {
   onDownload?: () => void;
   downloadTooltip?: string;
   expandable?: boolean;
+  thumbnailMode?: boolean;
   children: ReactNode;
   className?: string;
 }
@@ -24,6 +25,7 @@ export function ToolCard({
   onDownload,
   downloadTooltip = "Download",
   expandable = false,
+  thumbnailMode = false,
   children,
   className = "",
 }: ToolCardProps) {
@@ -195,7 +197,25 @@ export function ToolCard({
         </div>
 
         {/* Inline Content */}
-        <div className="w-full relative">{children}</div>
+        {thumbnailMode && !isExpanded ? (
+          <button
+            type="button"
+            onClick={toggleExpand}
+            className="w-full relative cursor-pointer group"
+          >
+            <div className="max-h-[80px] overflow-hidden pointer-events-none">
+              {children}
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--surface)] via-[var(--surface)]/60 to-transparent" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-[11px] font-semibold uppercase tracking-wider opacity-70 group-hover:opacity-100 transition-opacity bg-[var(--surface-muted)] border border-[var(--border-color)] rounded-full px-3 py-1">
+                View diagram
+              </span>
+            </div>
+          </button>
+        ) : (
+          <div className="w-full relative">{children}</div>
+        )}
       </div>
 
       {/* Render Portal Modal if expanded */}

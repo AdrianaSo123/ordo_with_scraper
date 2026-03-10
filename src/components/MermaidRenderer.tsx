@@ -169,6 +169,7 @@ export function MermaidRenderer({
       subtitle={caption || "Mermaid Graph Definition"}
       status={status}
       expandable={!!svgContent}
+      thumbnailMode={!!svgContent}
       onDownload={svgContent ? handleDownloadPng : undefined}
       downloadTooltip="Download as PNG"
       icon={
