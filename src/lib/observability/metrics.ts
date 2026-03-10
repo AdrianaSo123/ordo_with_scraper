@@ -1,4 +1,7 @@
-import { emitObservabilityEvent, subscribeObservability } from "@/lib/observability/events";
+import {
+  emitObservabilityEvent,
+  subscribeObservability,
+} from "@/lib/observability/events";
 
 let metricObserverRegistered = false;
 
@@ -27,7 +30,11 @@ function ensureMetricObserverRegistered() {
   metricObserverRegistered = true;
 }
 
-export function recordRouteMetric(route: string, durationMs: number, isError: boolean) {
+export function recordRouteMetric(
+  route: string,
+  durationMs: number,
+  isError: boolean,
+) {
   ensureMetricObserverRegistered();
   emitObservabilityEvent({
     type: "route-metric",
@@ -43,7 +50,8 @@ export function recordRouteMetric(route: string, durationMs: number, isError: bo
 export function getMetricsSnapshot() {
   return {
     mode: "externalized",
-    details: "Route metrics are emitted as structured logs with event=metric.route.",
+    details:
+      "Route metrics are emitted as structured logs with event=metric.route.",
   };
 }
 

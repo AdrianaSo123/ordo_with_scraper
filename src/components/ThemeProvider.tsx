@@ -2,42 +2,175 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-export type Theme = "fluid" | "bauhaus" | "swiss" | "postmodern" | "skeuomorphic";
+export type Theme =
+  | "fluid"
+  | "bauhaus"
+  | "swiss"
+  | "postmodern"
+  | "skeuomorphic";
+
+export type FontSize = "xs" | "sm" | "md" | "lg" | "xl";
+export type SpacingLevel = "tight" | "normal" | "relaxed";
+
+export type Density = "compact" | "normal" | "relaxed";
+
+export interface AccessibilitySettings {
+  fontSize: FontSize;
+  lineHeight: SpacingLevel;
+  letterSpacing: SpacingLevel;
+  density: Density;
+}
+
+const ACCESSIBILITY_DEFAULTS: AccessibilitySettings = {
+  fontSize: "md",
+  lineHeight: "normal",
+  letterSpacing: "normal",
+  density: "normal",
+};
 
 interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
+  isDark: boolean;
+  setIsDark: (dark: boolean) => void;
+  accessibility: AccessibilitySettings;
+  setAccessibility: (settings: AccessibilitySettings) => void;
+  gridEnabled: boolean;
+  setGridEnabled: (enabled: boolean) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+const FONT_SIZE_MAP: Record<FontSize, string> = {
+  xs: "0.875rem",
+  sm: "0.9375rem",
+  md: "1rem",
+  lg: "1.125rem",
+  xl: "1.25rem",
+};
+
+const LINE_HEIGHT_MAP: Record<SpacingLevel, string> = {
+  tight: "1.4",
+  normal: "1.6",
+  relaxed: "1.9",
+};
+
+const LETTER_SPACING_MAP: Record<SpacingLevel, string> = {
+  tight: "-0.01em",
+  normal: "0",
+  relaxed: "0.05em",
+};
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>("fluid");
+  const [isDark, setIsDark] = useState(false);
+  const [accessibility, setAccessibility] = useState<AccessibilitySettings>(
+    ACCESSIBILITY_DEFAULTS,
+  );
+  const [gridEnabled, setGridEnabled] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
-    const storedTheme = localStorage.getItem("design-era-theme") as Theme | null;
-    if (storedTheme) {
-      setTheme(storedTheme);
+
+    // Theme
+    const storedTheme = localStorage.getItem("pda-theme") as Theme | null;
+    if (storedTheme) setTheme(storedTheme);
+
+    // Dark Mode
+    const storedDark = localStorage.getItem("pda-dark");
+    if (storedDark !== null) {
+      setIsDark(storedDark === "true");
+    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      setIsDark(true);
     }
+
+    // Accessibility
+    const storedAcc = localStorage.getItem("pda-accessibility");
+    if (storedAcc) {
+      try {
+        setAccessibility({
+          ...ACCESSIBILITY_DEFAULTS,
+          ...JSON.parse(storedAcc),
+        });
+      } catch {
+        /* ignore */
+      }
+    }
+
+    // Grid
+    const storedGrid = localStorage.getItem("pda-grid-enabled");
+    if (storedGrid === "true") setGridEnabled(true);
   }, []);
 
   useEffect(() => {
-    if (mounted) {
-      localStorage.setItem("design-era-theme", theme);
-      // Remove all theme classes and add the new one
-      const root = document.documentElement;
-      const themes: Theme[] = ["fluid", "bauhaus", "swiss", "postmodern", "skeuomorphic"];
-      root.classList.remove(...themes.map(t => `theme-${t}`));
-      root.classList.add(`theme-${theme}`);
-    }
-  }, [theme, mounted]);
+    if (!mounted) return;
 
-  // Prevent hydration styling mismatch by rendering nothing until mounted,
-  // or just render but wait for effect to apply theme class. Since it's a wrapper, we'll just render siblings.
+    localStorage.setItem("pda-theme", theme);
+    localStorage.setItem("pda-dark", String(isDark));
+    localStorage.setItem("pda-accessibility", JSON.stringify(accessibility));
+    localStorage.setItem("pda-grid-enabled", String(gridEnabled));
+
+    const updateState = () => {
+      const root = document.documentElement;
+
+      // Theme class
+      const themes: Theme[] = [
+        "fluid",
+        "bauhaus",
+        "swiss",
+        "postmodern",
+        "skeuomorphic",
+      ];
+      root.classList.remove(...themes.map((t) => `theme-${t}`));
+      root.classList.add(`theme-${theme}`);
+
+      // Dark mode class
+      if (isDark) root.classList.add("dark");
+      else root.classList.remove("dark");
+
+      // Accessibility CSS Variables
+      root.style.setProperty(
+        "--font-size-base",
+        FONT_SIZE_MAP[accessibility.fontSize],
+      );
+      root.style.setProperty(
+        "--line-height-base",
+        LINE_HEIGHT_MAP[accessibility.lineHeight],
+      );
+      root.style.setProperty(
+        "--letter-spacing-base",
+        LETTER_SPACING_MAP[accessibility.letterSpacing],
+      );
+
+      // Density attribute
+      document.documentElement.setAttribute(
+        "data-density",
+        accessibility.density,
+      );
+    };
+
+    if (document.startViewTransition) {
+      document.startViewTransition(updateState);
+    } else {
+      updateState();
+    }
+  }, [theme, isDark, accessibility, gridEnabled, mounted]);
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider
+      value={{
+        theme,
+        setTheme,
+        isDark,
+        setIsDark,
+        accessibility,
+        setAccessibility,
+        gridEnabled,
+        setGridEnabled,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );

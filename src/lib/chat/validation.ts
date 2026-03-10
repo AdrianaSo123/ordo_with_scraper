@@ -12,7 +12,9 @@ export function parseIncomingMessages(body: unknown): ChatMessage[] {
 }
 
 export function getLatestUserMessage(messages: ChatMessage[]): string {
-  const latestUserMessage = [...messages].reverse().find((message) => message.role === "user")?.content;
+  const latestUserMessage = [...messages]
+    .reverse()
+    .find((message) => message.role === "user")?.content;
 
   if (!latestUserMessage) {
     throw new Error("No user message found.");
@@ -21,9 +23,15 @@ export function getLatestUserMessage(messages: ChatMessage[]): string {
   return latestUserMessage;
 }
 
-export function toAnthropicMessages(messages: ChatMessage[]): Anthropic.MessageParam[] {
+export function toAnthropicMessages(
+  messages: ChatMessage[],
+): Anthropic.MessageParam[] {
   return messages
-    .filter((message) => (message.role === "user" || message.role === "assistant") && message.content.trim())
+    .filter(
+      (message) =>
+        (message.role === "user" || message.role === "assistant") &&
+        message.content.trim(),
+    )
     .map<Anthropic.MessageParam>((message) => ({
       role: message.role,
       content: message.content,

@@ -1,10 +1,11 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { SYSTEM_PROMPT, getModelCandidates } from "@/lib/chat/policy";
-import { CALCULATOR_TOOL } from "@/lib/chat/tools";
+import { ALL_TOOLS } from "@/lib/chat/tools";
 import type { ToolChoice } from "@/lib/chat/types";
+import { ChatProviderError } from "@/lib/chat/provider-decorators";
 
 type MessageCreateParams = Parameters<Anthropic["messages"]["create"]>[0];
-const CHAT_TOOLS: NonNullable<MessageCreateParams["tools"]> = [CALCULATOR_TOOL];
+const CHAT_TOOLS: NonNullable<MessageCreateParams["tools"]> = ALL_TOOLS;
 
 const DEFAULT_TIMEOUT_MS = 12_000;
 const DEFAULT_RETRY_ATTEMPTS = 3;
@@ -34,7 +35,9 @@ type ErrorHandlingAction =
   | { type: "retry" }
   | { type: "throw"; error: Error };
 
-type ErrorHandler = (context: ErrorHandlingContext) => ErrorHandlingAction | null;
+type ErrorHandler = (
+  context: ErrorHandlingContext,
+) => ErrorHandlingAction | null;
 
 function delay(milliseconds: number) {
   return new Promise<void>((resolve) => {
@@ -46,7 +49,10 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
   return Promise.race([
     promise,
     new Promise<T>((_, reject) => {
-      setTimeout(() => reject(new Error("Provider request timed out.")), timeoutMs);
+      setTimeout(
+        () => reject(new Error("Provider request timed out.")),
+        timeoutMs,
+      );
     }),
   ]);
 }
@@ -77,7 +83,10 @@ function isTransientProviderError(error: unknown): boolean {
 }
 
 function normalizeProviderError(error: unknown): Error {
-  return new Error(`Anthropic provider error: ${toErrorMessage(error)}`);
+  return new ChatProviderError(
+    `Anthropic provider error: ${toErrorMessage(error)}`,
+    error,
+  );
 }
 
 const modelNotFoundHandler: ErrorHandler = ({ error }) => {
@@ -88,7 +97,11 @@ const modelNotFoundHandler: ErrorHandler = ({ error }) => {
   return null;
 };
 
-const transientRetryHandler: ErrorHandler = ({ error, attempt, retryAttempts }) => {
+const transientRetryHandler: ErrorHandler = ({
+  error,
+  attempt,
+  retryAttempts,
+}) => {
   if (isTransientProviderError(error) && attempt < retryAttempts) {
     return { type: "retry" };
   }
@@ -100,9 +113,15 @@ const defaultThrowHandler: ErrorHandler = ({ error }) => {
   return { type: "throw", error: normalizeProviderError(error) };
 };
 
-const errorHandlerChain: ErrorHandler[] = [modelNotFoundHandler, transientRetryHandler, defaultThrowHandler];
+const errorHandlerChain: ErrorHandler[] = [
+  modelNotFoundHandler,
+  transientRetryHandler,
+  defaultThrowHandler,
+];
 
-function resolveErrorAction(context: ErrorHandlingContext): ErrorHandlingAction {
+function resolveErrorAction(
+  context: ErrorHandlingContext,
+): ErrorHandlingAction {
   for (const handler of errorHandlerChain) {
     const action = handler(context);
     if (action) {
@@ -136,7 +155,7 @@ export async function createMessageWithModelFallback({
         const response = (await withTimeout(
           client.messages.create({
             model,
-            max_tokens: 800,
+            max_tokens: 2048,
             system: SYSTEM_PROMPT,
             messages,
             tools: CHAT_TOOLS,

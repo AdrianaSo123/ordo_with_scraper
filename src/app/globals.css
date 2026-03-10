@@ -1,110 +1,294 @@
 @import "tailwindcss";
 
+/* =========================================================
+   CSS Custom Properties — Design System Tokens
+   ========================================================= */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: oklch(0.98 0.01 250);
+  --foreground: oklch(0.21 0.01 250);
+  --surface: oklch(1 0 0);
+  --surface-hover: oklch(0.96 0.01 250);
+  --surface-muted: oklch(0.96 0.01 250);
+  --border: oklch(0.9 0.01 250);
+  --text: oklch(0.21 0.01 250);
+  --accent: oklch(0.24 0.04 260);
+  --accent-foreground: oklch(1 0 0);
 
   /* Shared Base Tokens */
-  --border-radius: 0.5rem;
+  --border-radius: 1rem;
   --border-width: 1px;
-  --border-color: #e5e7eb;
-  --accent-color: #2563eb;
-  --accent-foreground: #ffffff;
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --font-base: var(--font-geist-sans);
+  --border-color: var(--border);
+  --accent-color: var(--accent);
+  --shadow-sm: 0 4px 20px -2px rgb(0 0 0 / 0.05);
+  --font-base: var(--font-geist-sans, sans-serif);
+
+  /* Layout Tokens */
+  --container-width: 72rem;
+  --container-padding: 1.5rem;
+
+  /* Accessibility — these will be controlled via buttons now */
+  --font-size-base: 1rem;
+  --line-height-base: 1.6;
+  --letter-spacing-base: 0;
+
+  /* Density Tokens */
+  --spacing-unit: 1rem;
+  --message-gap: 1.5rem;
+  --container-padding: 1.5rem;
+  --input-padding: 1rem;
+}
+
+[data-density="compact"] {
+  --spacing-unit: 0.75rem;
+  --message-gap: 0.75rem;
+  --container-padding: 1rem;
+  --input-padding: 0.75rem;
+  --font-size-base: 0.9375rem;
+}
+
+[data-density="relaxed"] {
+  --spacing-unit: 1.25rem;
+  --message-gap: 2rem;
+  --container-padding: 2rem;
+  --input-padding: 1.25rem;
+  --font-size-base: 1.0625rem;
+}
+
+.dark {
+  --background: oklch(0.14 0.01 250);
+  --foreground: oklch(0.98 0.01 250);
+  --surface: oklch(0.21 0.01 250);
+  --surface-hover: oklch(0.25 0.02 250);
+  --surface-muted: oklch(0.18 0.02 250);
+  --border: oklch(0.35 0.02 250); 
+  --text: oklch(0.98 0.01 250);
+  --accent: oklch(0.98 0.01 250);
+  --accent-foreground: oklch(0.14 0.01 250);
+}
+
+/* Accessibility Focus Ring Utility */
+@utility focus-ring {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-color)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)];
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-text: var(--text);
   --font-sans: var(--font-base);
   --font-mono: var(--font-geist-mono);
-  --radius-custom: var(--border-radius);
-  --border-custom: var(--border-width);
-  --shadow-custom: var(--shadow-sm);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([class*="theme-"]) {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --border-color: #27272a;
-  }
-}
+/* =========================================================
+   Theme Overrides — applied to <html> element
+   ========================================================= */
 
-/* 1. Bauhaus Mode (1919): High contrast, thick borders, primary colors, sharp corners */
 .theme-bauhaus {
-  --background: #fdfaf6;
-  /* Warm paper white */
-  --foreground: #111111;
-  /* Ink black */
   --border-radius: 0px;
-  /* Strict geometric corners */
   --border-width: 4px;
-  /* Heavy rules for UX routing */
-  --border-color: #111111;
-  --accent-color: #e60000;
-  /* Primary red */
-  --accent-foreground: #ffffff;
-  --shadow-sm: 8px 8px 0px 0px #e60000;
-  /* Red geometric drop shadow */
-  --font-base: 'Arial', sans-serif;
-  /* Fallback to geometric sans if needed */
+  --border-color: oklch(0.15 0 0);
+  --accent: oklch(0.6 0.25 25);
+  --accent-color: var(--accent);
+  --accent-foreground: oklch(1 0 0);
+  --shadow-sm: 6px 6px 0px 0px var(--accent);
+  --font-base: 'Syne', 'Helvetica', 'Arial', sans-serif;
+
+  /* Semantic Tokens */
+  --background: oklch(0.98 0.01 80);
+  --foreground: oklch(0.15 0 0);
+  --surface: oklch(1 0 0);
+  --surface-hover: oklch(0.95 0 0);
+  --surface-muted: oklch(0.9 0 0);
+  --border: var(--border-color);
+  --text: var(--foreground);
 }
 
-/* 2. Swiss Grid (1950s): Extreme negative space, absolute minimal noise, pure Helvetica/Grotesk feel */
+.theme-bauhaus.dark {
+  --background: oklch(0.15 0 0);
+  --foreground: oklch(0.98 0.01 80);
+  --surface: oklch(0.2 0 0);
+  --surface-hover: oklch(0.25 0 0);
+  --surface-muted: oklch(0.3 0 0);
+  --border-color: oklch(0.35 0 0);
+  --border: var(--border-color);
+  --text: var(--foreground);
+}
+
 .theme-swiss {
-  --background: #ffffff;
-  --foreground: #000000;
   --border-radius: 2px;
   --border-width: 1px;
-  --border-color: #dddddd;
-  --accent-color: #000000;
-  --accent-foreground: #ffffff;
+  --border-color: oklch(0.85 0 0);
+  --accent: oklch(0 0 0);
+  --accent-color: var(--accent);
+  --accent-foreground: oklch(1 0 0);
   --shadow-sm: none;
-  /* No shadows, entirely flat */
-  --font-base: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-base: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+
+  /* Semantic Tokens */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0 0 0);
+  --surface: oklch(0.98 0 0);
+  --surface-hover: oklch(0.95 0 0);
+  --surface-muted: oklch(0.9 0 0);
+  --border: var(--border-color);
+  --text: var(--foreground);
 }
 
-/* 3. Postmodern (1990s): Intentional clash, chaotic borders, harsh colors */
+.theme-swiss.dark {
+  --background: oklch(0 0 0);
+  --foreground: oklch(1 0 0);
+  --surface: oklch(0.1 0 0);
+  --surface-hover: oklch(0.15 0 0);
+  --surface-muted: oklch(0.2 0 0);
+  --border-color: oklch(0.25 0 0);
+  --border: var(--border-color);
+  --accent-color: oklch(1 0 0);
+  --accent: var(--accent-color);
+  --accent-foreground: oklch(0 0 0);
+  --text: var(--foreground);
+}
+
 .theme-postmodern {
-  --background: #ffcc00;
-  /* Harsh yellow */
-  --foreground: #0000ff;
-  /* Blue text */
   --border-radius: 24px 0px 12px 0px;
-  /* Chaotic asymmetry */
-  --border-width: 3px;
-  --border-color: #0000ff;
-  --accent-color: #ff00ff;
-  /* Magenta */
-  --accent-foreground: #ffffff;
-  --shadow-sm: -5px 5px 0px #000, 5px -5px 0px #ff00ff;
-  --font-base: 'Courier New', Courier, monospace;
-  /* Typewriter/grunge feel */
+  --border-width: 4px;
+  --border-color: oklch(0.45 0.3 264);
+  --accent: oklch(0.7 0.3 328);
+  --accent-color: var(--accent);
+  --accent-foreground: oklch(1 0 0);
+  --shadow-sm: -5px 5px 0px oklch(0 0 0), 5px -5px 0px var(--accent);
+  --font-base: 'Space Mono', 'Courier New', Courier, monospace;
+
+  /* Semantic Tokens */
+  --background: oklch(0.85 0.18 85); 
+  --foreground: oklch(0.45 0.3 264);
+  --surface: oklch(0.88 0.15 85);
+  --surface-hover: oklch(0.92 0.12 85);
+  --surface-muted: oklch(0.75 0.15 85);
+  --border: var(--border-color);
+  --text: var(--foreground);
 }
 
-/* 4. Skeuomorphic (2000s): Linen textures, gloss, drop shadows everywhere */
+.theme-postmodern.dark {
+  --background: oklch(0.25 0.08 85);
+  --foreground: oklch(0.85 0.15 190);
+  --surface: oklch(0.32 0.1 85);
+  --surface-hover: oklch(0.4 0.12 85);
+  --surface-muted: oklch(0.5 0.15 85);
+  --accent-color: oklch(0.85 0.15 190);
+  --accent: var(--accent-color);
+  --accent-foreground: oklch(0 0 0);
+  --border-color: oklch(0.4 0.1 85);
+  --border: var(--border-color);
+  --text: var(--foreground);
+}
+
 .theme-skeuomorphic {
-  --background: #e0e4e8;
-  --foreground: #333344;
   --border-radius: 12px;
   --border-width: 1px;
-  --border-color: #b0c4de;
-  --accent-color: #5599ff;
-  --accent-foreground: #ffffff;
+  --border-color: oklch(0.75 0.05 240);
+  --accent: oklch(0.6 0.18 240);
+  --accent-color: var(--accent);
+  --accent-foreground: oklch(1 0 0);
   --shadow-sm: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 2px 4px rgba(0, 0, 0, 0.4);
-  /* Glossy bevel */
+  --font-base: var(--font-inter, sans-serif);
+
+  /* Semantic Tokens */
+  --background: oklch(0.88 0.02 240);
+  --foreground: oklch(0.25 0.05 240);
+  --surface: oklch(0.94 0.01 240);
+  --surface-hover: oklch(0.97 0.01 240);
+  --surface-muted: oklch(0.82 0.02 240);
+  --border: var(--border-color);
+  --text: var(--foreground);
+}
+
+.theme-skeuomorphic.dark {
+  --background: oklch(0.18 0.05 250);
+  --foreground: oklch(0.88 0.02 240);
+  --surface: oklch(0.24 0.06 250);
+  --surface-hover: oklch(0.3 0.08 250);
+  --surface-muted: oklch(0.14 0.06 250);
+  --border-color: oklch(0.35 0.06 250);
+  --border: var(--border-color);
+  --text: var(--foreground);
+  --accent-color: oklch(0.65 0.15 240);
+  --accent: var(--accent-color);
+  --accent-foreground: oklch(1 0 0);
+}
+
+.theme-fluid {
+  --border-radius: 1.25rem;
+  --border-width: 1px;
+  --border-color: oklch(0.93 0.01 250 / 0.4);
+  --accent: oklch(0.21 0.01 250);
+  --accent-color: var(--accent);
+  --accent-foreground: oklch(1 0 0);
+  --shadow-sm: 0 1px 1px oklch(0 0 0 / 0.05), 0 2px 2px oklch(0 0 0 / 0.05), 0 4px 4px oklch(0 0 0 / 0.05), 0 8px 8px oklch(0 0 0 / 0.05), 0 16px 16px oklch(0 0 0 / 0.05); /* Layered Shadow Bloom */
+  --font-base: var(--font-geist-sans, sans-serif);
+
+  /* Semantic Tokens */
+  --background: oklch(0.98 0.01 250);
+  --foreground: oklch(0.21 0.01 250);
+  --surface: oklch(1 0 0);
+  --surface-hover: oklch(0.96 0.01 250);
+  --surface-muted: oklch(0.96 0.01 250);
+  --border: var(--border-color);
+  --text: var(--foreground);
+}
+
+.theme-fluid.dark {
+  --background: oklch(0.14 0.01 250);
+  --foreground: oklch(0.98 0.01 250);
+  --surface: oklch(0.21 0.01 250);
+  --surface-hover: oklch(0.25 0.02 250);
+  --surface-muted: oklch(0.18 0.02 250);
+  --border-color: oklch(0.35 0.02 250 / 0.4);
+  --border: var(--border-color);
+  --shadow-sm: 0 1px 1px oklch(0 0 0 / 0.3), 0 2px 2px oklch(0 0 0 / 0.3), 0 4px 4px oklch(0 0 0 / 0.3), 0 8px 8px oklch(0 0 0 / 0.3), 0 16px 16px oklch(0 0 0 / 0.3);
+  --accent-color: oklch(0.98 0.01 250);
+  --accent: var(--accent-color);
+  --accent-foreground: oklch(0.14 0.01 250);
+  --text: var(--foreground);
+}
+
+/* =========================================================
+   Global Base Styles — consume the variables
+   ========================================================= */
+
+html,
+body {
+  block-size: 100%;
+  inline-size: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-inline: hidden;
+  overflow-block: auto; /* Restore natural scroll for footer accessibility */
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  font-family: var(--font-base, sans-serif);
+  line-height: var(--line-height-base);
+  letter-spacing: var(--letter-spacing-base);
+  display: flex;
+  flex-direction: column;
 }
 
-/* Add custom utility classes to tap into these variables easily */
+/* Force all themed containers to inherit properly */
+[class*="theme-"] * {
+  border-color: var(--border-color);
+}
+
+/* =========================================================
+   Custom Utility Classes
+   ========================================================= */
+
 @layer utilities {
   .rounded-theme {
     border-radius: var(--border-radius);
@@ -122,6 +306,18 @@ body {
     box-shadow: var(--shadow-sm);
   }
 
+  .bg-surface {
+    background-color: var(--surface);
+  }
+
+  .bg-surface-hover {
+    background-color: var(--surface-hover);
+  }
+
+  .bg-surface-muted {
+    background-color: var(--surface-muted);
+  }
+
   .bg-accent-theme {
     background-color: var(--accent-color);
     color: var(--accent-foreground);
@@ -130,4 +326,37 @@ body {
   .text-accent-theme {
     color: var(--accent-color);
   }
+
+  .border-accent-theme {
+    border-color: var(--accent-color);
+  }
+
+  .shadow-bloom {
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Sprint 4: Brand & Narrative */
+  .brand-pulse {
+    animation: brand-pulse 4s ease-in-out infinite;
+  }
+
+  @keyframes brand-pulse {
+    0%, 100% { opacity: 0.8; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); filter: drop-shadow(0 0 8px var(--accent-color)); }
+  }
+
+  /* Typographic Precision */
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+}
+/* Sprint 3: Physics & Haptics */
+@utility spring-bounce {
+  transition-timing-function: linear(0, 0.402 14%, 0.706 25%, 0.887 35%, 1.054 45%, 1.157 55%, 1.163 65%, 1.109 75%, 1.053 85%, 1.01 95%, 1);
+}
+
+@utility haptic-press {
+  @apply active:scale-[0.97] active:shadow-inner transition-all duration-200 spring-bounce;
 }

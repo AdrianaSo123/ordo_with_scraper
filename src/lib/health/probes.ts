@@ -40,7 +40,8 @@ export function getReadinessProbe(): ProbeResult {
         config: "error",
         model: "error",
       },
-      details: error instanceof Error ? error.message : "Readiness check failed.",
+      details:
+        error instanceof Error ? error.message : "Readiness check failed.",
     };
   }
 }

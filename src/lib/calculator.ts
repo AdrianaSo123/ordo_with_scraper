@@ -32,7 +32,9 @@ export function calculate(
   return { operation, a, b, result };
 }
 
-export function isCalculatorOperation(value: unknown): value is CalculatorOperation {
+export function isCalculatorOperation(
+  value: unknown,
+): value is CalculatorOperation {
   return (
     value === "add" ||
     value === "subtract" ||

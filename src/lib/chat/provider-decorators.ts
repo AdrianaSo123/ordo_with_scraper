@@ -26,14 +26,25 @@ export function withProviderTiming(
   };
 }
 
+export class ChatProviderError extends Error {
+  constructor(
+    message: string,
+    public readonly cause?: unknown,
+  ) {
+    super(message);
+    this.name = "ChatProviderError";
+  }
+}
+
 export function withProviderErrorMapping(provider: ChatProvider): ChatProvider {
   return {
     async createMessage(args: CreateMessageArgs) {
       try {
         return await provider.createMessage(args);
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Unexpected provider error.";
-        throw new Error(message);
+        const message =
+          error instanceof Error ? error.message : "Unexpected provider error.";
+        throw new ChatProviderError(message, error);
       }
     },
   };

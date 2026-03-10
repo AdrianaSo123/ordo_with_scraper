@@ -1,0 +1,214 @@
+"use client";
+
+import React, { useEffect, useRef, useState } from "react";
+import mermaid from "mermaid";
+import { ToolCard } from "./ToolCard";
+import { downloadFileFromUrl } from "../lib/download-browser";
+
+export function MermaidRenderer({
+  code,
+  caption,
+}: {
+  code: string;
+  caption?: string;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [svgContent, setSvgContent] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function renderDiagram() {
+      try {
+        setError(null);
+
+        // Resolve CSS custom properties to hex colors that Mermaid/d3-color can parse.
+        // CSS vars using oklch() resolve to lab() in some browsers — unsupported by Mermaid.
+        const resolveColor = (varName: string, fallback: string): string => {
+          try {
+            const el = document.createElement("div");
+            el.style.display = "none";
+            el.style.color = `var(${varName})`;
+            document.body.appendChild(el);
+            const computed = getComputedStyle(el).color;
+            document.body.removeChild(el);
+
+            const match = computed.match(/rgba?\(\s*(\d+),\s*(\d+),\s*(\d+)/);
+            if (match) {
+              const [, r, g, b] = match;
+              return `#${Number(r).toString(16).padStart(2, "0")}${Number(g).toString(16).padStart(2, "0")}${Number(b).toString(16).padStart(2, "0")}`;
+            }
+            return fallback;
+          } catch {
+            return fallback;
+          }
+        };
+
+        const style = getComputedStyle(document.documentElement);
+        const fontFamily = style.getPropertyValue("--font-base").trim() || "sans-serif";
+
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: "base",
+          themeVariables: {
+            fontFamily,
+            primaryColor: resolveColor("--surface-muted", "#f1f5f9"),
+            primaryTextColor: resolveColor("--foreground", "#111111"),
+            primaryBorderColor: resolveColor("--border-color", "#e2e8f0"),
+            lineColor: resolveColor("--foreground", "#111111"),
+            secondaryColor: resolveColor("--surface-muted", "#f1f5f9"),
+            tertiaryColor: resolveColor("--surface-hover", "#f1f5f9"),
+            mainBkg: "transparent",
+            nodeBorder: resolveColor("--border-color", "#e2e8f0"),
+            clusterBkg: "transparent",
+            clusterBorder: resolveColor("--border-color", "#e2e8f0"),
+            titleColor: resolveColor("--foreground", "#111111"),
+            edgeLabelBackground: resolveColor("--surface", "#ffffff"),
+          },
+          flowchart: {
+            htmlLabels: true,
+            curve: "basis",
+          },
+        });
+
+        // We need a unique ID for the SVG
+        const id = `mermaid-${Math.random().toString(36).substring(2, 9)}`;
+
+        // Fix: The LLM often outputs literal '\n' characters inside string node labels.
+        // Mermaid needs these to be HTML <br/> tags to render multi-line text when htmlLabels is true.
+        const processedCode = code.replace(/\\n/g, "<br/>");
+
+        const { svg } = await mermaid.render(id, processedCode);
+
+        if (isMounted) {
+          setSvgContent(svg);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err instanceof Error ? err.message : String(err));
+          // Mermaid sometimes throws but injects an error SVG anyway. We can clean it up.
+          const errorSvg = document.getElementById(`d${err}`);
+          if (errorSvg) errorSvg.remove();
+        }
+      }
+    }
+
+    renderDiagram();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [code]);
+
+  const handleDownloadPng = () => {
+    if (!svgContent || !containerRef.current) return;
+
+    const svgElement = containerRef.current.querySelector("svg");
+    if (!svgElement) return;
+
+    try {
+      // Create a canvas with the SVG dimensions
+      const canvas = document.createElement("canvas");
+      const bbox = svgElement.getBBox();
+      const width = svgElement.viewBox.baseVal.width || bbox.width || 800;
+      const height = svgElement.viewBox.baseVal.height || bbox.height || 600;
+
+      // Use a scale factor for higher quality
+      const scale = 2;
+      canvas.width = width * scale;
+      canvas.height = height * scale;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      // Background
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Serialize and ensure xmlns is present (critical for conversion)
+      let svgData = new XMLSerializer().serializeToString(svgElement);
+      if (!svgData.includes("http://www.w3.org/2000/svg")) {
+        svgData = svgData.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
+      }
+
+      // Use Base64 data URL instead of Blob for better security compatibility in some browsers
+      const svgBase64 = btoa(unescape(encodeURIComponent(svgData)));
+      const dataUrl = `data:image/svg+xml;base64,${svgBase64}`;
+
+      const img = new Image();
+      img.onload = () => {
+        try {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const pngUrl = canvas.toDataURL("image/png");
+          downloadFileFromUrl(pngUrl, `architecture_diagram_${Date.now()}.png`);
+        } catch (err) {
+          console.error("PNG conversion failed, falling back to SVG", err);
+          // Fallback to SVG download if canvas is tainted or toDataURL fails
+          const svgBlob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+          const svgUrl = URL.createObjectURL(svgBlob);
+          downloadFileFromUrl(svgUrl, `architecture_diagram_${Date.now()}.svg`);
+          setTimeout(() => URL.revokeObjectURL(svgUrl), 100);
+        }
+      };
+      img.onerror = () => {
+        console.error("Image load failed for PNG conversion");
+      };
+      img.src = dataUrl;
+    } catch (err) {
+      console.error("Export failed", err);
+    }
+  };
+
+  const status =
+    !svgContent && !error ? "loading" : error ? "error" : "success";
+
+  return (
+    <ToolCard
+      title="Architecture Diagram"
+      subtitle={caption || "Mermaid Graph Definition"}
+      status={status}
+      expandable={!!svgContent}
+      onDownload={svgContent ? handleDownloadPng : undefined}
+      downloadTooltip="Download as PNG"
+      icon={
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect width="18" height="18" x="3" y="3" rx="2" />
+          <path d="M8 9h8" />
+          <path d="M8 15h8" />
+          <circle cx="8" cy="12" r="1" />
+          <circle cx="16" cy="12" r="1" />
+        </svg>
+      }
+    >
+      <div
+        ref={containerRef}
+        className="w-full flex items-center justify-center p-4 min-h-[160px] overflow-auto"
+      >
+        {error ? (
+          <div className="text-red-500 text-xs font-mono p-4 bg-red-50 dark:bg-red-950/30 rounded-lg w-full">
+            Failed to render chart: {error}
+          </div>
+        ) : svgContent ? (
+          <div
+            className="w-full h-full flex items-center justify-center"
+            dangerouslySetInnerHTML={{ __html: svgContent }}
+          />
+        ) : (
+          <div className="h-32 flex items-center justify-center text-xs opacity-50 animate-pulse">
+            Rendering node graph...
+          </div>
+        )}
+      </div>
+    </ToolCard>
+  );
+}

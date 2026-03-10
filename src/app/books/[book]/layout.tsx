@@ -1,86 +1,70 @@
-import { getBook, getChapters, BOOKS } from "@/lib/book";
+import { BOOKS } from "@/core/entities/library";
+import { getBookSummaries } from "@/lib/book-library";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 
 export async function generateStaticParams() {
-    return BOOKS.map((book) => ({ book: book.slug }));
+  return BOOKS.map((book) => ({ book: book.slug }));
 }
 
+import { BookSidebar } from "@/components/BookSidebar";
+
 export default async function BookLayout({
-    children,
-    params,
+  children,
+  params,
 }: {
-    children: React.ReactNode;
-    params: Promise<{ book: string }>;
+  children: React.ReactNode;
+  params: Promise<{ book: string }>;
 }) {
-    const resolvedParams = await params;
-    const book = getBook(resolvedParams.book);
-    if (!book) notFound();
+  const resolvedParams = await params;
+  const book = BOOKS.find(b => b.slug === resolvedParams.book);
+  if (!book) {
+    notFound();
+  }
 
-    const chapters = await getChapters(book.slug);
+  const summaries = await getBookSummaries();
+  const summary = summaries.find(s => s.slug === book.slug);
+  const chapters = summary ? summary.chapterSlugs.map((slug, i) => ({
+    slug,
+    title: summary.chapters[i]
+  })) : [];
 
-    return (
-        <div className="flex min-h-screen bg-[var(--background)] font-sans text-[var(--foreground)] transition-colors duration-300">
-            {/* Sidebar */}
-            <aside className="w-72 shrink-0 border-r border-theme border-color-theme p-6 hidden md:flex flex-col gap-6 h-screen sticky top-0 overflow-y-auto">
-                <div>
-                    {/* Book selector */}
-                    <Link
-                        href="/books"
-                        className="text-xs font-bold uppercase tracking-wider opacity-50 hover:opacity-100 transition-opacity"
-                    >
-                        ← All Books
-                    </Link>
-                    <h2 className="mt-3 mb-4 text-sm font-bold tracking-tight">
-                        <span className="opacity-50 mr-1">{book.number}.</span> {book.title}
-                    </h2>
-                    <nav className="flex flex-col gap-3">
-                        {chapters.map((chapter) => (
-                            <Link
-                                key={chapter.slug}
-                                href={`/books/${book.slug}/${chapter.slug}`}
-                                className="text-sm opacity-80 hover:opacity-100 hover:text-accent-theme transition-colors leading-snug"
-                            >
-                                {chapter.title}
-                            </Link>
-                        ))}
-                    </nav>
-                </div>
+  return (
+    <div className="flex min-h-screen bg-[var(--background)] font-sans text-[var(--foreground)] transition-colors duration-300">
+      <div className="hidden md:flex">
+        <BookSidebar 
+          book={{
+            slug: book.slug,
+            title: book.title,
+            number: book.number
+          }}
+          chapters={chapters}
+        />
+      </div>
 
-                <div className="mt-auto flex flex-col gap-6 pt-6 border-t border-theme border-color-theme">
-                    <ThemeSwitcher />
-                    <Link
-                        href="/"
-                        className="text-xs uppercase tracking-wider font-bold text-accent-theme hover:opacity-80 transition-opacity"
-                    >
-                        ← Back to Chat
-                    </Link>
-                </div>
-            </aside>
-
-            {/* Main Content */}
-            <main className="flex-1 overflow-x-hidden p-6 lg:p-12 pb-24">
-                {/* Mobile Nav */}
-                <div className="md:hidden flex justify-between items-center mb-8 pb-4 border-b border-theme border-color-theme">
-                    <div className="flex gap-4 items-center">
-                        <Link
-                            href="/books"
-                            className="text-xs uppercase tracking-wider font-bold text-accent-theme"
-                        >
-                            ← Books
-                        </Link>
-                        <span className="text-xs opacity-50">{book.number}. {book.shortTitle}</span>
-                    </div>
-                    <div className="scale-75 origin-right">
-                        <ThemeSwitcher />
-                    </div>
-                </div>
-
-                <div className="mx-auto max-w-3xl">
-                    {children}
-                </div>
-            </main>
+      <main className="flex-1 overflow-x-hidden p-6 lg:p-12 pb-24">
+        <div className="md:hidden flex justify-between items-center mb-8 pb-4 border-b border-[var(--foreground)]/10">
+          <div className="flex gap-4 items-center">
+            <Link
+              href="/books"
+              className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--accent-color)]"
+            >
+              ← Books
+            </Link>
+            <span className="text-[10px] font-bold opacity-40 uppercase tracking-widest truncate max-w-[150px]">
+              {book.number}. {book.shortTitle}
+            </span>
+          </div>
+          <div className="scale-75 origin-right">
+            <ThemeSwitcher />
+          </div>
         </div>
-    );
+
+        <div className="mx-auto max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+          {children}
+        </div>
+      </main>
+    </div>
+  );
 }

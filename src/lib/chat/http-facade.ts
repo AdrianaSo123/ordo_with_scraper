@@ -1,6 +1,10 @@
-import type { NextRequest} from "next/server";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { createRequestId, getErrorCode, logEvent } from "@/lib/observability/logger";
+import {
+  createRequestId,
+  getErrorCode,
+  logEvent,
+} from "@/lib/observability/logger";
 import { recordRouteMetric } from "@/lib/observability/metrics";
 
 export type RouteContext = {
@@ -20,11 +24,18 @@ export function startRoute(route: string, request: NextRequest): RouteContext {
     startedAt: Date.now(),
   };
 
-  logEvent("info", "request.start", { route: context.route, requestId: context.requestId });
+  logEvent("info", "request.start", {
+    route: context.route,
+    requestId: context.requestId,
+  });
   return context;
 }
 
-export function successJson(context: RouteContext, payload: Record<string, unknown>, init?: ResponseInit) {
+export function successJson(
+  context: RouteContext,
+  payload: Record<string, unknown>,
+  init?: ResponseInit,
+) {
   const elapsed = durationMs(context.startedAt);
   recordRouteMetric(context.route, elapsed, false);
   logEvent("info", "request.success", {
@@ -36,7 +47,11 @@ export function successJson(context: RouteContext, payload: Record<string, unkno
   return NextResponse.json({ ...payload, requestId: context.requestId }, init);
 }
 
-export function successText(context: RouteContext, content: string, headers?: HeadersInit) {
+export function successText(
+  context: RouteContext,
+  content: string,
+  headers?: HeadersInit,
+) {
   const elapsed = durationMs(context.startedAt);
   recordRouteMetric(context.route, elapsed, false);
   logEvent("info", "request.success", {
@@ -55,7 +70,11 @@ export function successText(context: RouteContext, content: string, headers?: He
   });
 }
 
-export function errorJson(context: RouteContext, message: string, status: number) {
+export function errorJson(
+  context: RouteContext,
+  message: string,
+  status: number,
+) {
   const elapsed = durationMs(context.startedAt);
   const errorCode = getErrorCode(message);
 
@@ -68,14 +87,20 @@ export function errorJson(context: RouteContext, message: string, status: number
     message,
   });
 
-  return NextResponse.json({ error: message, errorCode, requestId: context.requestId }, { status });
+  return NextResponse.json(
+    { error: message, errorCode, requestId: context.requestId },
+    { status },
+  );
 }
 
 export async function runRouteTemplate({
   route,
   request,
   execute,
-  validationMessages = ["messages must be a non-empty array.", "No user message found."],
+  validationMessages = [
+    "messages must be a non-empty array.",
+    "No user message found.",
+  ],
 }: {
   route: string;
   request: NextRequest;
@@ -87,7 +112,8 @@ export async function runRouteTemplate({
   try {
     return await execute(context);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unexpected server error.";
+    const message =
+      error instanceof Error ? error.message : "Unexpected server error.";
     const status = validationMessages.includes(message) ? 400 : 500;
     return errorJson(context, message, status);
   }

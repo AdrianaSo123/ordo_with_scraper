@@ -12,7 +12,9 @@ export function createAbortTimeout(timeoutMs: number) {
   };
 }
 
-export async function safeCancelReader(reader: ReadableStreamDefaultReader<Uint8Array>) {
+export async function safeCancelReader(
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+) {
   try {
     await reader.cancel();
   } catch {

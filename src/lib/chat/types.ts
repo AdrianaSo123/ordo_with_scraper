@@ -3,4 +3,6 @@ export type ChatMessage = {
   content: string;
 };
 
-export type ToolChoice = { type: "auto" } | { type: "tool"; name: "calculator" };
+export type ToolChoice =
+  | { type: "auto" }
+  | { type: "tool"; name: "calculator" };

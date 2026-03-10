@@ -22,7 +22,9 @@ export async function orchestrateChatTurn({
 
     nextToolChoice = { type: "auto" };
 
-    const toolUses = response.content.filter((block) => block.type === "tool_use");
+    const toolUses = response.content.filter(
+      (block) => block.type === "tool_use",
+    );
     const textReply = response.content
       .filter((block) => block.type === "text")
       .map((block) => block.text)
@@ -39,7 +41,7 @@ export async function orchestrateChatTurn({
     };
     conversation.push(assistantMessage);
 
-    const toolResults = createToolResults(toolUses);
+    const toolResults = await createToolResults(toolUses);
     const toolResultMessage: Anthropic.MessageParam = {
       role: "user",
       content: toolResults,

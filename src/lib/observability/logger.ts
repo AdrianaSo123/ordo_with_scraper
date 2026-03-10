@@ -1,5 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { emitObservabilityEvent, subscribeObservability } from "@/lib/observability/events";
+import {
+  emitObservabilityEvent,
+  subscribeObservability,
+} from "@/lib/observability/events";
 
 export type LogLevel = "info" | "error";
 
@@ -37,7 +40,11 @@ export function createRequestId(headers?: Headers): string {
   return existing && existing.length > 0 ? existing : randomUUID();
 }
 
-export function logEvent(level: LogLevel, event: string, context: Record<string, unknown>) {
+export function logEvent(
+  level: LogLevel,
+  event: string,
+  context: Record<string, unknown>,
+) {
   ensureLoggerObserverRegistered();
   emitObservabilityEvent({
     type: "log",
@@ -51,7 +58,10 @@ export function logEvent(level: LogLevel, event: string, context: Record<string,
 }
 
 export function getErrorCode(message: string) {
-  if (message === "messages must be a non-empty array." || message === "No user message found.") {
+  if (
+    message === "messages must be a non-empty array." ||
+    message === "No user message found."
+  ) {
     return "VALIDATION_ERROR";
   }
 

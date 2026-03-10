@@ -1,0 +1,4 @@
+export const UI_CONSTANTS = {
+  COPY_TIMEOUT_MS: 2000,
+  DOWNLOAD_CLEANUP_MS: 100,
+};

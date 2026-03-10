@@ -3,9 +3,16 @@ import type { NextRequest } from "next/server";
 import { getAnthropicApiKey } from "@/lib/config/env";
 import { looksLikeMath } from "@/lib/chat/policy";
 import { orchestrateChatTurn } from "@/lib/chat/orchestrator";
-import { getLatestUserMessage, parseIncomingMessages, toAnthropicMessages } from "@/lib/chat/validation";
+import {
+  getLatestUserMessage,
+  parseIncomingMessages,
+  toAnthropicMessages,
+} from "@/lib/chat/validation";
 import { createAnthropicProvider } from "@/lib/chat/anthropic-client";
-import { withProviderErrorMapping, withProviderTiming } from "@/lib/chat/provider-decorators";
+import {
+  withProviderErrorMapping,
+  withProviderTiming,
+} from "@/lib/chat/provider-decorators";
 import { runRouteTemplate, successJson } from "@/lib/chat/http-facade";
 import { logEvent } from "@/lib/observability/logger";
 
@@ -33,7 +40,11 @@ export async function POST(request: NextRequest) {
         },
       );
 
-      const toolChoice: { type: "auto" } | { type: "tool"; name: "calculator" } = looksLikeMath(latestUserMessage)
+      const toolChoice:
+        | { type: "auto" }
+        | { type: "tool"; name: "calculator" } = looksLikeMath(
+        latestUserMessage,
+      )
         ? { type: "tool", name: "calculator" }
         : { type: "auto" };
 

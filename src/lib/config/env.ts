@@ -31,7 +31,10 @@ function requireNonEmpty(value: string | undefined, keysLabel: string): string {
   return value;
 }
 
-function readPrimaryThenLegacy(primaryKey: string, legacyKey: string): string | undefined {
+function readPrimaryThenLegacy(
+  primaryKey: string,
+  legacyKey: string,
+): string | undefined {
   const primary = readEnv(primaryKey);
   if (primary) {
     return primary;
@@ -47,18 +50,33 @@ function readPrimaryThenLegacy(primaryKey: string, legacyKey: string): string | 
 }
 
 export function getAnthropicApiKey(): string {
-  const value = readPrimaryThenLegacy("ANTHROPIC_API_KEY", "API__ANTHROPIC_API_KEY");
+  const value = readPrimaryThenLegacy(
+    "ANTHROPIC_API_KEY",
+    "API__ANTHROPIC_API_KEY",
+  );
   return requireNonEmpty(value, "ANTHROPIC_API_KEY/API__ANTHROPIC_API_KEY");
 }
 
 export function getAnthropicModel(): string {
-  return readPrimaryThenLegacy("ANTHROPIC_MODEL", "API__ANTHROPIC_MODEL") ?? "claude-haiku-4-5";
+  return (
+    readPrimaryThenLegacy("ANTHROPIC_MODEL", "API__ANTHROPIC_MODEL") ??
+    "claude-haiku-4-5"
+  );
 }
 
 export function getModelFallbacks(): string[] {
-  const configured = readPrimaryThenLegacy("ANTHROPIC_MODEL", "API__ANTHROPIC_MODEL");
-  const models = [configured, "claude-haiku-4-5", "claude-sonnet-4-6", "claude-opus-4-6"].filter(
-    (value): value is string => typeof value === "string" && value.trim().length > 0,
+  const configured = readPrimaryThenLegacy(
+    "ANTHROPIC_MODEL",
+    "API__ANTHROPIC_MODEL",
+  );
+  const models = [
+    configured,
+    "claude-haiku-4-5",
+    "claude-sonnet-4-6",
+    "claude-opus-4-6",
+  ].filter(
+    (value): value is string =>
+      typeof value === "string" && value.trim().length > 0,
   );
 
   return [...new Set(models)];

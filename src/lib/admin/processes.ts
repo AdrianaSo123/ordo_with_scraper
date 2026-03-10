@@ -1,6 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
-import { validateRequiredRuntimeConfig, getAnthropicModel } from "@/lib/config/env";
+import {
+  validateRequiredRuntimeConfig,
+  getAnthropicModel,
+} from "@/lib/config/env";
 import { getLivenessProbe, getReadinessProbe } from "@/lib/health/probes";
 import { getMetricsSnapshot } from "@/lib/observability/metrics";
 
@@ -8,9 +11,16 @@ export type AdminStatus = "ok" | "error";
 
 export function getDiagnosticsReport() {
   const packageJsonPath = path.join(process.cwd(), "package.json");
-  const releaseManifestPath = path.join(process.cwd(), "release", "manifest.json");
+  const releaseManifestPath = path.join(
+    process.cwd(),
+    "release",
+    "manifest.json",
+  );
 
-  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as { version?: string; name?: string };
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as {
+    version?: string;
+    name?: string;
+  };
 
   return {
     status: "ok" as const,
@@ -30,14 +40,20 @@ export function getHealthSweepReport() {
   const readiness = getReadinessProbe();
 
   return {
-    status: readiness.status === "ok" && liveness.status === "ok" ? ("ok" as const) : ("error" as const),
+    status:
+      readiness.status === "ok" && liveness.status === "ok"
+        ? ("ok" as const)
+        : ("error" as const),
     generatedAt: new Date().toISOString(),
     liveness,
     readiness,
   };
 }
 
-export function getEnvValidationReport(): { status: AdminStatus; message: string } {
+export function getEnvValidationReport(): {
+  status: AdminStatus;
+  message: string;
+} {
   try {
     validateRequiredRuntimeConfig();
     return {
@@ -47,7 +63,10 @@ export function getEnvValidationReport(): { status: AdminStatus; message: string
   } catch (error) {
     return {
       status: "error",
-      message: error instanceof Error ? error.message : "Environment validation failed.",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Environment validation failed.",
     };
   }
 }
