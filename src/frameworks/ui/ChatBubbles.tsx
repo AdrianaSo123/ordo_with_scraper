@@ -54,7 +54,7 @@ export function TypingIndicator() {
           <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
         </svg>
       </div>
-      <div className="border border-[var(--foreground)]/10 rounded-2xl rounded-bl-sm px-4 py-3 flex gap-1.5 items-center">
+      <div className="border border-[var(--border-color)] rounded-2xl rounded-bl-sm px-4 py-3 flex gap-1.5 items-center">
         <span className="w-1.5 h-1.5 rounded-full bg-current opacity-40 animate-bounce [animation-delay:0ms]" />
         <span className="w-1.5 h-1.5 rounded-full bg-current opacity-40 animate-bounce [animation-delay:120ms]" />
         <span className="w-1.5 h-1.5 rounded-full bg-current opacity-40 animate-bounce [animation-delay:240ms]" />
@@ -82,7 +82,7 @@ export function SuggestionChips({
             type="button"
             onClick={() => onSend(s)}
             style={{ animationDelay: `${i * 60}ms` }}
-            className="group flex items-center gap-2 rounded-full border border-[var(--foreground)]/12 bg-[var(--foreground)]/4 hover:bg-[var(--accent-color)] hover:text-[var(--accent-foreground)] hover:border-[var(--accent-color)] px-4 py-2 text-xs font-semibold transition-all duration-200 active:scale-95 hover:shadow-md animate-in fade-in slide-in-from-bottom-1 focus-ring"
+            className="group flex items-center gap-2 rounded-full border border-[var(--border-color)] bg-[var(--surface-muted)] hover:bg-[var(--accent-color)] hover:text-[var(--accent-foreground)] hover:border-[var(--accent-color)] px-4 py-2 text-xs font-semibold transition-all duration-200 active:scale-95 hover:shadow-md animate-in fade-in slide-in-from-bottom-1 focus-ring"
           >
             {s}
             <svg
@@ -116,7 +116,7 @@ export function ThemeIndicator({ theme }: { theme: Theme }) {
 
   return (
     <div className="flex justify-center mt-2">
-      <div className="rounded-full border border-[var(--foreground)]/10 bg-[var(--surface)] px-3 py-1 text-xs opacity-60 transition-all shadow-sm">
+      <div className="rounded-full border border-[var(--border-color)] bg-[var(--surface)] px-3 py-1 text-xs opacity-60 transition-all shadow-sm">
         Design era: {labels[theme]}
       </div>
     </div>
@@ -166,13 +166,13 @@ function ToolCallItem({
 
   return (
     <div className="flex flex-col animate-in fade-in slide-in-from-bottom-1 duration-300">
-      <div className="flex items-center gap-2 rounded-xl border border-[var(--foreground)]/10 bg-[var(--foreground)]/5 px-3 py-2 text-xs opacity-90 shadow-sm transition-all">
+      <div className="flex items-center gap-2 rounded-xl border border-[var(--border-color)] bg-[var(--surface-muted)] px-3 py-2 text-xs opacity-90 shadow-sm transition-all">
         <span
           className={isDone ? "text-green-500/80" : "animate-spin text-[10px]"}
         >
           {isDone ? "✓" : "⚙️"}
         </span>
-        <span className="font-mono text-[var(--foreground)]/70">{label}</span>
+        <span className="font-mono text-[var(--foreground)] opacity-70">{label}</span>
       </div>
     </div>
   );
@@ -302,7 +302,7 @@ export function AssistantBubble({
         </svg>
       </div>
       <div className="flex flex-col gap-1.5 max-w-[85%] sm:max-w-[80%] w-full">
-        <div className="border border-[var(--foreground)]/10 rounded-[1.25rem] rounded-bl-[0.25rem] px-6 py-4.5 text-[15px] leading-[1.7] shadow-sm bg-[var(--surface)] transition-all hover:shadow-md">
+        <div className="border border-[var(--border-color)] rounded-[1.25rem] rounded-bl-[0.25rem] px-6 py-4.5 text-[15px] leading-[1.7] shadow-sm bg-[var(--surface)] transition-all hover:shadow-md">
           <PartList
             parts={parts || []}
             fallbackText={content}

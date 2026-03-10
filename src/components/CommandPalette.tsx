@@ -93,10 +93,10 @@ export default function CommandPalette() {
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] animate-in fade-in duration-200" />
         <Dialog.Content
-          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-[70%] w-full max-w-[640px] bg-[var(--surface)] border border-[var(--foreground)]/15 rounded-2xl shadow-2xl z-[101] overflow-hidden animate-in zoom-in-95 fade-in slide-in-from-top-4 duration-200"
+          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-[70%] w-full max-w-[640px] bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl shadow-2xl z-[101] overflow-hidden animate-in zoom-in-95 fade-in slide-in-from-top-4 duration-200"
           onKeyDown={handleKeyDown}
         >
-          <div className="flex items-center border-b border-[var(--foreground)]/10 px-4 py-3 gap-3">
+          <div className="flex items-center border-b border-[var(--border-color)] px-4 py-3 gap-3">
             <svg
               width="20"
               height="20"
@@ -121,7 +121,7 @@ export default function CommandPalette() {
                 setActiveIndex(0);
               }}
             />
-            <kbd className="hidden sm:flex h-6 items-center gap-1 rounded border border-[var(--foreground)]/10 bg-[var(--foreground)]/5 px-2 font-mono text-[10px] font-medium opacity-60">
+            <kbd className="hidden sm:flex h-6 items-center gap-1 rounded border border-[var(--border-color)] bg-[var(--surface-muted)] px-2 font-mono text-[10px] font-medium opacity-60">
               ESC
             </kbd>
           </div>
@@ -139,7 +139,7 @@ export default function CommandPalette() {
                   className={`flex items-center justify-between w-full px-4 py-3 rounded-xl text-left transition-all duration-75 ${
                     index === activeIndex
                       ? "bg-[var(--accent-color)] text-[var(--accent-foreground)]"
-                      : "hover:bg-[var(--foreground)]/5"
+                      : "hover:bg-[var(--surface-hover)]"
                   }`}
                 >
                   <div className="flex flex-col">
@@ -176,7 +176,7 @@ export default function CommandPalette() {
             )}
           </div>
 
-          <div className="flex items-center justify-between border-t border-[var(--foreground)]/10 px-4 py-3 bg-[var(--foreground)]/2">
+          <div className="flex items-center justify-between border-t border-[var(--border-color)] px-4 py-3 bg-[var(--surface-muted)]">
             <div className="flex items-center gap-4 text-[10px] font-semibold opacity-40 uppercase tracking-widest">
               <div className="flex items-center gap-1.5">
                 <kbd className="px-1.5 py-0.5 rounded border border-current">

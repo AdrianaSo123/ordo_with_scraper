@@ -30,7 +30,7 @@ export function SiteNav({ user }: SiteNavProps) {
 
   return (
     <nav
-      className="h-[56px] border-b border-[var(--foreground)]/8 bg-[var(--background)] sticky top-0 z-[50] backdrop-blur-md"
+      className="h-[56px] border-b border-[var(--border-color)] bg-[var(--background)] sticky top-0 z-[50] backdrop-blur-md"
       aria-label="Primary"
     >
       <div className="h-full mx-auto flex max-w-[var(--container-width)] items-center justify-between px-[var(--container-padding)]">
@@ -63,7 +63,7 @@ export function SiteNav({ user }: SiteNavProps) {
         </div>
 
         {/* Center: AI Status (The "Unified" part) */}
-        <div className="hidden xl:flex items-center gap-4 px-6 py-1.5 rounded-full bg-[var(--foreground)]/5 border border-[var(--foreground)]/5">
+          <div className="hidden xl:flex items-center gap-4 px-6 py-1.5 rounded-full bg-[var(--surface-muted)] border border-[var(--border-color)]">
           <div className="flex items-center gap-3">
             <div className="w-5 h-5 rounded-full bg-[var(--accent-color)] flex items-center justify-center text-[var(--accent-foreground)] text-[8px] font-bold">
               A
@@ -73,7 +73,7 @@ export function SiteNav({ user }: SiteNavProps) {
               <span className="text-[8px] opacity-50 uppercase tracking-tighter font-semibold">Intelligent Orchestrator</span>
             </div>
           </div>
-          <div className="w-px h-4 bg-[var(--foreground)]/10" />
+          <div className="w-px h-4 bg-[var(--border-color)]" />
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-[9px] font-bold opacity-40 uppercase tracking-widest">System Ready</span>

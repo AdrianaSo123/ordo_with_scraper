@@ -13,10 +13,10 @@ interface AccountMenuProps {
 
 const SettingBlock = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="flex flex-col gap-2">
-    <div className="text-[9px] font-bold uppercase tracking-widest opacity-40 ml-1">
+    <div className="text-[9px] font-bold uppercase tracking-widest opacity-60 ml-1">
       {label}
     </div>
-    <div className="flex p-1 bg-[var(--foreground)]/5 rounded-xl gap-1 border border-[var(--foreground)]/5">
+    <div className="flex p-1 bg-[var(--surface-muted)] rounded-xl gap-1 border border-[var(--border-color)]">
       {children}
     </div>
   </div>
@@ -96,15 +96,15 @@ export function AccountMenu({ user }: AccountMenuProps) {
   const menuTrigger = (
     <button
       onClick={() => setOpen(!open)}
-      className="flex items-center gap-2 group p-1 rounded-full hover:bg-[var(--foreground)]/5 transition-all"
+      className="flex items-center gap-2 group p-1 rounded-full hover:bg-[var(--surface-hover)] transition-all"
     >
       <div className="flex flex-col items-end mr-1 hidden md:flex">
         <span className="text-[11px] font-bold leading-none">{user.name}</span>
-        <span className="text-[9px] opacity-40 uppercase tracking-tighter">
+        <span className="text-[9px] opacity-60 uppercase tracking-tighter">
           {user.roles[0]}
         </span>
       </div>
-      <div className="w-8 h-8 rounded-full border border-[var(--foreground)]/10 bg-[var(--foreground)]/5 flex items-center justify-center text-[10px] font-bold group-hover:bg-[var(--foreground)]/10 transition-colors shadow-sm">
+      <div className="w-8 h-8 rounded-full border border-[var(--border-color)] bg-[var(--surface-muted)] flex items-center justify-center text-[10px] font-bold group-hover:bg-[var(--surface-hover)] transition-colors shadow-sm">
         {initials}
       </div>
     </button>
@@ -115,15 +115,15 @@ export function AccountMenu({ user }: AccountMenuProps) {
       {menuTrigger}
 
       {open && (
-        <div className="absolute right-0 top-12 z-[100] w-72 rounded-[24px] border border-[var(--foreground)]/10 bg-[var(--background)] shadow-[0_20px_50px_rgba(0,0,0,0.2)] p-2.5 flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-4 duration-500 spring-bounce shadow-bloom">
+        <div className="absolute right-0 top-12 z-[100] w-72 rounded-[24px] border border-[var(--border-color)] bg-[var(--background)] shadow-[0_20px_50px_rgba(0,0,0,0.2)] p-2.5 flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-4 duration-500 spring-bounce shadow-bloom">
           
           {/* Header: Identity & Quick Toggles */}
-          <div className="px-3 py-2.5 flex items-center justify-between border-b border-[var(--foreground)]/5 mb-1 bg-[var(--foreground)]/2 rounded-t-2xl">
+          <div className="px-3 py-2.5 flex items-center justify-between border-b border-[var(--border-color)] mb-1 bg-[var(--surface-muted)] rounded-t-2xl">
             <div className="min-w-0">
               <p className="text-xs font-black truncate tracking-tight">{user.name}</p>
-              <p className="text-[10px] opacity-40 truncate font-medium">{user.email}</p>
+              <p className="text-[10px] opacity-60 truncate font-medium">{user.email}</p>
             </div>
-            <div className="flex items-center gap-1.5 bg-[var(--background)] p-1 rounded-xl border border-[var(--foreground)]/5 shadow-inner">
+            <div className="flex items-center gap-1.5 bg-[var(--background)] p-1 rounded-xl border border-[var(--border-color)] shadow-inner">
               <button
                 onClick={() => setGridEnabled(!gridEnabled)}
                 className={`p-1.5 rounded-lg transition-all ${gridEnabled ? "bg-[var(--accent-color)] text-[var(--accent-foreground)]" : "opacity-40 hover:opacity-100"}`}
@@ -145,26 +145,26 @@ export function AccountMenu({ user }: AccountMenuProps) {
             <Link
               href="/dashboard"
               onClick={() => setOpen(false)}
-              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold transition-all haptic-press hover:bg-[var(--foreground)]/5 ${pathname === "/dashboard" ? "bg-[var(--accent-color)]/10 text-[var(--accent-color)]" : ""}`}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold transition-all haptic-press hover:bg-[var(--surface-hover)] ${pathname === "/dashboard" ? "bg-[var(--accent-color)]/10 text-[var(--accent-color)]" : ""}`}
             >
               Dashboard
             </Link>
             <Link
               href="/profile"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold transition-all haptic-press hover:bg-[var(--foreground)]/5"
+              className="flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold transition-all haptic-press hover:bg-[var(--surface-hover)]"
             >
               Profile Settings
             </Link>
           </div>
 
-          <div className="h-px bg-[var(--foreground)]/5 mx-2 my-1" />
+          <div className="h-px bg-[var(--border-color)] mx-2 my-1" />
 
           {/* System Legibility Accordion */}
           <div className="flex flex-col">
             <button
               onClick={() => setShowAccessibility(!showAccessibility)}
-              className={`flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-bold transition-all hover:bg-[var(--foreground)]/5 ${showAccessibility ? "bg-[var(--foreground)]/5" : ""}`}
+              className={`flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-bold transition-all hover:bg-[var(--surface-hover)] ${showAccessibility ? "bg-[var(--surface-muted)]" : ""}`}
             >
               System Legibility
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className={`transition-transform duration-300 ${showAccessibility ? "rotate-180" : ""}`}><path d="m6 9 6 6 6-6"/></svg>
@@ -194,7 +194,7 @@ export function AccountMenu({ user }: AccountMenuProps) {
           <div className="flex flex-col">
             <button
               onClick={() => setShowSimulation(!showSimulation)}
-              className={`flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-bold transition-all hover:bg-[var(--foreground)]/5 ${showSimulation ? "bg-[var(--foreground)]/5" : ""}`}
+              className={`flex items-center justify-between px-3 py-2 rounded-xl text-[11px] font-bold transition-all hover:bg-[var(--surface-hover)] ${showSimulation ? "bg-[var(--surface-muted)]" : ""}`}
             >
               Simulation Mode
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className={`transition-transform duration-300 ${showSimulation ? "rotate-180" : ""}`}><path d="m6 9 6 6 6-6"/></svg>
@@ -205,12 +205,12 @@ export function AccountMenu({ user }: AccountMenuProps) {
                   <button
                     key={role}
                     onClick={() => switchRole(role)}
-                    className={`w-full flex items-start gap-3 px-3 py-2 rounded-xl text-left transition-all haptic-press hover:bg-[var(--foreground)]/5 ${user.roles.includes(role) ? "bg-[var(--foreground)]/5 ring-1 ring-[var(--foreground)]/10" : ""}`}
+                    className={`w-full flex items-start gap-3 px-3 py-2 rounded-xl text-left transition-all haptic-press hover:bg-[var(--surface-hover)] ${user.roles.includes(role) ? "bg-[var(--surface-muted)] ring-1 ring-[var(--border-color)]" : ""}`}
                   >
                     <span className={`w-2 h-2 rounded-full ${config.dot} mt-1.5 shrink-0`} />
                     <div className="min-w-0">
                       <p className="text-[11px] font-bold leading-tight">{config.label}</p>
-                      <p className="text-[9px] opacity-40 truncate">{config.description}</p>
+                      <p className="text-[9px] opacity-60 truncate">{config.description}</p>
                     </div>
                   </button>
                 ))}
@@ -218,11 +218,11 @@ export function AccountMenu({ user }: AccountMenuProps) {
             )}
           </div>
 
-          <div className="h-px bg-[var(--foreground)]/5 mx-2 my-1" />
+          <div className="h-px bg-[var(--border-color)] mx-2 my-1" />
 
           <button
             onClick={() => switchRole("ANONYMOUS")}
-            className="w-full text-center py-2 text-[10px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity"
+            className="w-full text-center py-2 text-[10px] font-black uppercase tracking-widest opacity-60 hover:opacity-100 transition-opacity"
           >
             {isAuth ? "Sign Out" : "Identity Simulation"}
           </button>

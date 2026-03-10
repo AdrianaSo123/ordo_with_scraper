@@ -20,10 +20,10 @@ const DashboardCard = ({
   children: React.ReactNode;
   className?: string;
 }) => (
-  <div className={`rounded-[32px] border border-[var(--foreground)]/10 bg-[var(--background)] p-6 shadow-bloom flex flex-col gap-4 transition-all hover:scale-[1.01] hover:shadow-2xl group ${className}`}>
+  <div className={`rounded-[32px] border border-[var(--border-color)] bg-[var(--background)] p-6 shadow-bloom flex flex-col gap-4 transition-all hover:scale-[1.01] hover:shadow-2xl group ${className}`}>
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-2xl bg-[var(--foreground)]/5 flex items-center justify-center text-[var(--accent-color)] group-hover:bg-[var(--accent-color)] group-hover:text-[var(--accent-foreground)] transition-all">
+        <div className="w-10 h-10 rounded-2xl bg-[var(--surface-muted)] flex items-center justify-center text-[var(--accent-color)] group-hover:bg-[var(--accent-color)] group-hover:text-[var(--accent-foreground)] transition-all">
           {Icon}
         </div>
         <div>
@@ -42,7 +42,7 @@ const DashboardCard = ({
 const SettingRow = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <div className="flex flex-col gap-1.5">
     <label className="text-[9px] font-black uppercase tracking-[0.2em] opacity-30 ml-1">{label}</label>
-    <div className="flex p-1 bg-[var(--foreground)]/3 rounded-xl gap-1 border border-[var(--foreground)]/5">
+    <div className="flex p-1 bg-[var(--surface-muted)] rounded-xl gap-1 border border-[var(--border-color)]">
       {children}
     </div>
   </div>
@@ -53,8 +53,8 @@ const PillButton = ({ active, onClick, label }: { active: boolean; onClick: () =
     onClick={onClick}
     className={`flex-1 py-1.5 text-[10px] font-black rounded-lg transition-all haptic-press ${
       active
-        ? "bg-[var(--background)] text-[var(--accent-color)] shadow-sm scale-[1.02] border border-[var(--foreground)]/5"
-        : "opacity-30 hover:opacity-100 hover:bg-[var(--foreground)]/5"
+        ? "bg-[var(--background)] text-[var(--accent-color)] shadow-sm scale-[1.02] border border-[var(--border-color)]"
+        : "opacity-30 hover:opacity-100 hover:bg-[var(--surface-hover)]"
     }`}
   >
     {label}
@@ -119,7 +119,7 @@ export default function DashboardPage() {
             icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>}
           >
             <div className="flex flex-col gap-4 mt-2">
-              <div className="bg-[var(--foreground)]/3 rounded-2xl p-4 border border-[var(--foreground)]/5">
+              <div className="bg-[var(--surface-muted)] rounded-2xl p-4 border border-[var(--border-color)]">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] font-bold opacity-40 uppercase tracking-widest">System Readiness</span>
                   <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Operational</span>
@@ -128,22 +128,22 @@ export default function DashboardPage() {
                   <div className="flex-1 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.3)]" />
                   <div className="flex-1 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.3)]" />
                   <div className="flex-1 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.3)]" />
-                  <div className="flex-1 bg-[var(--foreground)]/5 rounded-full" />
+                  <div className="flex-1 bg-[var(--surface-muted)] rounded-full" />
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 bg-[var(--foreground)]/2 rounded-xl border border-[var(--foreground)]/5">
-                  <p className="text-[9px] font-bold opacity-30 uppercase mb-1">Response Time</p>
+                <div className="p-3 bg-[var(--surface-muted)] rounded-xl border border-[var(--border-color)]">
+                  <p className="text-[9px] font-bold opacity-50 uppercase mb-1">Response Time</p>
                   <p className="text-lg font-black tracking-tighter">12ms</p>
                 </div>
-                <div className="p-3 bg-[var(--foreground)]/2 rounded-xl border border-[var(--foreground)]/5">
-                  <p className="text-[9px] font-bold opacity-30 uppercase mb-1">Active Memory</p>
+                <div className="p-3 bg-[var(--surface-muted)] rounded-xl border border-[var(--border-color)]">
+                  <p className="text-[9px] font-bold opacity-50 uppercase mb-1">Active Memory</p>
                   <p className="text-lg font-black tracking-tighter">1.2GB</p>
                 </div>
               </div>
 
-              <button className="mt-auto w-full py-2.5 rounded-xl bg-[var(--foreground)]/5 border border-[var(--foreground)]/10 text-[10px] font-black uppercase tracking-widest hover:bg-[var(--accent-color)] hover:text-white transition-all">
+              <button className="mt-auto w-full py-2.5 rounded-xl bg-[var(--surface-muted)] border border-[var(--border-color)] text-[10px] font-black uppercase tracking-widest hover:bg-[var(--accent-color)] hover:text-white transition-all">
                 Run Diagnostics Sweep
               </button>
             </div>
@@ -158,7 +158,7 @@ export default function DashboardPage() {
           >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-2">
               <div className="flex flex-col gap-5">
-                <div className="text-[10px] font-black uppercase tracking-widest opacity-30 border-b border-[var(--foreground)]/5 pb-2">Physics Lab</div>
+                <div className="text-[10px] font-black uppercase tracking-widest opacity-50 border-b border-[var(--border-color)] pb-2">Physics Lab</div>
                 <SettingRow label="Type Scale">
                   {(["xs", "sm", "md", "lg", "xl"] as const).map((s) => (
                     <PillButton key={s} label={s.toUpperCase()} active={accessibility.fontSize === s} onClick={() => setAccessibility({ ...accessibility, fontSize: s })} />
@@ -177,14 +177,14 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex flex-col gap-4">
-                <div className="text-[10px] font-black uppercase tracking-widest opacity-30 border-b border-[var(--foreground)]/5 pb-2">Layout Tokens</div>
-                <div className="flex-1 rounded-2xl border border-[var(--foreground)]/10 bg-[var(--foreground)]/2 p-4 flex flex-col justify-center gap-4">
+                <div className="text-[10px] font-black uppercase tracking-widest opacity-50 border-b border-[var(--border-color)] pb-2">Layout Tokens</div>
+                <div className="flex-1 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-muted)] p-4 flex flex-col justify-center gap-4">
                   <div className="flex flex-col gap-2">
                     <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest opacity-40">
                       <span>Border Tension</span>
                       <span>8px</span>
                     </div>
-                    <div className="h-1 bg-[var(--foreground)]/10 rounded-full overflow-hidden">
+                    <div className="h-1 bg-[var(--surface-muted)] rounded-full overflow-hidden">
                       <div className="h-full bg-[var(--accent-color)] w-1/4 rounded-full" />
                     </div>
                   </div>
@@ -193,7 +193,7 @@ export default function DashboardPage() {
                       <span>Chromatic Hue</span>
                       <span>220°</span>
                     </div>
-                    <div className="h-1 bg-[var(--foreground)]/10 rounded-full overflow-hidden">
+                    <div className="h-1 bg-[var(--surface-muted)] rounded-full overflow-hidden">
                       <div className="h-full bg-[var(--accent-color)] w-3/5 rounded-full" />
                     </div>
                   </div>
@@ -245,7 +245,7 @@ export default function DashboardPage() {
                   <button
                     key={role}
                     onClick={() => switchRole(role)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left transition-all haptic-press hover:bg-[var(--foreground)]/5 border border-transparent ${localRole === role ? "bg-[var(--foreground)]/5 border-[var(--foreground)]/10 ring-1 ring-[var(--foreground)]/5" : ""}`}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left transition-all haptic-press hover:bg-[var(--surface-hover)] border border-transparent ${localRole === role ? "bg-[var(--surface-muted)] border-[var(--border-color)] ring-1 ring-[var(--border-color)]" : ""}`}
                   >
                     <span className={`w-2 h-2 rounded-full ${config.dot} shrink-0`} />
                     <div className="min-w-0">
@@ -274,7 +274,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Footer info */}
-        <footer className="mt-12 pt-12 border-t border-[var(--foreground)]/5 flex flex-col md:flex-row justify-between items-center gap-6 opacity-40">
+        <footer className="mt-12 pt-12 border-t border-[var(--border-color)] flex flex-col md:flex-row justify-between items-center gap-6 opacity-60">
           <p className="text-[10px] font-bold uppercase tracking-widest">© 2026 Ordo Intelligence • Security Level 4 • All Systems Nominal</p>
           <div className="flex gap-8">
              <span className="text-[10px] font-black uppercase tracking-widest cursor-default hover:text-[var(--accent-color)] transition-all">Privacy Contract</span>

@@ -22,14 +22,14 @@ export function BookSidebar({ book, chapters, currentChapterSlug }: BookSidebarP
 
   return (
     <aside 
-      className={`relative transition-all duration-500 ease-in-out border-r border-[var(--foreground)]/10 bg-[var(--surface)] flex flex-col h-screen sticky top-0 ${
+      className={`relative transition-all duration-500 ease-in-out border-r border-[var(--border-color)] bg-[var(--surface)] flex flex-col h-screen sticky top-0 ${
         isCollapsed ? "w-16" : "w-72"
       }`}
     >
       {/* Collapse Toggle */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-10 w-6 h-6 bg-[var(--surface)] border border-[var(--foreground)]/10 rounded-full flex items-center justify-center z-50 hover:bg-[var(--accent-color)] hover:text-[var(--accent-foreground)] transition-colors shadow-sm"
+        className="absolute -right-3 top-10 w-6 h-6 bg-[var(--surface)] border border-[var(--border-color)] rounded-full flex items-center justify-center z-50 hover:bg-[var(--accent-color)] hover:text-[var(--accent-foreground)] transition-colors shadow-sm"
       >
         <svg
           width="12"
@@ -77,12 +77,12 @@ export function BookSidebar({ book, chapters, currentChapterSlug }: BookSidebarP
               className={`group flex items-center gap-3 py-2.5 px-3 rounded-lg transition-all duration-200 ${
                 currentChapterSlug === chapter.slug
                   ? "bg-[var(--accent-color)] text-[var(--accent-foreground)] shadow-md"
-                  : "hover:bg-[var(--foreground)]/5 opacity-70 hover:opacity-100"
+                  : "hover:bg-[var(--surface-hover)] opacity-70 hover:opacity-100"
               }`}
               title={isCollapsed ? chapter.title : undefined}
             >
               <div className={`w-1.5 h-1.5 rounded-full shrink-0 transition-all ${
-                currentChapterSlug === chapter.slug ? "bg-white scale-125" : "bg-[var(--foreground)]/20 group-hover:bg-[var(--accent-color)]"
+                currentChapterSlug === chapter.slug ? "bg-white scale-125" : "bg-[var(--border-color)] group-hover:bg-[var(--accent-color)]"
               }`} />
               {!isCollapsed && (
                 <span className="text-xs font-medium truncate animate-in slide-in-from-left-2 duration-300">
@@ -94,7 +94,7 @@ export function BookSidebar({ book, chapters, currentChapterSlug }: BookSidebarP
         </nav>
 
         {/* Footer Section */}
-        <div className={`mt-auto flex flex-col gap-6 pt-6 border-t border-[var(--foreground)]/10 ${isCollapsed ? "items-center px-0" : ""}`}>
+        <div className={`mt-auto flex flex-col gap-6 pt-6 border-t border-[var(--border-color)] ${isCollapsed ? "items-center px-0" : ""}`}>
           <div className={isCollapsed ? "scale-75 origin-center" : ""}>
             <ThemeSwitcher />
           </div>

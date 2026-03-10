@@ -124,7 +124,7 @@ export default async function ChapterPage({
           ),
           th: ({ node: _node, ...props }) => (
             <th
-              className="border border-theme border-color-theme px-4 py-2 text-left font-bold bg-[var(--foreground)]/5"
+              className="border border-theme border-color-theme px-4 py-2 text-left font-bold bg-[var(--surface-muted)]"
               {...props}
             />
           ),

@@ -41,14 +41,14 @@ export function ContentModal({
     >
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm animate-in fade-in duration-300" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[calc(100vw-2rem)] max-w-3xl h-[85vh] -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-[var(--background)] border border-[var(--foreground)]/15 shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--foreground)]/10 bg-[var(--surface)]/50">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[calc(100vw-2rem)] max-w-3xl h-[85vh] -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-[var(--background)] border border-[var(--border-color)] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] bg-[var(--surface)]/50">
             <Dialog.Title className="text-lg font-bold tracking-tight uppercase tracking-widest text-xs opacity-60">
               Library Reader
             </Dialog.Title>
             <Dialog.Close asChild>
               <button
-                className="p-2 rounded-xl hover:bg-[var(--foreground)]/5 transition-all active:scale-90"
+                className="p-2 rounded-xl hover:bg-[var(--surface-hover)] transition-all active:scale-90"
                 aria-label="Close reader"
               >
                 <svg
@@ -71,7 +71,7 @@ export function ContentModal({
           <div className="flex-1 overflow-y-auto p-8 sm:p-12 scroll-smooth">
             {loading ? (
               <div className="h-full flex flex-col items-center justify-center gap-4 py-20">
-                <div className="w-10 h-10 rounded-full border-4 border-[var(--foreground)]/10 border-t-[var(--accent-color)] animate-spin" />
+                <div className="w-10 h-10 rounded-full border-4 border-[var(--border-color)] border-t-[var(--accent-color)] animate-spin" />
                 <p className="text-sm font-bold uppercase tracking-widest opacity-40 animate-pulse">
                   Retrieving Chapter...
                 </p>

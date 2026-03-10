@@ -147,7 +147,7 @@ export const ChatContainer: React.FC<Props> = ({
   }
 
   const containerClasses = isFloating
-    ? `fixed z-[60] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-[-40px_40px_80px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden backdrop-blur-3xl bg-[var(--background)]/95 border border-[var(--foreground)]/10
+    ? `fixed z-[60] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] shadow-[-40px_40px_80px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden backdrop-blur-3xl bg-[var(--background)]/95 border border-[var(--border-color)]
        ${isFullScreen 
          ? "top-0 start-0 w-full h-full rounded-none" 
          : "bottom-6 end-6 w-[calc(100vw-3rem)] md:w-[480px] h-[calc(100dvh-6rem)] md:h-[calc(100dvh-10rem)] max-h-[820px] rounded-[32px]"}`
@@ -217,7 +217,7 @@ export const ChatContainer: React.FC<Props> = ({
         )}
       </div>
 
-      <div className="flex-none bg-[var(--background)]/90 px-3 sm:px-6 pt-3 pb-4 sm:pb-5 border-t border-[var(--foreground)]/5">
+      <div className="flex-none bg-[var(--background)] px-3 sm:px-6 pt-3 pb-4 sm:pb-5 border-t border-[var(--border-color)]">
         <div className={isFullScreen ? "max-w-4xl mx-auto w-full" : "w-full"}>
           <ChatInput
             value={input}

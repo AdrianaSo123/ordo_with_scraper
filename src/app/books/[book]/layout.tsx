@@ -44,7 +44,7 @@ export default async function BookLayout({
       </div>
 
       <main className="flex-1 overflow-x-hidden p-6 lg:p-12 pb-24">
-        <div className="md:hidden flex justify-between items-center mb-8 pb-4 border-b border-[var(--foreground)]/10">
+        <div className="md:hidden flex justify-between items-center mb-8 pb-4 border-b border-[var(--border-color)]">
           <div className="flex gap-4 items-center">
             <Link
               href="/books"

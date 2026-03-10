@@ -30,13 +30,13 @@ export default function MentionsMenu({
 
   return (
     <div
-      className="absolute z-[100] w-72 bg-[var(--surface)] border border-[var(--foreground)]/15 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200"
+      className="absolute z-[100] w-72 bg-[var(--surface)] border border-[var(--border-color)] rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200"
       style={{
         bottom: "calc(100% + 8px)",
         left: "12px",
       }}
     >
-      <div className="px-3 py-2 border-b border-[var(--foreground)]/10 bg-[var(--foreground)]/2 flex items-center justify-between">
+      <div className="px-3 py-2 border-b border-[var(--border-color)] bg-[var(--surface-muted)] flex items-center justify-between">
         <span className="text-[10px] font-bold uppercase tracking-widest opacity-50">
           Suggestions
         </span>
@@ -54,7 +54,7 @@ export default function MentionsMenu({
               className={`flex items-start gap-3 w-full px-3 py-3 rounded-lg text-left transition-all ${
                 index === activeIndex
                   ? "bg-[var(--accent-color)] text-[var(--accent-foreground)] shadow-lg shadow-[var(--accent-color)]/20"
-                  : "hover:bg-[var(--foreground)]/5"
+                  : "hover:bg-[var(--surface-hover)]"
               }`}
             >
               <span className="text-base mt-0.5 shrink-0">

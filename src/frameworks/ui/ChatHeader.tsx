@@ -37,7 +37,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
 }) => {
   if (isFloating) {
     return (
-      <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--foreground)]/5 bg-[var(--background)]/75 backdrop-blur-xl shrink-0 relative z-10 transition-colors duration-500">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-color)] bg-[var(--background)]/75 backdrop-blur-xl shrink-0 relative z-10 transition-colors duration-500">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-[var(--accent-color)] flex items-center justify-center text-white shadow-sm">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -59,7 +59,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         <div className="flex items-center gap-1">
           <button
             onClick={onFullScreenToggle}
-            className="p-2 rounded-xl hover:bg-[var(--foreground)]/5 opacity-50 hover:opacity-100 transition-all active:scale-90"
+            className="p-2 rounded-xl hover:bg-[var(--surface-hover)] opacity-50 hover:opacity-100 transition-all active:scale-90"
             aria-label={isFullScreen ? "Exit Full Screen" : "Enter Full Screen"}
           >
             {isFullScreen ? (
@@ -75,7 +75,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
           
           <button
             onClick={onMinimize}
-            className="p-2 rounded-xl hover:bg-[var(--foreground)]/5 opacity-50 hover:opacity-100 transition-all active:scale-90"
+            className="p-2 rounded-xl hover:bg-[var(--surface-hover)] opacity-50 hover:opacity-100 transition-all active:scale-90"
             aria-label="Minimize Chat"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -88,7 +88,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   }
 
   return (
-      <header className="flex items-center justify-between px-6 h-14 border-b border-[var(--foreground)]/5 bg-[var(--background)]/75 backdrop-blur-xl sticky top-0 z-30 transition-colors duration-500">
+      <header className="flex items-center justify-between px-6 h-14 border-b border-[var(--border-color)] bg-[var(--background)]/75 backdrop-blur-xl sticky top-0 z-30 transition-colors duration-500">
       <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-[var(--accent-color)] flex items-center justify-center text-[var(--accent-foreground)] font-bold shadow-sm shadow-[var(--accent-color)]/20">
           A
@@ -121,17 +121,17 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
             placeholder="Filter session..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="bg-[var(--foreground)]/5 border-none rounded-full ps-9 pe-4 py-1.5 text-xs outline-none focus:ring-2 focus:ring-[var(--accent-color)]/20 w-40 transition-all focus:w-64"
+            className="bg-[var(--surface-muted)] border-none rounded-full ps-9 pe-4 py-1.5 text-xs outline-none focus:ring-2 focus:ring-[var(--accent-color)]/20 w-40 transition-all focus:w-64"
           />
         </div>
 
         {/* Density */}
-        <div className="flex items-center gap-1 bg-[var(--foreground)]/5 p-1 rounded-full">
+        <div className="flex items-center gap-1 bg-[var(--surface-muted)] p-1 rounded-full">
           {(["compact", "normal", "relaxed"] as const).map((d) => (
             <button
               key={d}
               onClick={() => onDensityChange(d)}
-              className={`w-7 h-7 flex items-center justify-center rounded-full text-[10px] font-bold transition-all ${density === d ? "bg-[var(--accent-color)] text-[var(--accent-foreground)] shadow-sm" : "hover:bg-[var(--foreground)]/5 opacity-50"}`}
+              className={`w-7 h-7 flex items-center justify-center rounded-full text-[10px] font-bold transition-all ${density === d ? "bg-[var(--accent-color)] text-[var(--accent-foreground)] shadow-sm" : "hover:bg-[var(--surface-hover)] opacity-50"}`}
               title={`Density: ${d}`}
               aria-label={`Set density to ${d}`}
             >
@@ -143,7 +143,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         {/* Grid Toggle */}
         <button
           onClick={onGridToggle}
-          className={`p-2 rounded-full transition-all ${gridEnabled ? "bg-[var(--accent-color)] text-[var(--accent-foreground)]" : "hover:bg-[var(--foreground)]/10"}`}
+          className={`p-2 rounded-full transition-all ${gridEnabled ? "bg-[var(--accent-color)] text-[var(--accent-foreground)]" : "hover:bg-[var(--surface-hover)]"}`}
           title="Toggle Design Grid"
           aria-label="Toggle Design Grid"
         >

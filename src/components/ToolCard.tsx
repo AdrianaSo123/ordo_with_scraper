@@ -148,7 +148,7 @@ export function ToolCard({
                   <button
                     onClick={onDownload}
                     title={downloadTooltip}
-                    className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[var(--foreground)]/10 text-[var(--foreground)]/50 hover:text-[var(--foreground)] transition-all active:scale-90"
+                    className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[var(--surface-hover)] text-[var(--foreground)] opacity-50 hover:opacity-100 transition-all active:scale-90"
                   >
                     <svg
                       width="14"
@@ -170,7 +170,7 @@ export function ToolCard({
                   <button
                     onClick={toggleExpand}
                     title="Expand full screen"
-                    className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[var(--foreground)]/10 text-[var(--foreground)]/50 hover:text-[var(--foreground)] transition-all active:scale-90"
+                    className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-[var(--surface-hover)] text-[var(--foreground)] opacity-50 hover:opacity-100 transition-all active:scale-90"
                   >
                     <svg
                       width="14"

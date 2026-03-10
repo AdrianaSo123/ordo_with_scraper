@@ -16,7 +16,7 @@ function renderSpan(text: string, key: string | number): React.ReactNode {
       parts.push(
         <code
           key={`c-${m.index}`}
-          className="bg-[var(--surface-muted)] text-[var(--accent-color)] px-1.5 py-0.5 rounded-md text-xs font-mono border border-[var(--foreground)]/10 font-bold"
+          className="bg-[var(--surface-muted)] text-[var(--accent-color)] px-1.5 py-0.5 rounded-md text-xs font-mono border border-[var(--border-color)] font-bold"
         >
           {match.slice(1, -1)}
         </code>,
@@ -133,7 +133,7 @@ export function CodeBlock({ code, lang }: { code: string; lang?: string }) {
     setTimeout(() => setCopied(false), UI_CONSTANTS.COPY_TIMEOUT_MS);
   }
   return (
-    <div className="my-4 rounded-xl overflow-hidden border border-[var(--foreground)]/10 text-sm">
+    <div className="my-4 rounded-xl overflow-hidden border border-[var(--border-color)] text-sm">
       <div className="flex items-center justify-between bg-zinc-900 px-4 py-2">
         <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-mono">
           {lang || "code"}
@@ -307,7 +307,7 @@ export function renderMarkdown(content: string): React.ReactNode {
       elements.push(
         <blockquote
           key={`bq-${elements.length}`}
-          className="my-3 pl-4 border-l-4 border-[var(--foreground)]/20 opacity-75 italic text-sm leading-relaxed"
+          className="my-3 pl-4 border-l-4 border-[var(--border-color)] opacity-75 italic text-sm leading-relaxed"
         >
           {renderSpan(trimmed.slice(2), `bqs-${elements.length}`)}
         </blockquote>,
@@ -324,7 +324,7 @@ export function renderMarkdown(content: string): React.ReactNode {
       elements.push(
         <hr
           key={`hr-${elements.length}`}
-          className="my-4 border-[var(--foreground)]/10"
+          className="my-4 border-[var(--border-color)]"
         />,
       );
     } else if (!trimmed) {

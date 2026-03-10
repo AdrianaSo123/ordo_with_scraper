@@ -75,7 +75,7 @@ const blockRegistry: { [K in BlockNode["type"]]: React.FC<BlockProps<Extract<Blo
     );
   },
   blockquote: ({ block, onLinkClick }) => (
-    <blockquote className="my-3 pl-4 border-l-4 border-[var(--foreground)]/20 opacity-75 italic text-sm leading-relaxed">
+    <blockquote className="my-3 pl-4 border-l-4 border-[var(--border-color)] opacity-75 italic text-sm leading-relaxed">
       <InlineRenderer nodes={block.content} onLinkClick={onLinkClick} />
     </blockquote>
   ),
@@ -88,7 +88,7 @@ const blockRegistry: { [K in BlockNode["type"]]: React.FC<BlockProps<Extract<Blo
       ))}
     </ul>
   ),
-  divider: () => <hr className="my-4 border-[var(--foreground)]/10" />,
+  divider: () => <hr className="my-4 border-[var(--border-color)]" />,
   "code-block": ({ block }) => {
     if (block.language === "mermaid") {
       return <MermaidRenderer code={block.code} />;
@@ -124,7 +124,7 @@ const inlineRegistry: { [K in InlineNode["type"]]: React.FC<InlineProps<Extract<
   text: ({ node }) => <>{node.text}</>,
   bold: ({ node }) => <strong>{node.text}</strong>,
   "code-inline": ({ node }) => (
-    <code className="bg-[var(--foreground)]/5 text-[var(--foreground)] px-1.5 py-0.5 rounded-md text-[0.85em] font-mono border border-[var(--foreground)]/10">
+    <code className="bg-[var(--surface-muted)] text-[var(--foreground)] px-1.5 py-0.5 rounded-md text-[0.85em] font-mono border border-[var(--border-color)]">
       {node.text}
     </code>
   ),
@@ -164,7 +164,7 @@ const CodeBlock: React.FC<{ code: string; lang?: string }> = ({
     setTimeout(() => setCopied(false), UI_CONSTANTS.COPY_TIMEOUT_MS);
   };
   return (
-    <div className="my-4 rounded-xl overflow-hidden border border-[var(--foreground)]/10 text-sm">
+    <div className="my-4 rounded-xl overflow-hidden border border-[var(--border-color)] text-sm">
       <div className="flex items-center justify-between bg-zinc-900 px-4 py-2">
         <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-mono">
           {lang || "code"}
@@ -176,7 +176,7 @@ const CodeBlock: React.FC<{ code: string; lang?: string }> = ({
           {copied ? "✓ Copied" : "Copy"}
         </button>
       </div>
-      <pre className="bg-[#0d1117] text-[#c9d1d9] px-5 py-4 overflow-x-auto font-mono text-sm leading-relaxed border-t border-[var(--foreground)]/10">
+      <pre className="bg-[#0d1117] text-[#c9d1d9] px-5 py-4 overflow-x-auto font-mono text-sm leading-relaxed border-t border-[var(--border-color)]">
         <code>{code}</code>
       </pre>
     </div>

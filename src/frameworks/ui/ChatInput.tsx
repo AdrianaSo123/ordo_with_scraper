@@ -106,7 +106,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           {pendingFiles.map((file, i) => (
             <div
               key={i}
-              className="flex items-center gap-2 px-3 py-1.5 bg-[var(--surface)] border border-[var(--foreground)]/10 rounded-lg text-xs font-medium"
+              className="flex items-center gap-2 px-3 py-1.5 bg-[var(--surface)] border border-[var(--border-color)] rounded-lg text-xs font-medium"
             >
               <span className="truncate max-w-[120px]">{file.name}</span>
               <button
@@ -126,7 +126,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           e.preventDefault();
           onSend();
         }}
-        className="relative flex flex-col gap-1.5 bg-[var(--surface)] border border-[var(--foreground)]/10 rounded-2xl sm:rounded-[28px] p-2 sm:p-2.5 transition-all duration-500 focus-within:border-[var(--accent-color)]/40 focus-within:ring-2 focus-within:ring-[var(--accent-color)]/5 shadow-sm hover:shadow-md bg-white dark:bg-zinc-900"
+        className="relative flex flex-col gap-1.5 bg-[var(--surface)] border border-[var(--border-color)] rounded-2xl sm:rounded-[28px] p-2 sm:p-2.5 transition-all duration-500 focus-within:border-[var(--accent-color)] focus-within:ring-2 focus-within:ring-[var(--accent-color)]/10 shadow-sm hover:shadow-md"
       >
         {activeTrigger && suggestions.length > 0 && (
           <MentionsMenu
@@ -143,7 +143,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           onChange={(e) => onChange(e.target.value, e.target.selectionStart)}
           onKeyDown={handleKeyDown}
           placeholder="Ask anything…"
-          className="w-full bg-transparent px-3 sm:px-4 py-2 text-sm sm:text-[15px] leading-tight outline-none resize-none min-h-[40px] max-h-[240px] overflow-y-auto placeholder:text-[var(--foreground)]/40 font-normal text-[var(--foreground)]"
+          className="w-full bg-transparent px-3 sm:px-4 py-2 text-sm sm:text-[15px] leading-tight outline-none resize-none min-h-[40px] max-h-[240px] overflow-y-auto placeholder:text-[var(--foreground)]/50 font-normal text-[var(--foreground)]"
         />
 
         <div className="flex items-center justify-between px-1 pb-1">
@@ -158,12 +158,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="p-2 rounded-xl hover:bg-[var(--foreground)]/10 text-[var(--foreground)]/90 hover:text-[var(--accent-color)] transition-all active:scale-95 group border border-transparent hover:border-[var(--foreground)]/20 bg-[var(--foreground)]/5"
+              className="p-2 rounded-xl hover:bg-[var(--surface-hover)] text-[var(--foreground)]/70 hover:text-[var(--accent-color)] transition-all active:scale-95 group border border-[var(--border-color)] bg-[var(--surface-muted)]"
               aria-label="Attach file"
             >
               <svg 
-                width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
-                className="opacity-100"
+                width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
               >
                 <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.51a2 2 0 0 1-2.83-2.83l8.49-8.48" />
               </svg>
@@ -173,7 +172,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           <button
             type="submit"
             disabled={!canSend && pendingFiles.length === 0}
-            className="rounded-full bg-[var(--accent-color)] text-[var(--accent-foreground)] px-4 sm:px-6 py-2 text-[11px] font-bold uppercase tracking-[0.15em] disabled:bg-[var(--foreground)]/10 disabled:text-[var(--foreground)]/40 disabled:shadow-none flex items-center gap-2 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-95 outline-none"
+            className="rounded-full bg-[var(--accent-color)] text-[var(--accent-foreground)] px-4 sm:px-6 py-2 text-[11px] font-bold uppercase tracking-[0.15em] disabled:bg-[var(--surface-muted)] disabled:text-[var(--foreground)]/40 disabled:shadow-none flex items-center gap-2 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-95 outline-none"
           >
             {isSending ? (
               <span className="flex gap-1">

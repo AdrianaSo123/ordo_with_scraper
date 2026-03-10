@@ -143,13 +143,13 @@ const AssistantBubble = React.memo<{
   return (
     <div className="flex justify-start gap-2.5 sm:gap-4 items-start px-1 sm:px-2 md:px-0 w-full transition-all duration-300 group">
       {/* Assistant Avatar */}
-      <div className={`w-8 h-8 mt-1 rounded-full bg-[var(--surface-muted)] flex items-center justify-center shrink-0 border border-[var(--border-color)] shadow-sm ${isInitialGreeting ? "bg-[var(--accent-color)]/10 border-[var(--accent-color)]/20" : ""}`}>
-        <span className={`text-[10px] font-bold ${isInitialGreeting ? "text-[var(--accent-color)]" : ""}`}>A</span>
+      <div className={`w-8 h-8 mt-1 rounded-full flex items-center justify-center shrink-0 border shadow-sm ${isInitialGreeting ? "bg-[var(--accent-color)]/15 border-[var(--accent-color)]/30" : "bg-[var(--surface-muted)] border-[var(--border-color)]"}`}>
+        <span className={`text-[10px] font-bold ${isInitialGreeting ? "text-[var(--accent-color)]" : "text-[var(--foreground)]/60"}`}>A</span>
       </div>
 
       {/* Borderless Content Area */}
       <div className={`flex flex-col gap-1.5 max-w-[95%] sm:max-w-[90%] w-full ${isInitialGreeting ? "pt-1" : ""}`}>
-        <div className="text-[15px] leading-[1.75] text-[var(--foreground)]/90 relative">
+        <div className="text-[15px] leading-[1.75] text-[var(--foreground)] relative">
           <ErrorBoundary name="AssistantBubble">
             {isInitialGreeting ? (
               <div className="relative">
@@ -211,7 +211,7 @@ const SuggestionChips: React.FC<{
           key={s}
           onClick={() => onSend(s)}
           style={{ animationDelay: `${i * 100}ms` }}
-          className="rounded-xl border border-[var(--foreground)]/10 bg-[var(--background)] hover:bg-[var(--foreground)] hover:text-[var(--background)] px-3 sm:px-4 py-2 sm:py-2.5 text-[11px] sm:text-xs font-medium transition-all duration-200 hover:scale-[1.02] active:scale-95 shadow-sm hover:shadow-md animate-in fade-in slide-in-from-bottom-2 duration-500 fill-mode-both"
+          className="rounded-xl border border-[var(--border-color)] bg-[var(--surface)] hover:bg-[var(--accent-color)] hover:text-[var(--accent-foreground)] hover:border-[var(--accent-color)] px-3 sm:px-4 py-2 sm:py-2.5 text-[11px] sm:text-xs font-medium text-[var(--foreground)] transition-all duration-200 hover:scale-[1.02] active:scale-95 shadow-sm hover:shadow-md animate-in fade-in slide-in-from-bottom-2 duration-500 fill-mode-both"
         >
           {s}
         </button>
