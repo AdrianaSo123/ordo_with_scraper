@@ -16,6 +16,8 @@ export function GridInspector() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [enabled, setEnabled]);
 
+  // Only render in development mode — this is a developer tool
+  if (process.env.NODE_ENV !== "development") return null;
   if (!enabled) return null;
 
   return (
