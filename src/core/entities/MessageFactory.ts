@@ -1,6 +1,6 @@
 import type { MessagePart } from "./message-parts";
 
-interface ChatMessage {
+export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   parts?: MessagePart[];

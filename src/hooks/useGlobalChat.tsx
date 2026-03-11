@@ -3,13 +3,8 @@
 import React, { createContext, useContext, useReducer, useState, useMemo, ReactNode } from "react";
 export type { MessagePart } from "@/core/entities/message-parts";
 import type { MessagePart } from "@/core/entities/message-parts";
-
-export type ChatMessage = {
-  role: "user" | "assistant";
-  content: string;
-  parts?: MessagePart[];
-  timestamp?: Date;
-};
+export type { ChatMessage } from "@/core/entities/MessageFactory";
+import type { ChatMessage } from "@/core/entities/MessageFactory";
 
 import { 
   StreamProcessor, 

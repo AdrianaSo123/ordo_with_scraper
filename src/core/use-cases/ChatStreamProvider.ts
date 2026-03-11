@@ -10,7 +10,6 @@ export interface ChatStream {
   events(): AsyncIterableIterator<StreamEvent>;
   cancel(): void;
 }
-
 export interface ChatStreamProvider {
   fetchStream(messages: { role: string; content: string }[]): Promise<ChatStream>;
 }

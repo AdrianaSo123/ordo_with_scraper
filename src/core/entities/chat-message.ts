@@ -8,13 +8,6 @@ export interface ChatMessage {
   parts?: unknown[];
 }
 
-export interface ChatThread {
-  id: string;
-  messages: ChatMessage[];
-  createdAt: Date;
-  updatedAt: Date;
-}
-
 export interface ToolCallInfo {
   name: string;
   args: Record<string, unknown>;

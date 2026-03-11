@@ -1,6 +1,7 @@
 import { StreamEvent } from "@/core/entities/chat-stream";
 
 export interface StreamProcessingContext {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   dispatch: (action: any) => void;
   assistantIndex: number;
 }

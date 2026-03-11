@@ -4,6 +4,16 @@ import { useTheme } from "@/components/ThemeProvider";
 import { commandRegistry } from "@/core/commands/CommandRegistry";
 import { NavigationCommand } from "@/core/commands/NavigationCommands";
 import { ThemeCommand } from "@/core/commands/ThemeCommands";
+import type { Command } from "@/core/commands/Command";
+
+class PlaceholderCommand implements Command {
+  constructor(
+    readonly id: string,
+    readonly title: string,
+    readonly category: string,
+  ) {}
+  execute() { /* no-op placeholder */ }
+}
 
 /**
  * Registers all application commands (navigation, themes, tools)
@@ -29,8 +39,8 @@ export function useCommandRegistry() {
     commandRegistry.register(new ThemeCommand("theme-skeuomorphic", "Set Theme: Skeuomorphic", "Themes", setTheme, "skeuomorphic"));
 
     // Tools (placeholder commands)
-    commandRegistry.register({ id: "search", title: "Search Library", category: "Tools", execute: () => console.log("Trigger search via input") } as any);
-    commandRegistry.register({ id: "checklists", title: "Get Checklists", category: "Tools", execute: () => console.log("Trigger checklists") } as any);
-    commandRegistry.register({ id: "practitioners", title: "List Practitioners", category: "Tools", execute: () => console.log("Trigger practitioners") } as any);
+    commandRegistry.register(new PlaceholderCommand("search", "Search Library", "Tools"));
+    commandRegistry.register(new PlaceholderCommand("checklists", "Get Checklists", "Tools"));
+    commandRegistry.register(new PlaceholderCommand("practitioners", "List Practitioners", "Tools"));
   }, [router, setTheme]);
 }

@@ -7,7 +7,6 @@ import {
   FRAMEWORKS,
   type MentionItem,
   MentionCategory,
-  ALL_MENTIONS,
 } from "../core/entities/mentions";
 import { commandRegistry } from "../core/commands/CommandRegistry";
 
@@ -20,7 +19,7 @@ export const TRIGGERS: MentionTrigger[] = [
   { char: "@", category: "practitioner" },
   { char: "[[", category: "chapter" },
   { char: "#", category: "framework" },
-  { char: "/", category: "command" as any },
+  { char: "/", category: "command" },
 ];
 
 export function useMentions(
@@ -58,8 +57,8 @@ export function useMentions(
               const commands = commandRegistry.findCommands(segment);
               filtered = commands.map(cmd => ({
                 id: cmd.id,
-                name: cmd.id, // Use ID as the mention name for slash commands
-                category: "command" as any,
+                name: cmd.id,
+                category: "command" as MentionCategory,
                 description: cmd.title,
                 icon: cmd.icon || "⚡️"
               }));

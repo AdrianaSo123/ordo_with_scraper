@@ -1,38 +1,42 @@
 import { StreamEvent } from "../../core/entities/chat-stream";
 
+type RawSSEData = Record<string, unknown>;
+
 /**
  * Strategy Interface for Parsing Raw SSE JSON Data
  */
 export interface EventParserStrategy {
-  canParse(data: any): boolean;
-  parse(data: any): StreamEvent;
+  canParse(data: RawSSEData): boolean;
+  parse(data: RawSSEData): StreamEvent;
 }
 
 export class TextDeltaParser implements EventParserStrategy {
-  canParse(data: any) { return !!data.delta; }
-  parse(data: any): StreamEvent {
-    return { type: "text", delta: data.delta };
+  canParse(data: RawSSEData) { return !!data.delta; }
+  parse(data: RawSSEData): StreamEvent {
+    return { type: "text", delta: data.delta as string };
   }
 }
 
 export class ToolCallParser implements EventParserStrategy {
-  canParse(data: any) { return !!data.tool_call; }
-  parse(data: any): StreamEvent {
+  canParse(data: RawSSEData) { return !!data.tool_call; }
+  parse(data: RawSSEData): StreamEvent {
+    const tc = data.tool_call as { name: string; args: Record<string, unknown> };
     return { 
       type: "tool_call", 
-      name: data.tool_call.name, 
-      args: data.tool_call.args 
+      name: tc.name, 
+      args: tc.args 
     };
   }
 }
 
 export class ToolResultParser implements EventParserStrategy {
-  canParse(data: any) { return !!data.tool_result; }
-  parse(data: any): StreamEvent {
+  canParse(data: RawSSEData) { return !!data.tool_result; }
+  parse(data: RawSSEData): StreamEvent {
+    const tr = data.tool_result as { name: string; result: unknown };
     return { 
       type: "tool_result", 
-      name: data.tool_result.name, 
-      result: data.tool_result.result 
+      name: tr.name, 
+      result: tr.result 
     };
   }
 }
@@ -40,7 +44,7 @@ export class ToolResultParser implements EventParserStrategy {
 export class EventParser {
   constructor(private strategies: EventParserStrategy[]) {}
 
-  parse(data: any): StreamEvent | null {
+  parse(data: RawSSEData): StreamEvent | null {
     const strategy = this.strategies.find(s => s.canParse(data));
     return strategy ? strategy.parse(data) : null;
   }

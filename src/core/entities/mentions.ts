@@ -1,4 +1,4 @@
-export type MentionCategory = "practitioner" | "chapter" | "framework";
+export type MentionCategory = "practitioner" | "chapter" | "framework" | "command";
 
 export interface MentionItem {
   id: string;
