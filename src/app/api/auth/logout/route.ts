@@ -13,7 +13,7 @@ export async function POST() {
 
     // Clear both session and any simulated role cookie
     cookieStore.delete("lms_session_token");
-    cookieStore.delete("lms_simulated_role");
+    cookieStore.delete("lms_mock_session_role");
 
     return NextResponse.json({ success: true });
   } catch (error) {

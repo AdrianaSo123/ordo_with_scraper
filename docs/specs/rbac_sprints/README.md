@@ -1,13 +1,14 @@
 # Implementation Plan — Multi-User Auth, RBAC & Chat History
 
+> **Status:** ✅ Complete — All 6 sprints implemented and QA-verified.  
 > **Source:** `docs/specs/multi-user-rbac-spec.md` (v2.3)  
-> **Test runner:** Vitest (25 existing test files)  
+> **Test runner:** Vitest — 182 tests across 40 suites, all passing  
 > **Convention:** Each task = one commit. Run `npm run build && npm test` between commits.
 
 ## Sprint Files
 
 | Sprint | File | Tasks | Description |
-|--------|------|-------|-------------|
+| -------- | ------ | ------- | ------------- |
 | **0** | [sprint-0-dependency-fixes.md](sprint-0-dependency-fixes.md) | 4 | Dependency violation fixes (clean architecture) |
 | **1** | [sprint-1-auth-core.md](sprint-1-auth-core.md) | 8 | Auth core: entities, ports, use cases, adapters |
 | **2** | [sprint-2-auth-api-ui.md](sprint-2-auth-api-ui.md) | 4 | Auth API + UI: middleware, routes, pages, nav |
@@ -17,7 +18,7 @@
 
 ## Dependency Graph
 
-```
+```text
 Sprint 0 (violations)
   └──→ Sprint 1 (auth core)
          └──→ Sprint 2 (auth API + UI)
@@ -31,7 +32,7 @@ Each sprint is independently deployable (the app works after each sprint, just w
 ## Summary
 
 | Sprint | Tasks | New Files | Modified Files | New Tests |
-|--------|-------|-----------|----------------|-----------|
+| -------- | ------- | ----------- | ---------------- | ----------- |
 | **0 — Violations** | 4 | 1 | 10 | 0 (existing pass) |
 | **1 — Auth Core** | 8 | 9 | 3 | ~15 unit + integration |
 | **2 — Auth API & UI** | 4 | 7 | 5 | ~8 integration + middleware |
@@ -43,7 +44,7 @@ Each sprint is independently deployable (the app works after each sprint, just w
 ## Quick Reference — Requirement → Task Mapping
 
 | Requirement Group | Tasks |
-|-------------------|-------|
+| ------------------- | ------- |
 | REG-1 through REG-9 | 1.3, 1.4, 1.5, 1.7, 1.8, 2.2, 2.3 |
 | AUTH-1 through AUTH-7 | 1.3, 1.6, 1.8, 2.2, 5.1 |
 | SESS-1 through SESS-3 | 1.3, 1.6, 1.8, 2.1 |

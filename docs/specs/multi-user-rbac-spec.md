@@ -1,7 +1,7 @@
 # Multi-User Auth, RBAC & Chat History — System Spec
 
-> **Status:** Draft (v2.3 — architecture-audited + requirements + behavioral tests)  
-> **Date:** 2026-03-11  
+> **Status:** Implemented (v2.3 — all 6 sprints complete, QA-verified)  
+> **Date:** 2026-03-11 (implemented 2026-03-12)  
 > **Scope:** Replace mock role-switcher with real auth, enforce RBAC server-side, persist chat history per user, make LLM role-aware.  
 > **Audit:** Clean Architecture (Robert C. Martin), SOLID, GoF design patterns.
 
@@ -20,6 +20,7 @@ The application currently has:
 ### What we need
 
 A real multi-user system where:
+
 1. Users can register and log in.
 2. Each user has a persistent role (ANONYMOUS visitors have limited access).
 3. API routes are gated by role.
@@ -34,7 +35,7 @@ A real multi-user system where:
 ### Database (SQLite via better-sqlite3)
 
 | Table | Columns | Purpose |
-|-------|---------|---------|
+| ------- | --------- | --------- |
 | `roles` | id, name, description | 4 static roles |
 | `users` | id, email, name | 4 hardcoded mock users |
 | `user_roles` | user_id, role_id | Join table (1:1 today) |
@@ -43,7 +44,7 @@ No chat tables. No password column. No session table.
 
 ### Auth Flow (current)
 
-```
+```text
 Browser → POST /api/auth/switch {role: "ADMIN"}
   → setMockSession() writes httpOnly cookie
   → page reload
@@ -56,7 +57,7 @@ No middleware. No route guards. `requireRole()` exists in `src/lib/auth.ts` but 
 ### API Routes
 
 | Route | Auth | Role Check |
-|-------|------|------------|
+| ------- | ------ | ------------ |
 | `POST /api/auth/switch` | None | None |
 | `POST /api/chat` | None | None |
 | `POST /api/chat/stream` | None | None |
@@ -89,7 +90,7 @@ This section catalogs the existing design patterns, identifies violations, and p
 The codebase already uses Clean Architecture layers correctly in most places:
 
 | Pattern | Where | Assessment |
-|---------|-------|------------|
+| --------- | ------- | ------------ |
 | **Ports & Adapters** | `BookRepository` (port in core) → `FileSystemBookRepository` (adapter) | Correct |
 | **Ports & Adapters** | `ChatStreamProvider` (port in core) → `ChatStreamAdapter` (adapter) | Correct |
 | **Ports & Adapters** | `Logger` (port in core/services) → `ConsoleLogger` (adapter) | Correct |
@@ -107,7 +108,7 @@ The codebase already uses Clean Architecture layers correctly in most places:
 
 The rule: **dependencies point inward.** Core knows nothing about adapters, adapters know nothing about frameworks, infrastructure wires everything.
 
-```
+```text
 Outer: frameworks/ui → hooks → components → app/
   ↓
 Middle: adapters/ (ChatPresenter, DataMappers, Strategies)
@@ -121,7 +122,7 @@ Foundation: (no external deps — pure TypeScript)
 
 `src/core/use-cases/tools/BookTools.ts` imports `@/lib/book-library`:
 
-```
+```text
 core/use-cases/tools/BookTools.ts → lib/book-library.ts → adapters/ → core/
 ```
 
@@ -164,6 +165,7 @@ Since the calculator is pure math with zero I/O, the simplest correct fix is **m
 ### Violation 4 (MINOR) — Duplicate ChatMessage Entity
 
 Two competing `ChatMessage` types exist:
+
 - `src/core/entities/chat-message.ts` — has `id`, `role`, `content`, `timestamp`, `parts`
 - `src/core/entities/MessageFactory.ts` — re-declares with `role`, `content`, `parts`, `timestamp?` (no `id`)
 
@@ -184,6 +186,7 @@ The original draft (v1) of this spec also had architectural issues. Here are the
 v1 proposed adding `passwordHash` to `src/core/entities/user.ts`. This violates **Interface Segregation** — client-facing code imports `User` and would carry a security-sensitive field.
 
 **Correction:** Define two types:
+
 - `User` (public, exposed to client) — `{ id, email, name, roles }` (unchanged)
 - `UserRecord` (internal, adapter-only) — `{ id, email, name, passwordHash, createdAt }` used by `UserDataMapper`
 
@@ -211,6 +214,7 @@ This follows the same pattern the codebase already uses for books: port in core 
 v1 spec has the ConversationDataMapper handling conversations AND messages AND authorization checks (userId verification). This violates SRP.
 
 **Correction:** Split into:
+
 1. **Port:** `ConversationRepository` (core/use-cases) — queries and mutations for conversations
 2. **Port:** `MessageRepository` (core/use-cases) — queries and mutations for messages
 3. **Use case:** `ConversationInteractor` — orchestrates conversation lifecycle, enforces ownership
@@ -225,7 +229,7 @@ v1 placed the tool-filtering logic in `src/lib/chat/tools.ts`. But the policy "w
 
 **Correction:** Define tool access policy in core:
 
-```
+```text
 src/core/use-cases/ToolAccessPolicy.ts
 ```
 
@@ -252,7 +256,7 @@ Same issue — the per-role behavioral directives are **domain policy**, not inf
 
 **Correction:** Create a proper use case:
 
-```
+```text
 src/core/use-cases/ChatPolicyInteractor.ts
 ```
 
@@ -271,7 +275,7 @@ This means middleware is a **fast-reject filter** (no cookie = instant 401), and
 
 ### Corrected Layer Map (new files)
 
-```
+```text
 src/core/entities/
 ├── user.ts                  — User (public), RoleName (unchanged)
 ├── session.ts               — Session { id, userId, expiresAt, createdAt }
@@ -308,7 +312,7 @@ src/lib/
 ### Design Pattern Summary for New Code
 
 | Pattern | Application |
-|---------|-------------|
+| --------- | ------------- |
 | **Ports & Adapters** (Hexagonal) | `SessionRepository`, `ConversationRepository`, `MessageRepository`, `PasswordHasher` — all defined as interfaces in core, implemented in adapters |
 | **Use Case / Interactor** | `RegisterUserInteractor`, `AuthenticateUserInteractor`, `ValidateSessionInteractor`, `ConversationInteractor` — each implements `UseCase<TReq, TRes>`, wrappable with `LoggingDecorator` |
 | **Data Mapper** (PoEAA) | `SessionDataMapper`, `ConversationDataMapper`, `MessageDataMapper` — SQL ↔ entity mapping, no business logic |
@@ -332,7 +336,7 @@ Add password-based auth with `bcryptjs` hashing (pure JS, no native compilation)
 **New API routes:**
 
 | Route | Method | Purpose |
-|-------|--------|---------|
+| ------- | -------- | --------- |
 | `/api/auth/register` | POST | Create account |
 | `/api/auth/login` | POST | Authenticate, start session |
 | `/api/auth/logout` | POST | Clear session |
@@ -340,7 +344,8 @@ Add password-based auth with `bcryptjs` hashing (pure JS, no native compilation)
 | `/api/auth/switch` | POST | **ADMIN-only** simulation tool (preserved) |
 
 **Registration flow:**
-```
+
+```text
 POST /api/auth/register
 Body: { email, password, name }
 
@@ -358,7 +363,8 @@ Server:
 ```
 
 **Login flow:**
-```
+
+```text
 POST /api/auth/login
 Body: { email, password }
 
@@ -377,7 +383,7 @@ Server:
 Replace the bare role cookie with a **session token** cookie.
 
 | Current | Target |
-|---------|--------|
+| --------- | -------- |
 | Cookie: `lms_mock_session_role=ADMIN` | Cookie: `lms_session_token=<random-uuid>` |
 | Lookup: role → find mock user | Lookup: token → sessions table → user |
 
@@ -388,6 +394,7 @@ The session token is a cryptographically random UUID (via `crypto.randomUUID()`)
 #### Role Switcher (preserved for ADMIN; unrestricted in dev mode)
 
 The existing role switcher in AccountMenu stays, but:
+
 - Only visible when the current user has the `ADMIN` role **or** `NODE_ENV === 'development'`
 - `POST /api/auth/switch` requires ADMIN session **or** `NODE_ENV === 'development'`
 - Writes a **separate** `lms_simulated_role` cookie (not the session)
@@ -449,6 +456,7 @@ CREATE INDEX IF NOT EXISTS idx_messages_conversation ON messages(conversation_id
 **Migration strategy:** Since we use `CREATE TABLE IF NOT EXISTS` + `INSERT OR IGNORE`, add the new statements to `ensureSchema()`. For the `ALTER TABLE` on existing `users`, wrap in a try/catch (SQLite throws if column already exists). This is acceptable for a single-file SQLite dev database.
 
 **Existing hardcoded users:** The 4 mock users (ANONYMOUS, AUTHENTICATED, STAFF, ADMIN) will have NULL `password_hash` after migration. They **cannot log in** via the normal login flow. They serve two purposes going forward:
+
 1. The ANONYMOUS user record provides the identity for unauthenticated visitors.
 2. Admin can `INSERT` a password_hash manually or use a one-time bootstrap script to set passwords for the other 3 seed users.
 3. New users created via `/api/auth/register` always get a password_hash.
@@ -459,7 +467,7 @@ Do NOT auto-assign passwords to seed users — that's a security anti-pattern.
 
 Create `src/middleware.ts`:
 
-```
+```text
 Route matching (Edge Runtime — cookie presence check ONLY, no DB):
   /api/health/*          → PASS (public)
   /api/auth/register     → PASS (public)
@@ -493,7 +501,7 @@ class ChatPolicyInteractor implements UseCase<{ role: RoleName }, string> {
 **Per-role behavior:**
 
 | Role | LLM Persona | Tool Access | Content Access |
-|------|------------|-------------|----------------|
+| ------ | ------------ | ------------- | ---------------- |
 | **ANONYMOUS** | Sales assistant — demo the product, encourage sign-up | calculator, search_books (titles only), get_book_summary, set_theme, navigate, adjust_ui | No full chapter content, no audio, no checklists |
 | **AUTHENTICATED** | Full advisor — use all library tools freely | All tools | Full access |
 | **STAFF** | Advisor + analytics framing | All tools | Full access, analytics-oriented responses |
@@ -501,7 +509,7 @@ class ChatPolicyInteractor implements UseCase<{ role: RoleName }, string> {
 
 **Implementation in `/api/chat/stream`:**
 
-```
+```text
 1. Read lms_session_token cookie
 2. If cookie present → ValidateSessionInteractor.execute({ token }) → sessionUser
    If cookie absent → sessionUser = { roles: ["ANONYMOUS"] } (synthetic ANONYMOUS identity)
@@ -564,7 +572,7 @@ interface MessageRepository {
 **New API routes:**
 
 | Route | Method | Purpose |
-|-------|--------|---------|
+| ------- | -------- | --------- |
 | `/api/conversations` | GET | List user's conversations |
 | `/api/conversations` | POST | Create new conversation |
 | `/api/conversations/[id]` | GET | Get conversation with messages |
@@ -574,7 +582,7 @@ interface MessageRepository {
 
 `POST /api/chat/stream` gains an optional `conversationId` field:
 
-```
+```text
 Body: {
   messages: ChatMessage[],
   conversationId?: string    // omit to create new conversation
@@ -582,9 +590,12 @@ Body: {
 ```
 
 Flow:
+
 1. Read `lms_session_token` cookie
 2. If cookie present → `ValidateSessionInteractor.execute({ token })` → sessionUser
+
    If cookie absent → treat as ANONYMOUS (skip persistence, skip to step 6)
+
 3. If `conversationId` provided: `ConversationInteractor.get(conversationId, sessionUser.id)` — enforces ownership; check message count < 100 (NEG-DATA-3 → 400 if exceeded)
 4. If omitted: check conversation count; if ≥ 50, delete oldest (NEG-DATA-4). Then `ConversationInteractor.create(sessionUser.id, title)` — auto-title from first message (80 chars)
 5. Before calling Anthropic: `MessageRepository.create(conversationId, userMessage)` — persist user message
@@ -617,7 +628,7 @@ Flow:
 **New pages:**
 
 | Route | Component | Purpose |
-|-------|-----------|---------|
+| ------- | ----------- | --------- |
 | `/login` | `LoginPage` | Email + password form |
 | `/register` | `RegisterPage` | Email + password + name form |
 
@@ -642,7 +653,7 @@ These are simple server-rendered pages with client-side form submission. On succ
 ### New Files — Core Layer (entities + use cases + ports)
 
 | Path | Layer | Purpose |
-|------|-------|---------|
+| ------ | ------- | --------- |
 | `src/core/entities/session.ts` | Entity | `Session { id, userId, expiresAt, createdAt }` |
 | `src/core/entities/conversation.ts` | Entity | `Conversation`, `ConversationSummary`, `Message`, `NewMessage` |
 | `src/core/entities/calculator.ts` | Entity | Pure `calculate()` function (moved from `lib/calculator.ts`; fixes Violation 2) |
@@ -661,7 +672,7 @@ These are simple server-rendered pages with client-side form submission. On succ
 ### New Files — Adapter Layer
 
 | Path | Layer | Purpose |
-|------|-------|---------|
+| ------ | ------- | --------- |
 | `src/adapters/SessionDataMapper.ts` | Adapter | Implements `SessionRepository` — SQLite CRUD for sessions |
 | `src/adapters/ConversationDataMapper.ts` | Adapter | Implements `ConversationRepository` |
 | `src/adapters/MessageDataMapper.ts` | Adapter | Implements `MessageRepository` |
@@ -670,7 +681,7 @@ These are simple server-rendered pages with client-side form submission. On succ
 ### New Files — Infrastructure / UI
 
 | Path | Layer | Purpose |
-|------|-------|---------|
+| ------ | ------- | --------- |
 | `src/middleware.ts` | Infrastructure | Edge middleware — cookie presence check only (no DB; see §2A Issue F) |
 | `src/app/api/auth/register/route.ts` | Route | Registration endpoint → delegates to `RegisterUserInteractor` |
 | `src/app/api/auth/login/route.ts` | Route | Login endpoint → delegates to `AuthenticateUserInteractor` |
@@ -684,7 +695,7 @@ These are simple server-rendered pages with client-side form submission. On succ
 ### Modified Files
 
 | Path | Changes |
-|------|---------|
+| ------ | --------- |
 | `src/lib/db/schema.ts` | Add sessions, conversations, messages tables; add password_hash + created_at to users |
 | `src/lib/auth.ts` | Refactor to **composition root**: wires interactors (`RegisterUser`, `Authenticate`, `ValidateSession`) to adapters. Exports convenience functions. |
 | `src/lib/chat/policy.ts` | Delegates to `ChatPolicyInteractor` for prompt building and math detection |
@@ -710,7 +721,7 @@ These are simple server-rendered pages with client-side form submission. On succ
 These MUST be completed first to establish clean architecture before adding new features:
 
 | # | Fix | Files | Effort |
-|---|-----|-------|--------|
+| --- | ----- | ------- | -------- |
 | V1 | Inject `BookRepository` into BookTools via constructor | `BookTools.ts`, `tools.ts` (wiring) | Small |
 | V2 | Move `calculate()` to `core/entities/calculator.ts` | `CalculatorTool.ts`, `lib/calculator.ts` | Small |
 | V3 | Move `BookMeta` + `BOOKS` to adapter layer | `library.ts`, `FileSystemBookRepository.ts` | Small |
@@ -719,7 +730,7 @@ These MUST be completed first to establish clean architecture before adding new 
 ### New Dependency
 
 | Package | Purpose |
-|---------|---------|
+| --------- | --------- |
 | `bcryptjs` | Password hashing (pure JS, no native compilation required — works in all environments) |
 
 ---
@@ -728,7 +739,7 @@ These MUST be completed first to establish clean architecture before adding new 
 
 ### Authentication Boundaries
 
-```
+```text
                     ┌──────────────────────────────────┐
                     │         middleware.ts (Edge)      │
                     │   cookie presence check ONLY      │
@@ -751,7 +762,7 @@ These MUST be completed first to establish clean architecture before adding new 
          └────────────────────────────────────────────────────────┘
 ```
 
-```
+```text
 Two-layer auth check (Chain of Responsibility):
 
 1. Middleware (Edge) → protected route + cookie missing? → 401 (fast reject)
@@ -801,7 +812,7 @@ Two-layer auth check (Chain of Responsibility):
 ### Cookie security
 
 | Attribute | Value |
-|-----------|-------|
+| ----------- | ------- |
 | `httpOnly` | `true` |
 | `sameSite` | `lax` |
 | `secure` | `true` in production |
@@ -883,7 +894,7 @@ The `search_books` tool for ANONYMOUS should return truncated results (title + f
 
 ### Data Flow
 
-```
+```text
 User sends message
   → Client: dispatch APPEND_USER_MESSAGE
   → Client: POST /api/chat/stream { messages, conversationId? }
@@ -926,7 +937,7 @@ The `parts` column stores the full `MessagePart[]` as JSON. This preserves tool 
 
 A single user message may trigger multiple Anthropic agent-loop turns (e.g., tool_call → tool_result → tool_call → tool_result → final text). All turns are persisted as a **single assistant message** with the complete `parts` array. This matches the client-side `PresentedMessage` model — one assistant message contains all tool interactions plus the final text response.
 
-```
+```text
 User message  → 1 row in messages (role: 'user')
 Agent loop    → 1 row in messages (role: 'assistant', parts: [...all tool_calls + tool_results + text])
 ```
@@ -1024,7 +1035,7 @@ These are intentionally deferred:
 ## 10. Environment Variables (updated)
 
 | Variable | Required | Default | Purpose |
-|----------|----------|---------|---------|
+| ---------- | ---------- | --------- | --------- |
 | `ANTHROPIC_API_KEY` | Yes | — | Claude API |
 | `ANTHROPIC_MODEL` | No | `claude-haiku-4-5` | Default model |
 | `OPENAI_API_KEY` | No | — | TTS (disabled without) |
@@ -1038,7 +1049,7 @@ These are intentionally deferred:
 ### Unit Tests (core layer — no I/O, no DB)
 
 | Test | What it proves |
-|------|---------------|
+| ------ | --------------- |
 | `RegisterUserInteractor` | Validates input, calls `PasswordHasher.hash()`, calls `UserRepository.create()`, calls `SessionRepository.create()`. Uses stub/mock ports. |
 | `AuthenticateUserInteractor` | Correct password → session created. Wrong password → throws. User not found → still calls `PasswordHasher.verify()` against dummy hash (timing-safe), then throws. NULL `password_hash` (seed users) → throws. |
 | `ValidateSessionInteractor` | Valid token → returns user. Expired → throws. Missing → throws. |
@@ -1052,7 +1063,7 @@ These are intentionally deferred:
 ### Integration Tests (adapter layer — real SQLite)
 
 | Test | What it proves |
-|------|---------------|
+| ------ | --------------- |
 | `SessionDataMapper` | Create → findByToken → delete lifecycle against test DB. Expired sessions not found. |
 | `UserDataMapper (extended)` | `create()` → `findByEmail()` → `findById()` chain. Duplicate email rejected. |
 | `ConversationDataMapper` | Create → listByUser → findById → delete. CASCADE deletes messages. |
@@ -1062,7 +1073,7 @@ These are intentionally deferred:
 ### Middleware Test
 
 | Test | What it proves |
-|------|---------------|
+| ------ | --------------- |
 | Cookie absent + protected route | 401 response |
 | Cookie present + protected route | Request passes through to handler |
 | Cookie absent + public route | Request passes through |
@@ -1070,7 +1081,7 @@ These are intentionally deferred:
 ### E2E / Page-Level Tests
 
 | Test | What it proves |
-|------|---------------|
+| ------ | --------------- |
 | Login page (TEST-PAGE-03) | Form shows inline errors, retains email, clears password on failure. |
 | Register page (TEST-PAGE-04) | Inline field-level validation for password length, email format, empty name. |
 | Registration redirect (TEST-PAGE-05) | Successful registration → redirect to `/`, nav shows user info. |
@@ -1086,12 +1097,12 @@ See §14.6 for full GIVEN/WHEN/THEN specifications.
 
 ### Auth
 
-```
+```text
 POST /api/auth/register
   Body: { email: string, password: string, name: string }
   → 201: { user: { id, email, name, roles } }
-  → 400: { error: string }    — "Email already registered" for duplicates;
-                                validation message listing all invalid fields otherwise
+  → 409: { error: string }    — "Email already registered" for duplicates;
+  → 400: { error: string }    — validation message listing all invalid fields
 
 POST /api/auth/login
   Body: { email: string, password: string }
@@ -1116,7 +1127,7 @@ POST /api/auth/switch  (ADMIN only)
 
 ### Conversations
 
-```
+```text
 GET /api/conversations
   Cookie: lms_session_token (required)
   Query: ?limit=20
@@ -1143,7 +1154,7 @@ DELETE /api/conversations/[id]
 
 ### Chat (updated)
 
-```
+```text
 POST /api/chat/stream
   Cookie: lms_session_token (optional — absent = ANONYMOUS role, no persistence)
   Body: { messages: ChatMessage[], conversationId?: string }
@@ -1180,7 +1191,7 @@ POST /api/tts
 #### Registration
 
 | ID | Requirement |
-|----|-------------|
+| ---- | ------------- |
 | REG-1 | The system MUST allow a visitor to create an account with email, password, and name. |
 | REG-2 | The system MUST hash the password with bcryptjs (cost 12) before storing it. |
 | REG-3 | The system MUST reject registration if the email is already registered (400 response). |
@@ -1194,7 +1205,7 @@ POST /api/tts
 #### Authentication
 
 | ID | Requirement |
-|----|-------------|
+| ---- | ------------- |
 | AUTH-1 | The system MUST allow a registered user to log in with email and password. |
 | AUTH-2 | The system MUST create a new session token (crypto.randomUUID) on each successful login. |
 | AUTH-3 | The system MUST return 401 for invalid credentials without revealing whether the email or password was wrong. |
@@ -1206,7 +1217,7 @@ POST /api/tts
 #### Session & Cookie
 
 | ID | Requirement |
-|----|-------------|
+| ---- | ------------- |
 | SESS-1 | The session cookie MUST be httpOnly, sameSite: lax, path: /, secure in production. |
 | SESS-2 | The session token MUST be a cryptographically random UUID. |
 | SESS-3 | The session lookup MUST go through `ValidateSessionInteractor` → `SessionRepository` (never raw DB in route handlers). |
@@ -1214,7 +1225,7 @@ POST /api/tts
 #### Middleware & Route Protection
 
 | ID | Requirement |
-|----|-------------|
+| ---- | ------------- |
 | MW-1 | Middleware MUST run in Edge Runtime — cookie presence check only, no DB access. |
 | MW-2 | Middleware MUST return 401 for protected routes (`/api/conversations/*`, `/api/auth/me`, `/api/auth/logout`) when the cookie is missing. |
 | MW-3 | Middleware MUST pass chat routes (`/api/chat/*`, `/api/tts`) without cookie — ANONYMOUS access is allowed. |
@@ -1225,7 +1236,7 @@ POST /api/tts
 #### RBAC & Role-Aware LLM
 
 | ID | Requirement |
-|----|-------------|
+| ---- | ------------- |
 | RBAC-1 | The system MUST provide 4 roles: ANONYMOUS, AUTHENTICATED, STAFF, ADMIN. |
 | RBAC-2 | The system MUST pass the caller's role to `ChatPolicyInteractor` for system prompt generation. |
 | RBAC-3 | The system MUST filter available tools by role via `ToolAccessPolicy.getToolNamesForRole()`. |
@@ -1237,7 +1248,7 @@ POST /api/tts
 #### Role Switcher (ADMIN Simulation)
 
 | ID | Requirement |
-|----|-------------|
+| ---- | ------------- |
 | SWITCH-1 | The role switcher MUST only be accessible to users with the ADMIN role (exception: all authenticated users in `NODE_ENV === 'development'`). |
 | SWITCH-2 | The simulated role MUST be stored in a separate `lms_simulated_role` cookie, not the session. |
 | SWITCH-3 | The system MUST verify ADMIN role via `ValidateSessionInteractor` before accepting a switch request. |
@@ -1245,7 +1256,7 @@ POST /api/tts
 #### Chat History
 
 | ID | Requirement |
-|----|-------------|
+| ---- | ------------- |
 | CHAT-1 | The system MUST persist every authenticated user's messages and assistant responses to SQLite. (ANONYMOUS visitors are excluded — see NEG-DATA-2.) |
 | CHAT-2 | The system MUST auto-create a conversation on the first message (when no conversationId is provided). |
 | CHAT-3 | The system MUST auto-title conversations from the first user message (truncated to 80 chars). |
@@ -1260,7 +1271,7 @@ POST /api/tts
 #### UI
 
 | ID | Requirement |
-|----|-------------|
+| ---- | ------------- |
 | UI-1 | Unauthenticated visitors MUST see "Sign In" / "Register" links in the navigation. |
 | UI-2 | Authenticated users MUST see their name, conversation history, and accessibility controls. |
 | UI-3 | ADMIN users MUST additionally see the role simulation panel. |
@@ -1274,7 +1285,7 @@ POST /api/tts
 #### Security Prohibitions
 
 | ID | Requirement |
-|----|-------------|
+| ---- | ------------- |
 | NEG-SEC-1 | The system MUST NOT store passwords in plaintext — ever. |
 | NEG-SEC-2 | The system MUST NOT return `passwordHash` in any API response or client-facing prop. |
 | NEG-SEC-3 | The system MUST NOT log passwords, password hashes, or session tokens. |
@@ -1287,7 +1298,7 @@ POST /api/tts
 #### Architecture Prohibitions
 
 | ID | Requirement |
-|----|-------------|
+| ---- | ------------- |
 | NEG-ARCH-1 | Core layer MUST NOT import from `src/lib/` or `src/adapters/` — dependencies point inward only. |
 | NEG-ARCH-2 | Data mappers MUST NOT contain authorization logic — ownership checks belong in use-case interactors. |
 | NEG-ARCH-3 | Middleware MUST NOT access the database — `better-sqlite3` is incompatible with Edge Runtime. |
@@ -1298,7 +1309,7 @@ POST /api/tts
 #### Role Prohibitions
 
 | ID | Requirement |
-|----|-------------|
+| ---- | ------------- |
 | NEG-ROLE-1 | Non-ADMIN users MUST NOT access the role-switcher endpoint — return 403 (bypassed when `NODE_ENV === 'development'`). |
 | NEG-ROLE-2 | ANONYMOUS users MUST NOT access full chapter content, audio generation, or checklists. |
 | NEG-ROLE-3 | ANONYMOUS users MUST NOT access conversation history endpoints (`/api/conversations/*`). |
@@ -1307,7 +1318,7 @@ POST /api/tts
 #### Data Prohibitions
 
 | ID | Requirement |
-|----|-------------|
+| ---- | ------------- |
 | NEG-DATA-1 | The system MUST NOT allow a user to read, modify, or delete another user's conversations. |
 | NEG-DATA-2 | The system MUST NOT persist chat messages for ANONYMOUS visitors (no session = no conversation tracking). |
 | NEG-DATA-3 | The system MUST NOT allow conversations to exceed 100 messages (hard limit — returns 400 at creation; see TEST-CHAT-09). |
@@ -1323,7 +1334,7 @@ These are acceptance-test-style scenarios covering complete user journeys. Each 
 
 #### TEST-REG-01: Successful Registration
 
-```
+```text
 GIVEN   a visitor with no account
 WHEN    they POST /api/auth/register with:
           { email: "alice@example.com", password: "securepass1", name: "Alice" }
@@ -1338,7 +1349,7 @@ AND     a row exists in user_roles linking the user to the AUTHENTICATED role
 
 #### TEST-REG-02: Duplicate Email Rejection
 
-```
+```text
 GIVEN   a user "alice@example.com" already exists
 WHEN    a visitor POSTs /api/auth/register with { email: "alice@example.com", ... }
 THEN    response status = 400
@@ -1349,7 +1360,7 @@ AND     no new session is created
 
 #### TEST-REG-03: Password Too Short
 
-```
+```text
 GIVEN   a visitor with no account
 WHEN    they POST /api/auth/register with { password: "short" } (5 chars)
 THEN    response status = 400
@@ -1359,7 +1370,7 @@ AND     no user is created
 
 #### TEST-REG-04: Password Too Long (bcrypt limit)
 
-```
+```text
 GIVEN   a visitor with no account
 WHEN    they POST /api/auth/register with { password: <73 characters> }
 THEN    response status = 400
@@ -1369,7 +1380,7 @@ AND     no user is created (password NOT silently truncated)
 
 #### TEST-REG-05: Invalid Email Format
 
-```
+```text
 GIVEN   a visitor with no account
 WHEN    they POST /api/auth/register with { email: "not-an-email" }
 THEN    response status = 400
@@ -1378,7 +1389,7 @@ AND     response body contains a validation error about email format
 
 #### TEST-REG-06: Empty Name
 
-```
+```text
 GIVEN   a visitor with no account
 WHEN    they POST /api/auth/register with { name: "" }
 THEN    response status = 400
@@ -1387,7 +1398,7 @@ AND     response body contains a validation error about name being required
 
 #### TEST-REG-07: Name Too Long
 
-```
+```text
 GIVEN   a visitor with no account
 WHEN    they POST /api/auth/register with { name: <101 characters> }
 THEN    response status = 400
@@ -1396,7 +1407,7 @@ AND     response body contains a validation error about name length
 
 #### TEST-REG-08: Missing Required Fields
 
-```
+```text
 GIVEN   a visitor with no account
 WHEN    they POST /api/auth/register with { email: "a@b.com" } (missing password and name)
 THEN    response status = 400
@@ -1407,7 +1418,7 @@ AND     response body lists all missing fields
 
 #### TEST-LOGIN-01: Successful Login
 
-```
+```text
 GIVEN   a registered user "alice@example.com" with password "securepass1"
 WHEN    they POST /api/auth/login with { email: "alice@example.com", password: "securepass1" }
 THEN    response status = 200
@@ -1418,7 +1429,7 @@ AND     a new row exists in the sessions table
 
 #### TEST-LOGIN-02: Wrong Password
 
-```
+```text
 GIVEN   a registered user "alice@example.com"
 WHEN    they POST /api/auth/login with { email: "alice@example.com", password: "wrongpass" }
 THEN    response status = 401
@@ -1429,7 +1440,7 @@ AND     no session is created
 
 #### TEST-LOGIN-03: Nonexistent Email
 
-```
+```text
 GIVEN   no user with email "nobody@example.com"
 WHEN    they POST /api/auth/login with { email: "nobody@example.com", password: "anything" }
 THEN    response status = 401
@@ -1439,7 +1450,7 @@ AND     the response is indistinguishable from TEST-LOGIN-02 (timing-safe)
 
 #### TEST-LOGIN-04: Seed User Without Password (cannot login)
 
-```
+```text
 GIVEN   the hardcoded ADMIN seed user with NULL password_hash
 WHEN    they POST /api/auth/login with { email: "admin@lms.local", password: "anything" }
 THEN    response status = 401
@@ -1449,7 +1460,7 @@ AND     response body = { error: "Invalid credentials" }
 
 #### TEST-LOGIN-05: Multiple Active Sessions
 
-```
+```text
 GIVEN   user "alice" is logged in on Browser A (session token A)
 WHEN    user "alice" logs in on Browser B
 THEN    a new session token B is created
@@ -1460,7 +1471,7 @@ AND     session token A remains valid (concurrent sessions allowed)
 
 #### TEST-SESS-01: Valid Session — Access Protected Route
 
-```
+```text
 GIVEN   user "alice" has a valid session (cookie: lms_session_token=<valid>)
 WHEN    they GET /api/auth/me
 THEN    response status = 200
@@ -1469,7 +1480,7 @@ AND     response body = { user: { id, email: "alice@...", name: "Alice", roles: 
 
 #### TEST-SESS-02: Expired Session — Rejected
 
-```
+```text
 GIVEN   user "alice" has an expired session (expires_at < now)
 WHEN    they GET /api/auth/me
 THEN    response status = 401
@@ -1478,7 +1489,7 @@ AND     the Set-Cookie header clears the lms_session_token cookie
 
 #### TEST-SESS-03: Invalid Token — Rejected
 
-```
+```text
 GIVEN   a request with cookie lms_session_token=<random-garbage>
 WHEN    they GET /api/auth/me
 THEN    response status = 401
@@ -1487,7 +1498,7 @@ AND     no user data is returned
 
 #### TEST-SESS-04: Logout Destroys Session
 
-```
+```text
 GIVEN   user "alice" has a valid session
 WHEN    they POST /api/auth/logout
 THEN    response status = 200
@@ -1499,7 +1510,7 @@ THEN    response status = 401
 
 #### TEST-SESS-05: No Cookie — Middleware Blocks Protected Routes
 
-```
+```text
 GIVEN   a request with no lms_session_token cookie
 WHEN    they GET /api/conversations
 THEN    response status = 401 (from middleware, no DB hit)
@@ -1507,7 +1518,7 @@ THEN    response status = 401 (from middleware, no DB hit)
 
 #### TEST-SESS-06: No Cookie — Middleware Allows Chat Routes
 
-```
+```text
 GIVEN   a request with no lms_session_token cookie
 WHEN    they POST /api/chat/stream with { messages: [...] }
 THEN    the request reaches the route handler
@@ -1520,7 +1531,7 @@ AND     only 6 tools are available (calculator, search_books, get_book_summary, 
 
 #### TEST-RBAC-01: ANONYMOUS Gets Limited Tools
 
-```
+```text
 GIVEN   an unauthenticated visitor (no session cookie)
 WHEN    they POST /api/chat/stream with a message asking for a full chapter
 THEN    the LLM receives only 6 tools (not get_chapter, get_checklist, etc.)
@@ -1531,7 +1542,7 @@ AND     the LLM suggests creating an account for full access
 
 #### TEST-RBAC-02: AUTHENTICATED Gets Full Tools
 
-```
+```text
 GIVEN   user "alice" with role AUTHENTICATED and a valid session
 WHEN    they POST /api/chat/stream with a message asking for a full chapter
 THEN    the LLM receives all 11 tools
@@ -1541,7 +1552,7 @@ AND     the LLM CAN return full chapter content
 
 #### TEST-RBAC-03: ADMIN Can Switch Roles
 
-```
+```text
 GIVEN   user "admin" with role ADMIN and a valid session
 WHEN    they POST /api/auth/switch with { role: "ANONYMOUS" }
 THEN    response status = 200
@@ -1551,7 +1562,7 @@ AND     subsequent LLM requests use the ANONYMOUS system prompt + tool set
 
 #### TEST-RBAC-04: Non-ADMIN Cannot Switch Roles
 
-```
+```text
 GIVEN   user "alice" with role AUTHENTICATED and a valid session
 WHEN    they POST /api/auth/switch with { role: "ADMIN" }
 THEN    response status = 403
@@ -1561,7 +1572,7 @@ AND     no lms_simulated_role cookie is set
 
 #### TEST-RBAC-05: ANONYMOUS Cannot Access Conversations
 
-```
+```text
 GIVEN   an unauthenticated visitor (no session cookie)
 WHEN    they GET /api/conversations
 THEN    response status = 401 (middleware rejects — no cookie on protected route)
@@ -1569,7 +1580,7 @@ THEN    response status = 401 (middleware rejects — no cookie on protected rou
 
 #### TEST-RBAC-06: Tool Content Gating (Belt and Suspenders)
 
-```
+```text
 GIVEN   an unauthenticated visitor (ANONYMOUS role)
 WHEN    the LLM somehow attempts to call get_chapter (tool not in filtered list)
 THEN    the tool call is rejected (tool not available in the filtered set)
@@ -1580,7 +1591,7 @@ Note:   This is enforced by ToolAccessPolicy, not just the prompt directive
 
 #### TEST-CHAT-01: First Message Creates Conversation
 
-```
+```text
 GIVEN   user "alice" is authenticated
 WHEN    they POST /api/chat/stream with { messages: [{ role: "user", content: "Tell me about Bauhaus" }] }
         (no conversationId)
@@ -1593,7 +1604,7 @@ AND     the assistant response (with parts) is persisted after stream completes
 
 #### TEST-CHAT-02: Subsequent Message Appends to Conversation
 
-```
+```text
 GIVEN   user "alice" is authenticated and has conversation "conv_123"
 WHEN    they POST /api/chat/stream with { messages: [...], conversationId: "conv_123" }
 THEN    the message is appended to the existing conversation
@@ -1603,7 +1614,7 @@ AND     the conversation's updated_at timestamp is refreshed
 
 #### TEST-CHAT-03: Conversation Ownership Enforced
 
-```
+```text
 GIVEN   user "alice" owns conversation "conv_alice_1"
 AND     user "bob" is authenticated
 WHEN    bob GETs /api/conversations/conv_alice_1
@@ -1614,7 +1625,7 @@ THEN    response status = 404
 
 #### TEST-CHAT-04: Load Previous Conversation
 
-```
+```text
 GIVEN   user "alice" has conversation "conv_123" with 5 messages
 WHEN    they GET /api/conversations/conv_123
 THEN    response contains all 5 messages in chronological order
@@ -1624,7 +1635,7 @@ AND     tool_call/tool_result parts are preserved in the parts JSON
 
 #### TEST-CHAT-05: Delete Conversation Cascades
 
-```
+```text
 GIVEN   user "alice" has conversation "conv_123" with 10 messages
 WHEN    they DELETE /api/conversations/conv_123
 THEN    response status = 200
@@ -1636,7 +1647,7 @@ THEN    response status = 404
 
 #### TEST-CHAT-06: List Conversations (Most Recent First)
 
-```
+```text
 GIVEN   user "alice" has 3 conversations created at T1, T2, T3
 WHEN    they GET /api/conversations
 THEN    response contains 3 conversations ordered by updated_at DESC (T3 first)
@@ -1645,7 +1656,7 @@ AND     each entry contains { id, title, updatedAt, messageCount }
 
 #### TEST-CHAT-07: New Chat Resets State
 
-```
+```text
 GIVEN   user "alice" is in conversation "conv_123" in the UI
 WHEN    they click "New Chat"
 THEN    the client clears conversationId from state
@@ -1655,7 +1666,7 @@ AND     the next POST /api/chat/stream omits conversationId (creating a new conv
 
 #### TEST-CHAT-08: ANONYMOUS Chat Is Not Persisted
 
-```
+```text
 GIVEN   an unauthenticated visitor (no session cookie)
 WHEN    they POST /api/chat/stream with a message
 THEN    the LLM responds normally (with ANONYMOUS tool set)
@@ -1666,7 +1677,7 @@ AND     the SSE stream does NOT include a conversationId event
 
 #### TEST-CHAT-09: Conversation Message Limit
 
-```
+```text
 GIVEN   user "alice" has a conversation with 100 messages
 WHEN    they POST /api/chat/stream with a new message to that conversation
 THEN    response status = 400
@@ -1675,7 +1686,7 @@ AND     response body = { error: "Conversation message limit reached (100). Star
 
 #### TEST-CHAT-10: Conversation Count Limit
 
-```
+```text
 GIVEN   user "alice" has 50 conversations
 WHEN    they POST /api/chat/stream with a new message (no conversationId, which would create #51)
 THEN    the oldest conversation is deleted to make room
@@ -1686,7 +1697,7 @@ AND     the new conversation is created successfully
 
 #### TEST-PAGE-01: Unauthenticated Visitor Sees Public Layout
 
-```
+```text
 GIVEN   a visitor with no session cookie
 WHEN    they navigate to /
 THEN    the page renders with "Sign In" / "Register" links in the nav
@@ -1696,7 +1707,7 @@ AND     no conversation sidebar is shown
 
 #### TEST-PAGE-02: Authenticated User Sees Full Layout
 
-```
+```text
 GIVEN   user "alice" is authenticated
 WHEN    they navigate to /
 THEN    the nav shows alice's name and role
@@ -1706,7 +1717,7 @@ AND     the chat is fully functional with all tools
 
 #### TEST-PAGE-03: Login Page Shows Errors Inline
 
-```
+```text
 GIVEN   a visitor navigates to /login
 WHEN    they submit the form with wrong credentials
 THEN    the page shows "Invalid credentials" as an inline error (not an alert/popup)
@@ -1716,7 +1727,7 @@ AND     the password field IS cleared (security)
 
 #### TEST-PAGE-04: Register Page Validates Fields
 
-```
+```text
 GIVEN   a visitor navigates to /register
 WHEN    they submit with password "short" (5 chars)
 THEN    the page shows an inline error: "Password must be at least 8 characters"
@@ -1728,7 +1739,7 @@ THEN    the page shows an inline error: "Name is required"
 
 #### TEST-PAGE-05: Successful Registration Redirects
 
-```
+```text
 GIVEN   a visitor fills out the register form with valid data
 WHEN    they submit the form
 THEN    the account is created (REG-1 through REG-9)
@@ -1738,7 +1749,7 @@ AND     the nav now shows their name and AUTHENTICATED role
 
 #### TEST-PAGE-06: Successful Login Redirects
 
-```
+```text
 GIVEN   a registered user navigates to /login
 WHEN    they submit valid credentials
 THEN    a session is created
@@ -1750,7 +1761,7 @@ AND     their previous conversations are loadable
 
 #### TEST-EDGE-01: DB Unavailable During Session Validation
 
-```
+```text
 GIVEN   the SQLite database file is locked or corrupted
 WHEN    a request arrives with a valid session cookie
 THEN    the route handler returns 500 { error: "Internal server error" }
@@ -1759,7 +1770,7 @@ AND     the error is logged (but no sensitive data in the log)
 
 #### TEST-EDGE-02: Concurrent Registration Race Condition
 
-```
+```text
 GIVEN   two simultaneous POST /api/auth/register with the same email
 WHEN    both requests reach the interactor
 THEN    one succeeds (201) and the other fails (400: "Email already registered")
@@ -1769,7 +1780,7 @@ AND     only one user row exists in the DB
 
 #### TEST-EDGE-03: Cookie Present but Session Deleted (e.g., admin cleanup)
 
-```
+```text
 GIVEN   user "alice" has cookie lms_session_token=<token>
 AND     an admin manually deletes alice's session from the DB
 WHEN    alice makes a request to /api/auth/me
@@ -1779,7 +1790,7 @@ AND     the stale cookie is cleared
 
 #### TEST-EDGE-04: Malformed Request Bodies
 
-```
+```text
 GIVEN   an authenticated user
 WHEN    they POST /api/chat/stream with { messages: "not-an-array" }
 THEN    response status = 400
@@ -1790,7 +1801,7 @@ THEN    response status = 400
 
 #### TEST-EDGE-05: Conversation ID Tampering
 
-```
+```text
 GIVEN   user "alice" is authenticated
 WHEN    they POST /api/chat/stream with { conversationId: "conv_nonexistent" }
 THEN    response status = 404
@@ -1799,7 +1810,7 @@ THEN    response status = 404
 
 #### TEST-EDGE-06: XSS in User Input Fields
 
-```
+```text
 GIVEN   a visitor registers with name: "<script>alert('xss')</script>"
 WHEN    the name is displayed in the UI
 THEN    it is rendered as escaped text, NOT executed as HTML
@@ -1808,7 +1819,7 @@ THEN    it is rendered as escaped text, NOT executed as HTML
 
 #### TEST-EDGE-07: SQL Injection in Login
 
-```
+```text
 GIVEN   a visitor attempts login with email: "' OR '1'='1"
 WHEN    the request reaches AuthenticateUserInteractor
 THEN    the parameterized query finds no user (email is treated as a literal string)

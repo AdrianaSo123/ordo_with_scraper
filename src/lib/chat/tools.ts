@@ -203,12 +203,14 @@ export async function createToolResults(
     toolUses.map(
       async (toolUse): Promise<Anthropic.Messages.ToolResultBlockParam> => {
         try {
-          const command = (commands as any)[toolUse.name];
+          const command = commands[toolUse.name as keyof typeof commands] as
+            | { execute(input: Record<string, unknown>): Promise<unknown> }
+            | undefined;
           if (!command) throw new Error(`Unknown tool: ${toolUse.name}`);
 
           const input = role
             ? { ...(toolUse.input as Record<string, unknown>), role }
-            : toolUse.input;
+            : (toolUse.input as Record<string, unknown>);
           const result = await command.execute(input);
           return {
             type: "tool_result" as const,
