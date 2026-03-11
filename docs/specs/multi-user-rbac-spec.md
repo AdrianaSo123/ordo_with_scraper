@@ -1,6 +1,6 @@
 # Multi-User Auth, RBAC & Chat History — System Spec
 
-> **Status:** Draft (v2 — architecture-audited)  
+> **Status:** Draft (v2.1 — architecture-audited + requirements + behavioral tests)  
 > **Date:** 2026-03-11  
 > **Scope:** Replace mock role-switcher with real auth, enforce RBAC server-side, persist chat history per user, make LLM role-aware.  
 > **Audit:** Clean Architecture (Robert C. Martin), SOLID, GoF design patterns.
@@ -232,7 +232,7 @@ src/core/use-cases/ToolAccessPolicy.ts
 ```typescript
 import type { RoleName } from "../entities/user";
 
-const TOOL_ACCESS: Record<RoleName, readonly string[]> = {
+const TOOL_ACCESS: Record<RoleName, readonly string[] | "ALL"> = {
   ANONYMOUS: ["calculator", "search_books", "get_book_summary", "set_theme", "navigate", "adjust_ui"],
   AUTHENTICATED: "ALL",
   STAFF: "ALL",
@@ -280,6 +280,7 @@ src/core/entities/
 
 src/core/use-cases/
 ├── SessionRepository.ts     — port: create, findByToken, delete, deleteExpired
+├── UserRepository.ts        — port: create, findByEmail, findById, findByRole
 ├── ConversationRepository.ts — port: create, list, get, delete, updateTitle
 ├── MessageRepository.ts     — port: create, listByConversation
 ├── PasswordHasher.ts        — port: hash(plain), verify(plain, hash)
@@ -400,6 +401,9 @@ Add these tables to `src/lib/db/schema.ts`:
 ALTER TABLE users ADD COLUMN password_hash TEXT;
 ALTER TABLE users ADD COLUMN created_at TEXT NOT NULL DEFAULT (datetime('now'));
 
+-- Add UNIQUE constraint on email (needed for duplicate-email rejection)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
 -- Sessions
 CREATE TABLE IF NOT EXISTS sessions (
   id TEXT PRIMARY KEY,                    -- crypto.randomUUID()
@@ -494,12 +498,14 @@ class ChatPolicyInteractor implements UseCase<{ role: RoleName }, string> {
 **Implementation in `/api/chat/stream`:**
 
 ```
-1. ValidateSessionInteractor.execute({ token }) → sessionUser
-2. role = sessionUser.roles[0] (highest privilege)
-3. systemPrompt = ChatPolicyInteractor.execute({ role })
-4. allowedTools = ToolAccessPolicy.getToolNamesForRole(role)
-5. tools = filter ALL_TOOLS by allowedTools
-6. Pass systemPrompt + tools to Anthropic agent loop
+1. Read lms_session_token cookie
+2. If cookie present → ValidateSessionInteractor.execute({ token }) → sessionUser
+   If cookie absent → sessionUser = { roles: ["ANONYMOUS"] } (synthetic ANONYMOUS identity)
+3. role = sessionUser.roles[0] (highest privilege)
+4. systemPrompt = ChatPolicyInteractor.execute({ role })
+5. allowedTools = ToolAccessPolicy.getToolNamesForRole(role)
+6. tools = filter ALL_TOOLS by allowedTools
+7. Pass systemPrompt + tools to Anthropic agent loop
 ```
 
 **Tool access policy** (domain rule in core — see §2A Issue D):
@@ -572,12 +578,16 @@ Body: {
 ```
 
 Flow:
-1. `ValidateSessionInteractor.execute({ token })` → sessionUser
-2. If `conversationId` provided: `ConversationInteractor.get(conversationId, sessionUser.id)` — enforces ownership
-3. If omitted: `ConversationInteractor.create(sessionUser.id, title)` — auto-title from first message (80 chars)
-4. Before calling Anthropic: `MessageRepository.create(conversationId, userMessage)` — persist user message
-5. After stream completes: `MessageRepository.create(conversationId, assistantMessage)` — persist assistant response with parts
-6. Return `conversationId` in the SSE stream (first event) so client can track it
+1. Read `lms_session_token` cookie
+2. If cookie present → `ValidateSessionInteractor.execute({ token })` → sessionUser
+   If cookie absent → treat as ANONYMOUS (skip persistence, skip to step 6)
+3. If `conversationId` provided: `ConversationInteractor.get(conversationId, sessionUser.id)` — enforces ownership
+4. If omitted: `ConversationInteractor.create(sessionUser.id, title)` — auto-title from first message (80 chars)
+5. Before calling Anthropic: `MessageRepository.create(conversationId, userMessage)` — persist user message
+6. Build role-aware system prompt + filtered tools (ANONYMOUS if no session)
+7. Call Anthropic with system prompt + tools, stream SSE response
+8. After stream completes (authenticated only): `MessageRepository.create(conversationId, assistantMessage)` — persist assistant response with parts
+9. Return `conversationId` in the SSE stream first event (authenticated only — ANONYMOUS gets no conversationId)
 
 #### Client-Side
 
@@ -871,16 +881,17 @@ The `search_books` tool for ANONYMOUS should return truncated results (title + f
 User sends message
   → Client: dispatch APPEND_USER_MESSAGE
   → Client: POST /api/chat/stream { messages, conversationId? }
-  → Server: ValidateSessionInteractor.execute({ token }) → sessionUser
-  → Server: if no conversationId, ConversationInteractor.create(userId, title)
-  → Server: MessageRepository.create(conversationId, userMessage)
+  → Server: read cookie → if present, ValidateSessionInteractor → sessionUser
+                          → if absent, synthetic ANONYMOUS identity (no persistence)
+  → Server: (authenticated) if no conversationId, ConversationInteractor.create(userId, title)
+  → Server: (authenticated) MessageRepository.create(conversationId, userMessage)
   → Server: ChatPolicyInteractor.execute({ role }) → systemPrompt
   → Server: ToolAccessPolicy.getToolNamesForRole(role) → filtered tools
   → Server: call Anthropic with role-aware prompt + filtered tools
   → Server: stream SSE response
-  → Server: on stream complete, MessageRepository.create(conversationId, assistantMessage)
+  → Server: on stream complete, (authenticated) MessageRepository.create(conversationId, assistantMessage)
   → Client: update state from SSE events
-  → Client: store conversationId for subsequent messages
+  → Client: (authenticated) store conversationId for subsequent messages
 ```
 
 ### Conversation Lifecycle
@@ -1114,7 +1125,7 @@ DELETE /api/conversations/[id]
 
 ```
 POST /api/chat/stream
-  Cookie: lms_session_token (required)
+  Cookie: lms_session_token (optional — absent = ANONYMOUS role, no persistence)
   Body: { messages: ChatMessage[], conversationId?: string }
   → SSE stream:
       data: {"conversationId": "conv_xxx"}     ← first event
@@ -1199,7 +1210,7 @@ POST /api/chat/stream
 
 | ID | Requirement |
 |----|-------------|
-| CHAT-1 | The system MUST persist every user message and assistant response to SQLite. |
+| CHAT-1 | The system MUST persist every authenticated user's messages and assistant responses to SQLite. (ANONYMOUS visitors are excluded — see NEG-DATA-2.) |
 | CHAT-2 | The system MUST auto-create a conversation on the first message (when no conversationId is provided). |
 | CHAT-3 | The system MUST auto-title conversations from the first user message (truncated to 80 chars). |
 | CHAT-4 | The system MUST return `conversationId` in the first SSE event so the client can track it. |
