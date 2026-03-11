@@ -218,16 +218,23 @@ export function AudioPlayer({ title, text }: AudioPlayerProps) {
     audio.addEventListener("pause", () => dispatch({ type: "PAUSE" }));
     audio.addEventListener("ended", () => dispatch({ type: "PAUSE" }));
 
-    await audio.play();
+    // Auto-play — browsers may block without user gesture, so catch silently
+    try {
+      await audio.play();
+    } catch {
+      // Autoplay blocked; user can press play manually
+      dispatch({ type: "PAUSE" });
+    }
   }
 
-  /* ── #1: Auto-generate on mount ────────────────────────────────── */
+  /* ── #1: Auto-generate on mount (guarded) ────────────────────────── */
 
   useEffect(() => {
     if (hasStarted.current) return;
+    if (!text || text.trim().length === 0) return; // wait for text to arrive during streaming
     hasStarted.current = true;
     fetchAndPlay();
-  }, [fetchAndPlay]);
+  }, [fetchAndPlay, text]);
 
   /* ── #5: Off-screen toast via IntersectionObserver ─────────────── */
 
@@ -265,6 +272,11 @@ export function AudioPlayer({ title, text }: AudioPlayerProps) {
       } else {
         audioRef.current.play();
       }
+      return;
+    }
+    // Edge case: fetch completed but audio element wasn't created (shouldn't happen)
+    if (state.audioUrl && !audioRef.current) {
+      createAndPlay(state.audioUrl);
     }
   }
 
