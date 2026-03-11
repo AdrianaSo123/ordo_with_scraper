@@ -15,7 +15,7 @@ export class SearchBooksCommand implements ToolCommand<{ query: string; max_resu
     const results = await this.search.execute({ query, maxResults: Math.min(max_results, 15) });
     if (results.length === 0) return `No results found for "${query}".`;
 
-    if (role === "ANONYMOUS") {
+    if (role === "ANONYMOUS" || !role) {
       return JSON.stringify(results.map(r => ({
         book: `${r.bookNumber}. ${r.bookTitle}`,
         bookNumber: r.bookNumber,
