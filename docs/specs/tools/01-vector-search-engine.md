@@ -1,6 +1,6 @@
 # Tool Spec 01 — Vector Search & Embedding Infrastructure
 
-> **Status:** Draft v2.1 — audit-hardened (UB×3, GoF×3, GB×3, GH×4 resolved)
+> **Status:** Draft v2.2 — QA-hardened (8 consistency fixes: diagram, ports, interfaces, numbering)
 > **Priority:** Critical — highest-impact single improvement
 > **Scope:** General-purpose embedding infrastructure with hybrid BM25 + vector
 >   search, markdown-aware chunking, SQLite storage, MCP server, and on-demand
@@ -63,19 +63,25 @@ conversation history is added) without a rewrite.
 ┌─────────────────────────────────────────────────────────────────┐
 │                    CORE  (zero infra imports)                   │
 │                                                                 │
-│  ┌──────────────┐  ┌──────────────┐  ┌────────────────────┐    │
-│  │ Chunker      │  │ HybridSearch │  │ EmbeddingPipeline  │    │
-│  │ (port)       │  │ Engine       │  │ (orchestrator)     │    │
-│  │              │  │ BM25 + Vec   │  │                    │    │
-│  │ Markdown  ◄──┤  │ + RRF        │  │ Chunker → Embedder │    │
-│  │ Conversation │  │              │  │ → VectorStore      │    │
-│  └──────────────┘  └──────┬───────┘  └────────────────────┘    │
-│                           │                                     │
-│  ┌──────────────┐  ┌──────┴───────┐  ┌────────────────────┐    │
-│  │ Embedder     │  │ VectorStore  │  │ QueryProcessor     │    │
-│  │ (port)       │  │ (port)       │  │ BM25Scorer         │    │
-│  └──────────────┘  └──────────────┘  │ cosineSimilarity   │    │
-│                                      └────────────────────┘    │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────┐  │
+│  │ Ports            │  │ Engine           │  │ Pipeline      │  │
+│  │  Chunker         │  │ HybridSearch     │  │ Embedding     │  │
+│  │  Embedder        │  │  Engine          │  │  Pipeline     │  │
+│  │  VectorStore     │  │  (BM25+Vec+RRF)  │  │ Embedding     │  │
+│  │  BM25IndexStore  │  │ SearchHandler    │  │  PipelineFactory│ │
+│  │  SearchHandler   │  │  Chain (GoF-1)   │  │ ChangeDetector│  │
+│  │  QueryProcessing │  │ QueryProcessor   │  │ Embedding     │  │
+│  │   Step           │  │  (step chain)    │  │  Validator    │  │
+│  └──────────────────┘  └──────────────────┘  └──────────────┘  │
+│                                                                 │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────┐  │
+│  │ Chunking         │  │ Scoring          │  │ Query Steps   │  │
+│  │  MarkdownChunker │  │ BM25Scorer       │  │ LowercaseStep │  │
+│  │  (heading-aware, │  │ dotSimilarity    │  │ StopwordStep  │  │
+│  │   UB-1: Core)    │  │ l2Normalize      │  │ SynonymStep   │  │
+│  │                  │  │ ReciprocalRank   │  │               │  │
+│  │                  │  │  Fusion          │  │               │  │
+│  └──────────────────┘  └──────────────────┘  └──────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
         │                    │
         ▼                    ▼
@@ -89,9 +95,14 @@ conversation history is added) without a rewrite.
 │  └──────────────────┘  └──────────────────┘                    │
 │                                                                 │
 │  ┌──────────────────┐  ┌──────────────────┐                    │
-│  │ MarkdownChunker  │  │ InMemoryVector   │                    │
-│  │ (heading-aware)  │  │ Store (tests)    │                    │
+│  │ SQLiteBM25Index  │  │ InMemoryVector   │                    │
+│  │ Store            │  │ Store (tests)    │                    │
 │  └──────────────────┘  └──────────────────┘                    │
+│                                                                 │
+│  ┌──────────────────┐                                          │
+│  │ InMemoryBM25     │                                          │
+│  │ IndexStore(tests)│                                          │
+│  └──────────────────┘                                          │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -251,7 +262,7 @@ interface ChunkerOptions {
 }
 
 interface Chunker {
-  chunk(sourceId: string, content: string, options?: ChunkerOptions): Chunk[];
+  chunk(sourceId: string, content: string, metadata: ChunkMetadata, options?: ChunkerOptions): Chunk[];
 }
 ```
 
@@ -320,6 +331,7 @@ interface Embedder {
   embed(text: string): Promise<Float32Array>;
   embedBatch(texts: string[]): Promise<Float32Array[]>;
   dimensions(): number;  // 384 for MiniLM
+  isReady(): boolean;    // true when model is loaded and inference is available
 }
 ```
 
@@ -383,8 +395,8 @@ class EmbeddingPipeline {
     metadata: ChunkMetadata;   // discriminated union (GB-1)
   }): Promise<IndexResult> {
     // 1. Delegate change check to ChangeDetector (UB-2)
-    // 2. If unchanged AND modelVersion matches stored, skip (return early)
-    // 3. Chunk the content
+    // 2. If unchanged AND vectorStore.getModelVersion(sourceId) matches, skip (return early)
+    // 3. Chunk the content (metadata passed for enriched prefix construction — GH-2)
     // 4. Embed all chunks (batched)
     // 5. L2-normalize each embedding vector (GH-3)
     // 6. Upsert into VectorStore with modelVersion (delete old chunks first)
@@ -506,6 +518,7 @@ interface VectorStore {
   getAll(query?: VectorQuery): EmbeddingRecord[];
   getBySourceId(sourceId: string): EmbeddingRecord[];
   getContentHash(sourceId: string): string | null;
+  getModelVersion(sourceId: string): string | null;  // for stale-model detection (GH-4)
   count(sourceType?: string): number;
 }
 ```
@@ -697,7 +710,8 @@ class HybridSearchEngine {
     private vectorStore: VectorStore,
     private bm25Scorer: BM25Scorer,
     private bm25IndexStore: BM25IndexStore,   // UB-3
-    private queryProcessor: QueryProcessor,
+    private vectorQueryProcessor: QueryProcessor,   // no synonyms — model handles semantics
+    private bm25QueryProcessor: QueryProcessor,     // with synonym expansion for keyword branch
     private options: {
       vectorTopN: number;      // default 50
       bm25TopN: number;        // default 50
@@ -707,12 +721,13 @@ class HybridSearchEngine {
   ) {}
 
   async search(query: string, filters?: VectorQuery): Promise<HybridSearchResult[]> {
-    // 1. Process query via QueryProcessor pipeline (GoF-3)
-    // 2. Vector retrieval (embed → dot product → rank)
-    // 3. BM25 retrieval (tokenize → score → rank)
-    // 4. Reciprocal Rank Fusion
-    // 5. Deduplication & rollup
-    // 6. Return top N results
+    // 1. Process query via vectorQueryProcessor for embedding (GoF-3)
+    // 2. Process query via bm25QueryProcessor for BM25 scoring (GoF-3)
+    // 3. Vector retrieval (embed → dot product → rank)
+    // 4. BM25 retrieval (tokenize → score → rank)
+    // 5. Reciprocal Rank Fusion
+    // 6. Deduplication & rollup
+    // 7. Return top N results
   }
 }
 ```
@@ -720,10 +735,11 @@ class HybridSearchEngine {
 ### 6.6 Full Search Flow
 
 ```text
-1. QUERY PROCESSING (via composable step chain — §7)
-   a. LowercaseStep → StopwordStep → [SynonymStep for BM25 only]
-   b. Embed the cleaned query → 384-dim vector (~10ms)
-   c. L2-normalize the query vector (GH-3)
+1. QUERY PROCESSING (via two composable step chains — §7)
+   a. Vector branch: vectorQueryProcessor (LowercaseStep → StopwordStep)
+   b. BM25 branch: bm25QueryProcessor (LowercaseStep → StopwordStep → SynonymStep)
+   c. Embed the vector-cleaned query → 384-dim vector (~10ms)
+   d. L2-normalize the query vector (GH-3)
 
 2. VECTOR RETRIEVAL (top 50)
    a. Load all passage-level embeddings from VectorStore
@@ -1322,7 +1338,7 @@ from scratch (each is <50 lines of code).
 | --- | --- |
 | VSEARCH-12 | Chunks split on markdown heading boundaries, not mid-paragraph |
 | VSEARCH-13 | Code blocks, lists, blockquotes, and tables are never split |
-| VSEARCH-14 | Each chunk is prefixed with contextual path before embedding (`Book > Section > text`) |
+| VSEARCH-14 | Each chunk is prefixed with enriched contextual path before embedding (`Book: Chapter. FirstSentence > Section > text` — see §3.3) |
 | VSEARCH-15 | Chunks are 200-400 words (soft target), max 500 words (hard cap) |
 | VSEARCH-16 | Chunks below 50 words are merged with the previous chunk |
 
@@ -1368,12 +1384,12 @@ from scratch (each is <50 lines of code).
 
 | ID | Requirement |
 | --- | --- |
-| VSEARCH-ARCH-1 | `src/core/search/` has zero imports from `src/adapters/` or `src/lib/` |
-| VSEARCH-ARCH-2 | `HybridSearchEngine` depends only on ports, not concrete implementations |
-| VSEARCH-ARCH-3 | `BM25Scorer` and `dotSimilarity` are pure functions with no side effects |
-| VSEARCH-ARCH-4 | Existing `search_books` API contract unchanged — enhanced results are additive |
-| VSEARCH-ARCH-5 | All existing search tests continue to pass (backward compatibility) |
-| VSEARCH-ARCH-6 | `VectorStore` port is swappable — SQLite today, `sqlite-vec` at 50K+ vectors |
+| VSEARCH-35 | `src/core/search/` has zero imports from `src/adapters/` or `src/lib/` |
+| VSEARCH-36 | `HybridSearchEngine` depends only on ports, not concrete implementations |
+| VSEARCH-37 | `BM25Scorer` and `dotSimilarity` are pure functions with no side effects |
+| VSEARCH-38 | Existing `search_books` API contract unchanged — enhanced results are additive |
+| VSEARCH-39 | All existing search tests continue to pass (backward compatibility) |
+| VSEARCH-40 | `VectorStore` port is swappable — SQLite today, `sqlite-vec` at 50K+ vectors |
 
 ### Audit-Hardened (v2.1)
 
@@ -1387,7 +1403,7 @@ from scratch (each is <50 lines of code).
 | VSEARCH-46 | `QueryProcessor` is a compositor over `QueryProcessingStep[]`; each step is independently testable | GoF-3 |
 | VSEARCH-47 | `Chunk.metadata` uses `ChunkMetadata` discriminated union (`BookChunkMetadata \| ConversationMetadata`), not `Record<string, unknown>` | GB-1 |
 | VSEARCH-48 | Embedding input transformation is explicit: strip markdown, remove code blocks, normalize whitespace, prepend prefix | GB-2 |
-| VSEARCH-49 | `HybridSearchEngine` constructor signature declares all dependencies explicitly (embedder, vectorStore, bm25Scorer, bm25IndexStore, queryProcessor, options) | GB-3 |
+| VSEARCH-49 | `HybridSearchEngine` constructor signature declares all dependencies explicitly (embedder, vectorStore, bm25Scorer, bm25IndexStore, vectorQueryProcessor, bm25QueryProcessor, options) | GB-3 |
 | VSEARCH-50 | Build-time validation embeds known pairs and asserts similarity thresholds (>0.7 similar, <0.3 dissimilar) | GH-1 |
 | VSEARCH-51 | Contextual prefix includes semantic summary (chapter title + first sentence), not just navigation path | GH-2 |
 | VSEARCH-52 | All embeddings are L2-normalized before storage; vector similarity uses dot product | GH-3 |
@@ -1469,7 +1485,7 @@ TEST-VS-49: StopwordStep.process(["the", "best", "ux"]) returns ["best", "ux"] (
 TEST-VS-50: SynonymStep.process(["ux"]) returns ["ux", "user experience", "usability"] (GoF-3)
 TEST-VS-51: BookChunkMetadata includes bookSlug, chapterSlug, bookTitle, chapterFirstSentence (GB-1)
 TEST-VS-52: transformForEmbedding() strips markdown, removes code blocks, normalizes whitespace (GB-2)
-TEST-VS-53: HybridSearchEngine constructor requires all 6 dependencies (GB-3)
+TEST-VS-53: HybridSearchEngine constructor requires all 7 dependencies (embedder, vectorStore, bm25Scorer, bm25IndexStore, vectorQueryProcessor, bm25QueryProcessor, options) (GB-3)
 TEST-VS-54: validateEmbeddingQuality() passes for known semantic pairs (sim > 0.7) (GH-1)
 TEST-VS-55: validateEmbeddingQuality() fails for dissimilar pairs exceeding threshold (GH-1)
 TEST-VS-56: Contextual prefix includes chapter first sentence, not just title (GH-2)
@@ -1560,34 +1576,30 @@ Phase 0  → Current keyword-only search (unchanged)
 | Metadata typing? | **Discriminated union** (GB-1). `BookChunkMetadata \| ConversationMetadata` keyed on `sourceType`. Eliminates `Record<string, unknown>`. |
 | Fallback pattern? | **Chain of Responsibility** (GoF-1). Four handlers in sequence, each independently testable. Replaces prose-only spec. |
 | Query processing design? | **Composable step chain** (GoF-3). `LowercaseStep → StopwordStep → SynonymStep`. Each step is a Strategy, independently swappable. |
+| BM25 index storage? | **`BM25IndexStore` port** (UB-3) with `SQLiteBM25IndexStore` adapter. Compute in-memory on startup (~100ms for 2000 docs), persist to SQLite for durability, recompute after any index change. |
 
 ---
 
 ## 17. Open Questions
 
-1. **BM25 index storage:** Resolved to use `BM25IndexStore` port (UB-3) with
-   `SQLiteBM25IndexStore` adapter. Recommend compute in-memory on startup
-   (~100ms for 2000 docs), persist to SQLite for durability, and recompute
-   after any index change.
-
-2. **Embedding model warm-up:** The ONNX model takes ~2-3 seconds to load on
+1. **Embedding model warm-up:** The ONNX model takes ~2-3 seconds to load on
    first inference. Recommend lazy-load with a cache — first search pays the
    2-3s penalty, all subsequent searches are instant.
 
-3. **MCP server vs. API route for on-demand embedding:** Should on-demand
+2. **MCP server vs. API route for on-demand embedding:** Should on-demand
    embedding (when a chapter changes) go through the MCP server or be a direct
    function call in the Next.js process? For the build script and CLI, MCP
    makes sense. For runtime hot-reload, a direct function call avoids the
    stdio transport overhead. Recommend both paths share the same
    `EmbeddingPipeline` core.
 
-4. **Conversation chunking strategy:** When conversation history embedding is
+3. **Conversation chunking strategy:** When conversation history embedding is
    implemented, how should messages be chunked? Options: (a) one embedding per
    message, (b) sliding window over conversation turns, (c) topic-segmented
    chunks. This is deferred to the conversation history spec — the pipeline
    architecture supports any strategy via a new `Chunker` implementation.
 
-5. **Cross-source search ranking:** When searching across book content AND
+4. **Cross-source search ranking:** When searching across book content AND
    conversation history simultaneously, should results be interleaved by RRF
    score, or grouped by source type? Recommend interleaved — the user wants
    the most relevant result regardless of source.
