@@ -1,17 +1,19 @@
 "use client";
 
-import React, { createContext, useContext, useReducer, useState, useMemo, ReactNode } from "react";
+import React, { createContext, useContext, useReducer, useState, useMemo, useCallback, useEffect, ReactNode } from "react";
 export type { MessagePart } from "@/core/entities/message-parts";
 import type { MessagePart } from "@/core/entities/message-parts";
 export type { ChatMessage } from "@/core/entities/chat-message";
 import type { ChatMessage } from "@/core/entities/chat-message";
+import type { ConversationSummary } from "@/core/entities/conversation";
 
 import { 
   StreamProcessor, 
   TextDeltaStrategy, 
   ToolCallStrategy, 
   ToolResultStrategy, 
-  ErrorStrategy 
+  ErrorStrategy,
+  ConversationIdStrategy 
 } from "@/lib/chat/StreamStrategy";
 import { getChatStreamProvider } from "@/adapters/StreamProviderFactory";
 import { MessageFactory } from "@/core/entities/MessageFactory";
@@ -31,7 +33,8 @@ type ChatAction =
       name: string;
       result: unknown;
     }
-  | { type: "SET_ERROR"; index: number; error: string };
+  | { type: "SET_ERROR"; index: number; error: string }
+  | { type: "SET_CONVERSATION_ID"; conversationId: string };
 
 function chatReducer(state: ChatMessage[], action: ChatAction): ChatMessage[] {
   switch (action.type) {
@@ -100,8 +103,14 @@ interface ChatContextType {
   input: string;
   isSending: boolean;
   canSend: boolean;
+  conversationId: string | null;
+  conversations: ConversationSummary[];
   setInput: (val: string) => void;
   sendMessage: (eventOrMessage?: { preventDefault: () => void } | string) => Promise<void>;
+  loadConversation: (id: string) => Promise<void>;
+  newConversation: () => void;
+  deleteConversation: (id: string) => Promise<void>;
+  refreshConversations: () => Promise<void>;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -112,6 +121,7 @@ const streamProcessor = new StreamProcessor([
   new ToolCallStrategy(),
   new ToolResultStrategy(),
   new ErrorStrategy(),
+  new ConversationIdStrategy(),
 ]);
 
 export function ChatProvider({ children }: { children: ReactNode }) {
@@ -123,10 +133,97 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   ]);
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
 
   const canSend = useMemo(
     () => input.trim().length > 0 && !isSending,
     [input, isSending],
+  );
+
+  const refreshConversations = useCallback(async () => {
+    try {
+      const res = await fetch("/api/conversations");
+      if (res.ok) {
+        const data = await res.json() as { conversations: ConversationSummary[] };
+        setConversations(data.conversations);
+      }
+    } catch {
+      // Silent fail — conversations list is non-critical
+    }
+  }, []);
+
+  // Load conversations on mount
+  useEffect(() => {
+    refreshConversations();
+  }, [refreshConversations]);
+
+  const newConversation = useCallback(() => {
+    setConversationId(null);
+    dispatch({
+      type: "REPLACE_ALL",
+      messages: [
+        MessageFactory.createHeroMessage(
+          "The PD Advisor helps you build high-performance products by combining deep architectural wisdom with modern AI workflows. I can help you navigate the library, check your development patterns, or identify the best practitioners for your next sprint.",
+          ["Explore the Library", "Check Architectural Patterns", "Find Practitioners", "Switch to Bauhaus Theme"]
+        ),
+      ],
+    });
+  }, []);
+
+  const loadConversation = useCallback(async (id: string) => {
+    try {
+      const res = await fetch(`/api/conversations/${encodeURIComponent(id)}`);
+      if (!res.ok) return;
+      const data = await res.json() as {
+        conversation: { id: string };
+        messages: Array<{
+          id: string;
+          role: "user" | "assistant";
+          content: string;
+          parts: MessagePart[];
+          createdAt: string;
+        }>;
+      };
+
+      const loaded: ChatMessage[] = data.messages.map((m) => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        parts: m.parts,
+        timestamp: new Date(m.createdAt),
+      }));
+
+      setConversationId(data.conversation.id);
+      dispatch({ type: "REPLACE_ALL", messages: loaded });
+    } catch {
+      // Silent fail
+    }
+  }, []);
+
+  const deleteConversation = useCallback(async (id: string) => {
+    try {
+      await fetch(`/api/conversations/${encodeURIComponent(id)}`, { method: "DELETE" });
+      setConversations((prev) => prev.filter((c) => c.id !== id));
+      if (conversationId === id) {
+        newConversation();
+      }
+    } catch {
+      // Silent fail
+    }
+  }, [conversationId, newConversation]);
+
+  // Listen for SET_CONVERSATION_ID actions from the stream processor
+  const dispatchWithConversationId = useCallback(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (action: any) => {
+      if (action.type === "SET_CONVERSATION_ID") {
+        setConversationId(action.conversationId);
+        return;
+      }
+      dispatch(action);
+    },
+    [],
   );
 
   async function sendMessage(eventOrMessage?: { preventDefault: () => void } | string) {
@@ -160,11 +257,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         content: m.content,
       }));
 
-      const stream = await streamAdapter.fetchStream(historyForBackend);
+      const stream = await streamAdapter.fetchStream(historyForBackend, {
+        conversationId: conversationId || undefined,
+      });
       
       for await (const event of stream.events()) {
-        streamProcessor.process(event, { dispatch, assistantIndex });
+        streamProcessor.process(event, { dispatch: dispatchWithConversationId, assistantIndex });
       }
+
+      // Refresh conversation list after sending
+      refreshConversations();
     } catch (error) {
       dispatch({
         type: "SET_ERROR",
@@ -177,7 +279,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <ChatContext.Provider value={{ messages, input, isSending, canSend, setInput, sendMessage }}>
+    <ChatContext.Provider value={{
+      messages, input, isSending, canSend, conversationId, conversations,
+      setInput, sendMessage, loadConversation, newConversation, deleteConversation, refreshConversations
+    }}>
       {children}
     </ChatContext.Provider>
   );

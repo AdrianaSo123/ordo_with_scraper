@@ -4,21 +4,23 @@ import {
   EventParser, 
   TextDeltaParser, 
   ToolCallParser, 
-  ToolResultParser 
+  ToolResultParser,
+  ConversationIdParser 
 } from "./chat/EventParserStrategy";
 
 export class ChatStreamAdapter implements ChatStreamProvider {
   private readonly parser = new EventParser([
     new TextDeltaParser(),
     new ToolCallParser(),
-    new ToolResultParser()
+    new ToolResultParser(),
+    new ConversationIdParser()
   ]);
 
-  async fetchStream(messages: { role: string; content: string }[]): Promise<ChatStream> {
+  async fetchStream(messages: { role: string; content: string }[], options?: { conversationId?: string }): Promise<ChatStream> {
     const response = await fetch("/api/chat/stream", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages }),
+      body: JSON.stringify({ messages, conversationId: options?.conversationId }),
     });
 
     if (!response.ok) {

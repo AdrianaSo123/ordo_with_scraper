@@ -11,6 +11,9 @@ import { runClaudeAgentLoopStream } from "@/lib/chat/anthropic-stream";
 import { getToolsForRole } from "@/lib/chat/tools";
 import { getSessionUser } from "@/lib/auth";
 import type { RoleName } from "@/core/entities/user";
+import type { MessagePart } from "@/core/entities/message-parts";
+import { getConversationInteractor } from "@/lib/chat/conversation-root";
+import { MessageLimitError } from "@/core/use-cases/ConversationInteractor";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -33,7 +36,10 @@ export async function POST(request: NextRequest) {
       const systemPrompt = await buildSystemPrompt(role);
       const tools = getToolsForRole(role);
 
-      const body = (await request.json()) as { messages?: ChatMessage[] };
+      const body = (await request.json()) as {
+        messages?: ChatMessage[];
+        conversationId?: string;
+      };
       const incomingMessages = body.messages ?? [];
 
       if (!Array.isArray(incomingMessages) || incomingMessages.length === 0) {
@@ -46,6 +52,39 @@ export async function POST(request: NextRequest) {
 
       if (!latestUserMessage) {
         return errorJson(context, "No user message found.", 400);
+      }
+
+      // Persistence: only for authenticated (non-ANONYMOUS) users
+      const shouldPersist = role !== "ANONYMOUS";
+      let conversationId = body.conversationId || null;
+
+      if (shouldPersist) {
+        const interactor = getConversationInteractor();
+
+        // Create conversation if needed
+        if (!conversationId) {
+          const title = latestUserMessage.slice(0, 80);
+          const conv = await interactor.create(user.id, title);
+          conversationId = conv.id;
+        }
+
+        // Persist user message
+        try {
+          await interactor.appendMessage(
+            {
+              conversationId,
+              role: "user",
+              content: latestUserMessage,
+              parts: [{ type: "text", text: latestUserMessage }],
+            },
+            user.id,
+          );
+        } catch (err) {
+          if (err instanceof MessageLimitError) {
+            return errorJson(context, err.message, 400);
+          }
+          throw err;
+        }
       }
 
       if (looksLikeMath(latestUserMessage)) {
@@ -70,15 +109,39 @@ export async function POST(request: NextRequest) {
           );
         }
 
+        // Persist math reply as assistant message
+        if (shouldPersist && conversationId && mathPayload.reply) {
+          const interactor = getConversationInteractor();
+          await interactor.appendMessage(
+            {
+              conversationId,
+              role: "assistant",
+              content: mathPayload.reply,
+              parts: [{ type: "text", text: mathPayload.reply }],
+            },
+            user.id,
+          );
+        }
+
         return successText(context, mathPayload.reply || "");
       }
 
       const encoder = new TextEncoder();
       const streamAbortController = new AbortController();
+      // Collect assistant parts for persistence
+      const assistantParts: MessagePart[] = [];
+      let assistantText = "";
 
       const stream = new ReadableStream<Uint8Array>({
         async start(controller) {
           try {
+            // Send conversationId as first SSE event for authenticated users
+            if (shouldPersist && conversationId) {
+              controller.enqueue(
+                encoder.encode(sseChunk({ conversation_id: conversationId })),
+              );
+            }
+
             await runClaudeAgentLoopStream({
               apiKey,
               messages: incomingMessages,
@@ -88,20 +151,42 @@ export async function POST(request: NextRequest) {
               role,
               callbacks: {
                 onDelta(text) {
+                  assistantText += text;
+                  assistantParts.push({ type: "text", text });
                   controller.enqueue(encoder.encode(sseChunk({ delta: text })));
                 },
                 onToolCall(name, args) {
+                  assistantParts.push({ type: "tool_call", name, args });
                   controller.enqueue(
                     encoder.encode(sseChunk({ tool_call: { name, args } })),
                   );
                 },
                 onToolResult(name, result) {
+                  assistantParts.push({ type: "tool_result", name, result });
                   controller.enqueue(
                     encoder.encode(sseChunk({ tool_result: { name, result } })),
                   );
                 },
               },
             });
+
+            // Persist assistant message after stream
+            if (shouldPersist && conversationId) {
+              try {
+                const interactor = getConversationInteractor();
+                await interactor.appendMessage(
+                  {
+                    conversationId,
+                    role: "assistant",
+                    content: assistantText,
+                    parts: assistantParts,
+                  },
+                  user.id,
+                );
+              } catch (err) {
+                console.error("[stream] persist assistant error", err);
+              }
+            }
 
             controller.close();
           } catch (err) {

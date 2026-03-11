@@ -11,5 +11,5 @@ export interface ChatStream {
   cancel(): void;
 }
 export interface ChatStreamProvider {
-  fetchStream(messages: { role: string; content: string }[]): Promise<ChatStream>;
+  fetchStream(messages: { role: string; content: string }[], options?: { conversationId?: string }): Promise<ChatStream>;
 }

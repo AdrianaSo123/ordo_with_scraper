@@ -41,6 +41,13 @@ export class ToolResultParser implements EventParserStrategy {
   }
 }
 
+export class ConversationIdParser implements EventParserStrategy {
+  canParse(data: RawSSEData) { return !!data.conversation_id; }
+  parse(data: RawSSEData): StreamEvent {
+    return { type: "conversation_id", id: data.conversation_id as string };
+  }
+}
+
 export class EventParser {
   constructor(private strategies: EventParserStrategy[]) {}
 

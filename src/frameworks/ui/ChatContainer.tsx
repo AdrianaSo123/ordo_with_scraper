@@ -8,6 +8,7 @@ import { useMentions } from "@/hooks/useMentions";
 import { ChatHeader } from "./ChatHeader";
 import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
+import { ConversationSidebar } from "./ConversationSidebar";
 import { ChatPresenter } from "../../adapters/ChatPresenter";
 import { MarkdownParserService } from "../../adapters/MarkdownParserService";
 import { CommandParserService } from "../../adapters/CommandParserService";
@@ -24,7 +25,7 @@ export const ChatContainer: React.FC<Props> = ({
   isFloating = false,
   onClose,
 }) => {
-  const { messages, input, isSending, canSend, setInput, sendMessage } =
+  const { messages, input, isSending, canSend, setInput, sendMessage, conversationId, conversations } =
     useGlobalChat();
   const {
     accessibility,
@@ -46,6 +47,7 @@ export const ChatContainer: React.FC<Props> = ({
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [sessionSearchQuery, setSessionSearchQuery] = useState("");
   const [mentionIndex, setMentionIndex] = useState(0);
+  const [showHistory, setShowHistory] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -150,6 +152,31 @@ export const ChatContainer: React.FC<Props> = ({
           gridEnabled={gridEnabled}
           onGridToggle={() => setGridEnabled(!gridEnabled)}
         />
+      )}
+
+      {/* Conversation history toggle — only show when there are conversations */}
+      {isFloating && conversations.length > 0 && (
+        <div className="border-b border-[var(--border-color)]">
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            className="w-full flex items-center justify-between px-4 py-2 text-[10px] font-bold uppercase tracking-wider opacity-40 hover:opacity-70 transition-opacity"
+          >
+            <span>History ({conversations.length})</span>
+            <svg
+              width="10" height="10"
+              viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+              className={`transition-transform ${showHistory ? "rotate-180" : ""}`}
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          {showHistory && (
+            <div className="max-h-48 overflow-y-auto">
+              <ConversationSidebar />
+            </div>
+          )}
+        </div>
       )}
 
       <div className="relative flex-1 min-h-0 flex flex-col w-full overflow-hidden">

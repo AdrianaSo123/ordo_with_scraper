@@ -65,6 +65,17 @@ export class ErrorStrategy implements StreamEventStrategy {
   }
 }
 
+export class ConversationIdStrategy implements StreamEventStrategy {
+  canHandle(event: StreamEvent) {
+    return event.type === "conversation_id";
+  }
+  handle(event: StreamEvent, { dispatch }: StreamProcessingContext) {
+    if (event.type === "conversation_id") {
+      dispatch({ type: "SET_CONVERSATION_ID", conversationId: event.id });
+    }
+  }
+}
+
 export class StreamProcessor {
   private strategies: StreamEventStrategy[];
 
