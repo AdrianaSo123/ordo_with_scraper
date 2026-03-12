@@ -213,9 +213,12 @@ clearCache(): void {
 
 ### 4.3 `RepositoryFactory`
 
-No change to the factory itself, but the singleton `CachedBookRepository`
-instance must be accessible to the librarian tools so they can call
-`clearCache()` after mutations.
+No change to the factory itself. The MCP embedding server's `buildDeps()`
+function constructs the repository graph directly — not via
+`RepositoryFactory.getBookRepository()` — so it can capture references to
+the concrete `CachedBookRepository` and `FileSystemBookRepository` instances.
+This allows wrapping both `clearCache()` and `clearDiscoveryCache()` into
+the single `clearCaches` callback injected into `LibrarianToolDeps`.
 
 ---
 
@@ -261,8 +264,12 @@ run as admin processes).
 }
 ```
 
-**Behavior:** Scans `_corpus/`, reads each `book.json`, counts `chapters/*.md`
-files, checks if embeddings exist in the vector store for this book's chapters.
+**Behavior:** Scans `_corpus/`, reads each `book.json` directly from disk
+(bypassing `BookRepository` — `domain`/`tags` are not yet surfaced through
+`BookMeta`), counts `chapters/*.md` files, checks if embeddings exist in the
+vector store for this book's chapters. At current scale (~10 books, ~100
+chapters), per-chapter `getBySourceId()` is acceptable; a future optimization
+could use `vectorStore.count(sourceType)` for a single aggregated check.
 
 #### `librarian_get_book`
 
@@ -274,6 +281,8 @@ files, checks if embeddings exist in the vector store for this book's chapters.
   "slug": "software-engineering",
   "title": "Software Engineering",
   "number": "I",
+  "domain": ["teaching", "reference"],
+  "tags": ["software-engineering", "best-practices"],
   "chapters": [
     {
       "slug": "ch00-the-people-behind-the-principles",
@@ -330,7 +339,9 @@ The zip file must contain:
   "slug": "ai-ethics",
   "title": "AI Ethics",
   "directory": "_corpus/ai-ethics-book",
-  "chaptersWritten": 10
+  "chaptersWritten": 10,
+  "indexed": false,
+  "hint": "Run rebuild_index to make this book searchable."
 }
 ```
 
@@ -425,12 +436,15 @@ Following the established pattern (`mcp/calculator-tool.ts`,
 export interface LibrarianToolDeps {
   corpusDir: string;              // absolute path to docs/_corpus/
   vectorStore: VectorStore;       // for embedding cleanup on remove
-  clearRepoCache: () => void;     // callback to bust CachedBookRepository
+  clearCaches: () => void;        // callback to bust CachedBookRepository + discovery cache
 }
 ```
 
 Librarian tools do NOT depend on the full `EmbeddingToolDeps`. They only need
 filesystem access, the vector store (for cleanup), and a cache-clear callback.
+The `clearCaches` callback wraps both `CachedBookRepository.clearCache()` and
+`FileSystemBookRepository.clearDiscoveryCache()` — wired in the composition
+root so tool functions stay decoupled from concrete repository types.
 
 ---
 

@@ -67,6 +67,7 @@ export async function librarianGetBook(
   args: { slug: string },
 ): Promise<{
   slug: string; title: string; number: string;
+  domain: string[]; tags: string[];
   directory: string;
   chapters: Array<{
     slug: string; title: string;
@@ -86,6 +87,7 @@ export async function librarianAddBook(
 ): Promise<{
   slug: string; title: string;
   directory: string; chaptersWritten: number;
+  indexed: boolean; hint: string;
 }>
 
 // --- librarian_add_chapter ---
@@ -352,6 +354,8 @@ export async function librarianAddBook(deps, args) {
     title: args.title,
     directory: `_corpus/${args.slug}-book`,
     chaptersWritten,
+    indexed: false,
+    hint: "Run rebuild_index to make this book searchable.",
   };
 }
 ```
@@ -436,7 +440,7 @@ npx vitest run tests/corpus/librarian-tools.test.ts
 async function addBookFromZip(
   deps: LibrarianToolDeps,
   zipBase64: string,
-): Promise<{ slug: string; title: string; directory: string; chaptersWritten: number }> {
+): Promise<{ slug: string; title: string; directory: string; chaptersWritten: number; indexed: boolean; hint: string }> {
   // 1. Decode base64 to Buffer
   const zipBuffer = Buffer.from(zipBase64, "base64");
 
