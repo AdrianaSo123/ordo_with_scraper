@@ -571,20 +571,20 @@ npm run build                 # build discovers corpus, embeds, BM25 indexes
 
 ## Sprint 1 — Completion Checklist
 
-- [ ] `mcp/librarian-tool.ts` — 6 tool functions with `LibrarianToolDeps`
-- [ ] `mcp/embedding-server.ts` — 12 total tools (6 embedding + 6 librarian)
-- [ ] `librarian_list` — returns book inventory with indexing status
-- [ ] `librarian_get_book` — returns book details with chapter listing
-- [ ] `librarian_add_book` (manual) — creates `_corpus/{slug}/` + book.json (with sortOrder) + chapters
-- [ ] `librarian_add_chapter` — adds/overwrites chapter to existing book
-- [ ] `librarian_remove_book` — removes book dir + cleans embeddings
-- [ ] `librarian_remove_chapter` — removes chapter file + cleans embeddings
-- [ ] Path traversal prevention via `path.relative()` on all filesystem ops
-- [ ] Slug validation: lowercase kebab-case, max 100 chars
-- [ ] Cache clearing after every successful mutation (`LIBRARIAN-050`)
-- [ ] ~26 unit tests for librarian tools (21 functional + 5 security)
-- [ ] All ~346 tests pass
-- [ ] `npm run build` clean
+- [x] `mcp/librarian-tool.ts` — 6 tool functions with `LibrarianToolDeps`
+- [x] `mcp/embedding-server.ts` — 12 total tools (6 embedding + 6 librarian)
+- [x] `librarian_list` — returns book inventory with indexing status
+- [x] `librarian_get_book` — returns book details with chapter listing
+- [x] `librarian_add_book` (manual) — creates `_corpus/{slug}/` + book.json (with sortOrder) + chapters
+- [x] `librarian_add_chapter` — adds/overwrites chapter to existing book
+- [x] `librarian_remove_book` — removes book dir + cleans embeddings
+- [x] `librarian_remove_chapter` — removes chapter file + cleans embeddings
+- [x] Path traversal prevention via `path.relative()` on all filesystem ops
+- [x] Slug validation: lowercase kebab-case, max 100 chars
+- [x] Cache clearing after every successful mutation (`LIBRARIAN-050`)
+- [x] ~26 unit tests for librarian tools (21 functional + 5 security)
+- [x] All ~346 tests pass
+- [x] `npm run build` clean
 
 ---
 
