@@ -1,3 +1,4 @@
+import * as path from "path";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -5,7 +6,8 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { getDb } from "@/lib/db";
-import { getBookRepository } from "@/adapters/RepositoryFactory";
+import { FileSystemBookRepository } from "@/adapters/FileSystemBookRepository";
+import { CachedBookRepository } from "@/adapters/CachedBookRepository";
 import { LocalEmbedder } from "@/adapters/LocalEmbedder";
 import { SQLiteVectorStore } from "@/adapters/SQLiteVectorStore";
 import { SQLiteBM25IndexStore } from "@/adapters/SQLiteBM25IndexStore";
@@ -33,15 +35,33 @@ import {
   getIndexStats,
   deleteEmbeddings,
 } from "./embedding-tool";
+import type { LibrarianToolDeps } from "./librarian-tool";
+import {
+  librarianList,
+  librarianGetBook,
+  librarianAddBook,
+  librarianAddChapter,
+  librarianRemoveBook,
+  librarianRemoveChapter,
+} from "./librarian-tool";
 
 const MODEL_VERSION = "all-MiniLM-L6-v2@1.0";
 
-function buildDeps(): EmbeddingToolDeps {
+interface AllDeps {
+  embedding: EmbeddingToolDeps;
+  librarian: LibrarianToolDeps;
+}
+
+function buildDeps(): AllDeps {
   const db = getDb();
   const embedder = new LocalEmbedder();
   const vectorStore = new SQLiteVectorStore(db);
   const bm25IndexStore = new SQLiteBM25IndexStore(db);
-  const bookRepo = getBookRepository();
+
+  // Build repo graph directly to capture concrete types for cache clearing
+  const fsRepo = new FileSystemBookRepository();
+  const cached = new CachedBookRepository(fsRepo);
+  const bookRepo = cached;
 
   const pipelineFactory = new EmbeddingPipelineFactory(
     embedder,
@@ -82,17 +102,27 @@ function buildDeps(): EmbeddingToolDeps {
   legacy.setNext(empty);
 
   return {
-    embedder,
-    vectorStore,
-    bm25IndexStore,
-    searchHandler: hybrid,
-    pipelineFactory,
-    bookRepo,
+    embedding: {
+      embedder,
+      vectorStore,
+      bm25IndexStore,
+      searchHandler: hybrid,
+      pipelineFactory,
+      bookRepo,
+    },
+    librarian: {
+      corpusDir: path.resolve(process.cwd(), "docs/_corpus"),
+      vectorStore,
+      clearCaches: () => {
+        cached.clearCache();
+        fsRepo.clearDiscoveryCache();
+      },
+    },
   };
 }
 
-let deps: EmbeddingToolDeps | null = null;
-function getDeps(): EmbeddingToolDeps {
+let deps: AllDeps | null = null;
+function getDeps(): AllDeps {
   if (!deps) deps = buildDeps();
   return deps;
 }
@@ -206,6 +236,134 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         additionalProperties: false,
       },
     },
+    // --- Librarian tools ---
+    {
+      name: "librarian_list",
+      description:
+        "List all books in the corpus with chapter counts and indexing status.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {},
+        additionalProperties: false,
+      },
+    },
+    {
+      name: "librarian_get_book",
+      description:
+        "Get details of a corpus book including its chapters.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          slug: { type: "string", description: "Book slug." },
+        },
+        required: ["slug"],
+        additionalProperties: false,
+      },
+    },
+    {
+      name: "librarian_add_book",
+      description:
+        "Add a new book to the corpus. Provide slug, title, number, sortOrder, domain, and optionally chapters.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          slug: {
+            type: "string",
+            description:
+              "Book slug (lowercase kebab-case). Becomes the directory name.",
+          },
+          title: { type: "string", description: "Book title." },
+          number: {
+            type: "string",
+            description: "Display number (e.g. 'XI'). Decorative only.",
+          },
+          sortOrder: { type: "number", description: "Numeric sort order." },
+          domain: {
+            type: "array",
+            description:
+              "Content domains (e.g. ['teaching', 'reference']).",
+            items: { type: "string" },
+          },
+          tags: {
+            type: "array",
+            description:
+              "Optional freeform tags (lowercase kebab-case).",
+            items: { type: "string" },
+          },
+          chapters: {
+            type: "array",
+            description: "Array of {slug, content} chapter objects.",
+            items: {
+              type: "object",
+              properties: {
+                slug: { type: "string" },
+                content: { type: "string" },
+              },
+              required: ["slug", "content"],
+            },
+          },
+        },
+        required: ["slug", "title", "number", "sortOrder", "domain"],
+        additionalProperties: false,
+      },
+    },
+    {
+      name: "librarian_add_chapter",
+      description:
+        "Add a chapter to an existing book in the corpus. Overwrites if the chapter already exists.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          book_slug: {
+            type: "string",
+            description: "Slug of the target book.",
+          },
+          chapter_slug: {
+            type: "string",
+            description: "Chapter slug (becomes filename).",
+          },
+          content: {
+            type: "string",
+            description: "Chapter markdown content.",
+          },
+        },
+        required: ["book_slug", "chapter_slug", "content"],
+        additionalProperties: false,
+      },
+    },
+    {
+      name: "librarian_remove_book",
+      description:
+        "Remove a book and all its embeddings from the corpus.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          slug: {
+            type: "string",
+            description: "Book slug to remove.",
+          },
+        },
+        required: ["slug"],
+        additionalProperties: false,
+      },
+    },
+    {
+      name: "librarian_remove_chapter",
+      description:
+        "Remove a single chapter and its embeddings from a book.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          book_slug: { type: "string", description: "Book slug." },
+          chapter_slug: {
+            type: "string",
+            description: "Chapter slug to remove.",
+          },
+        },
+        required: ["book_slug", "chapter_slug"],
+        additionalProperties: false,
+      },
+    },
   ],
 }));
 
@@ -217,31 +375,73 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   let result: unknown;
   switch (name) {
     case "embed_text":
-      result = await embedText(d, a as { text: string });
+      result = await embedText(d.embedding, a as { text: string });
       break;
     case "embed_document":
       result = await embedDocument(
-        d,
+        d.embedding,
         a as { source_type: string; source_id: string; content: string },
       );
       break;
     case "search_similar":
       result = await searchSimilar(
-        d,
+        d.embedding,
         a as { query: string; source_type?: string; limit?: number },
       );
       break;
     case "rebuild_index":
       result = await rebuildIndex(
-        d,
+        d.embedding,
         a as { source_type: string; force?: boolean },
       );
       break;
     case "get_index_stats":
-      result = getIndexStats(d, a as { source_type?: string });
+      result = getIndexStats(d.embedding, a as { source_type?: string });
       break;
     case "delete_embeddings":
-      result = deleteEmbeddings(d, a as { source_id: string });
+      result = deleteEmbeddings(d.embedding, a as { source_id: string });
+      break;
+    // --- Librarian tools ---
+    case "librarian_list":
+      result = await librarianList(d.librarian);
+      break;
+    case "librarian_get_book":
+      result = await librarianGetBook(
+        d.librarian,
+        a as { slug: string },
+      );
+      break;
+    case "librarian_add_book":
+      result = await librarianAddBook(
+        d.librarian,
+        a as {
+          slug: string;
+          title: string;
+          number: string;
+          sortOrder: number;
+          domain: string[];
+          tags?: string[];
+          chapters?: Array<{ slug: string; content: string }>;
+        },
+      );
+      break;
+    case "librarian_add_chapter":
+      result = await librarianAddChapter(
+        d.librarian,
+        a as { book_slug: string; chapter_slug: string; content: string },
+      );
+      break;
+    case "librarian_remove_book":
+      result = await librarianRemoveBook(
+        d.librarian,
+        a as { slug: string },
+      );
+      break;
+    case "librarian_remove_chapter":
+      result = await librarianRemoveChapter(
+        d.librarian,
+        a as { book_slug: string; chapter_slug: string },
+      );
       break;
     default:
       throw new Error(`Unknown tool: ${name}`);
