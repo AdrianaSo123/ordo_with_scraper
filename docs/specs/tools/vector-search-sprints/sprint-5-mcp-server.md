@@ -247,10 +247,11 @@ export function deleteEmbeddings(
 }
 ```
 
-> **Note on `delete_embeddings`:** The spec (§11.2) lists 5 tools and VSEARCH
-> requirements cover 5 tools (30–34). `delete_embeddings` is added as a useful
-> operational tool that delegates to `VectorStore.delete()`. It has no VSEARCH
-> requirement ID.
+> **Note on `delete_embeddings`:** The spec §11.2 tool table lists 6 tools
+> including `delete_embeddings`. However, VSEARCH requirements cover only 5
+> tools (VSEARCH-30 through VSEARCH-34) and Phase 6 step 25 lists only 5.
+> `delete_embeddings` has no VSEARCH requirement ID but IS part of the spec
+> tool surface. It delegates to `VectorStore.delete()`.
 
 ### Verify
 
@@ -280,12 +281,26 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { getDb } from "../src/lib/db";
-import { getBookRepository } from "../src/adapters/RepositoryFactory";
-import { LocalEmbedder } from "../src/adapters/LocalEmbedder";
-import { SQLiteVectorStore } from "../src/adapters/SQLiteVectorStore";
-import { SQLiteBM25IndexStore } from "../src/adapters/SQLiteBM25IndexStore";
-import { getEmbeddingPipelineFactory, getSearchHandler } from "../src/lib/chat/tool-composition-root";
+import { getDb } from "@/lib/db";
+import { getBookRepository } from "@/adapters/RepositoryFactory";
+import { LocalEmbedder } from "@/adapters/LocalEmbedder";
+import { SQLiteVectorStore } from "@/adapters/SQLiteVectorStore";
+import { SQLiteBM25IndexStore } from "@/adapters/SQLiteBM25IndexStore";
+import { EmbeddingPipelineFactory } from "@/core/search/EmbeddingPipelineFactory";
+import { BM25Scorer } from "@/core/search/BM25Scorer";
+import { QueryProcessor } from "@/core/search/QueryProcessor";
+import { LowercaseStep } from "@/core/search/query-steps/LowercaseStep";
+import { StopwordStep } from "@/core/search/query-steps/StopwordStep";
+import { SynonymStep } from "@/core/search/query-steps/SynonymStep";
+import { HybridSearchEngine } from "@/core/search/HybridSearchEngine";
+import {
+  HybridSearchHandler,
+  BM25SearchHandler,
+  LegacyKeywordHandler,
+  EmptyResultHandler,
+} from "@/core/search/SearchHandlerChain";
+import { STOPWORDS } from "@/core/search/data/stopwords";
+import { SYNONYMS } from "@/core/search/data/synonyms";
 import type { EmbeddingToolDeps } from "./embedding-tool";
 import {
   embedText,
@@ -296,16 +311,57 @@ import {
   deleteEmbeddings,
 } from "./embedding-tool";
 
-function createDeps(): EmbeddingToolDeps {
+const MODEL_VERSION = "all-MiniLM-L6-v2@1.0";
+
+// Build all shared singletons ONCE at startup — same instances used by
+// embedder, pipeline, search handler, and tool functions.
+function buildDeps(): EmbeddingToolDeps {
   const db = getDb();
+  const embedder = new LocalEmbedder();
+  const vectorStore = new SQLiteVectorStore(db);
+  const bm25IndexStore = new SQLiteBM25IndexStore(db);
+  const bookRepo = getBookRepository();
+
+  const pipelineFactory = new EmbeddingPipelineFactory(
+    embedder, vectorStore, MODEL_VERSION,
+  );
+
+  // Build search handler chain (mirrors tool-composition-root.ts)
+  const bm25Scorer = new BM25Scorer();
+  const vectorProcessor = new QueryProcessor([
+    new LowercaseStep(), new StopwordStep(STOPWORDS),
+  ]);
+  const bm25Processor = new QueryProcessor([
+    new LowercaseStep(), new StopwordStep(STOPWORDS), new SynonymStep(SYNONYMS),
+  ]);
+  const engine = new HybridSearchEngine(
+    embedder, vectorStore, bm25Scorer, bm25IndexStore,
+    vectorProcessor, bm25Processor,
+    { vectorTopN: 50, bm25TopN: 50, rrfK: 60, maxResults: 10 },
+  );
+  const hybrid = new HybridSearchHandler(engine, embedder, bm25IndexStore);
+  const bm25 = new BM25SearchHandler(bm25Scorer, bm25IndexStore, vectorStore, bm25Processor);
+  const legacy = new LegacyKeywordHandler(bookRepo);
+  const empty = new EmptyResultHandler();
+  hybrid.setNext(bm25);
+  bm25.setNext(legacy);
+  legacy.setNext(empty);
+
   return {
-    embedder: new LocalEmbedder(),
-    vectorStore: new SQLiteVectorStore(db),
-    bm25IndexStore: new SQLiteBM25IndexStore(db),
-    searchHandler: getSearchHandler(),
-    pipelineFactory: getEmbeddingPipelineFactory(),
-    bookRepo: getBookRepository(),
+    embedder,
+    vectorStore,
+    bm25IndexStore,
+    searchHandler: hybrid,
+    pipelineFactory,
+    bookRepo,
   };
+}
+
+// Singleton deps — constructed once when first request arrives
+let deps: EmbeddingToolDeps | null = null;
+function getDeps(): EmbeddingToolDeps {
+  if (!deps) deps = buildDeps();
+  return deps;
 }
 
 const server = new Server(
@@ -396,28 +452,28 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
-  const deps = createDeps();
+  const d = getDeps();
   const a = (args ?? {}) as Record<string, unknown>;
 
   let result: unknown;
   switch (name) {
     case "embed_text":
-      result = await embedText(deps, a as { text: string });
+      result = await embedText(d, a as { text: string });
       break;
     case "embed_document":
-      result = await embedDocument(deps, a as { source_type: string; source_id: string; content: string });
+      result = await embedDocument(d, a as { source_type: string; source_id: string; content: string });
       break;
     case "search_similar":
-      result = await searchSimilar(deps, a as { query: string; source_type?: string; limit?: number });
+      result = await searchSimilar(d, a as { query: string; source_type?: string; limit?: number });
       break;
     case "rebuild_index":
-      result = await rebuildIndex(deps, a as { source_type: string; force?: boolean });
+      result = await rebuildIndex(d, a as { source_type: string; force?: boolean });
       break;
     case "get_index_stats":
-      result = getIndexStats(deps, a as { source_type?: string });
+      result = getIndexStats(d, a as { source_type?: string });
       break;
     case "delete_embeddings":
-      result = deleteEmbeddings(deps, a as { source_id: string });
+      result = deleteEmbeddings(d, a as { source_id: string });
       break;
     default:
       throw new Error(`Unknown tool: ${name}`);
@@ -473,6 +529,9 @@ and a mock embedder that returns deterministic vectors. Construct
 ```typescript
 import { InMemoryVectorStore } from "@/adapters/InMemoryVectorStore";
 import { InMemoryBM25IndexStore } from "@/adapters/InMemoryBM25IndexStore";
+import { embedText, embedDocument, ... } from "../../mcp/embedding-tool";
+// ↑ relative path from tests/search/ — matches calculator pattern:
+//   tests/calculator-mcp-contract.test.ts imports "../mcp/calculator-tool"
 // MockEmbedder returns deterministic 384-d vectors
 // Mock SearchHandler returns canned HybridSearchResult[]
 // Mock BookRepository returns canned books/chapters
