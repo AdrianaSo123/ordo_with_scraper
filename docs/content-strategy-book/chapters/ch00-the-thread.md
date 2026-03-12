@@ -1,6 +1,7 @@
 # Chapter 0 — The Thread: From Copy to Content Architecture
 
 ## Abstract
+
 Content strategy is the discipline of planning, creating, delivering, and governing content so that it serves both user needs and business goals. This book traces content from the copywriting tradition through web content strategy, structured content, voice and tone systems, and the AI-augmented content pipeline that redefines what "authoring" means.
 
 ---

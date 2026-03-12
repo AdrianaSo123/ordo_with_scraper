@@ -8,7 +8,7 @@
 
 ### Bad Prompt
 
-```
+```text
 Do a SOLID refactor of my chat module.
 ```
 
@@ -22,7 +22,7 @@ The framework name loaded the program. The program ran without constraints. That
 
 ### Good Prompt
 
-```
+```text
 Framework: SOLID (Robert C. Martin's five principles of object-oriented design)
 Scope: src/lib/chat/ directory only — specifically the provider integration
   modules.
@@ -65,7 +65,7 @@ The contract pattern from Chapter 4 (framework name + scope + local interpretati
 
 ### Bad Prompt
 
-```
+```text
 Make my app 12-factor compliant.
 ```
 
@@ -77,7 +77,7 @@ The output will be too large to review, too scattered to verify, and too uncoord
 
 ### Good Prompt
 
-```
+```text
 Framework: 12-Factor App (Adam Wiggins, 2011 — operational contract between
   application and environment)
 Scope: Factor III (Config) only.
@@ -124,7 +124,7 @@ The explicit "do not address any other factors" instruction prevents me from not
 
 ### Bad Prompt
 
-```
+```text
 Use design patterns to improve my code.
 ```
 
@@ -136,7 +136,7 @@ I am pattern-matching my training rather than diagnosing your codebase. The resu
 
 ### Good Prompt
 
-```
+```text
 Framework: GoF Design Patterns — specifically Observer
 Scope: Observability emission in src/lib/chat/http-facade.ts and
   src/app/api/chat/route.ts.
@@ -177,7 +177,7 @@ The problem diagnosis tells me *why* Observer is the right pattern — the dupli
 
 ### Bad Prompt
 
-```
+```text
 My code doesn't follow DRY. Fix it.
 ```
 
@@ -191,7 +191,7 @@ My default interpretation of DRY is the shallow one: reduce line duplication. Wi
 
 ### Good Prompt
 
-```
+```text
 Framework: DRY (Thomas and Hunt, 1999 — "Every piece of knowledge must have
   a single, unambiguous, authoritative representation within a system.")
 
@@ -232,7 +232,7 @@ This is the framework-awareness Chapter 4 advocates: not just invoking DRY as a 
 
 ### Bad Prompt
 
-```
+```text
 How should our team use design patterns in code review?
 ```
 
@@ -242,7 +242,7 @@ I produce a process recommendation: "Create a pattern review checklist. Train th
 
 ### Good Prompt
 
-```
+```text
 Our team has adopted the Chapter 4 contract pattern for framework references
 in code reviews:
 1. Framework name (semantic macro)

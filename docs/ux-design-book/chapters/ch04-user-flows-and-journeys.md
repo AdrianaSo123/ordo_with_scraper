@@ -1,6 +1,7 @@
 # Chapter 4 — User Flows and Journey Mapping: The Choreography of Experience
 
 ## Abstract
+
 A single screen is a tableau. A *sequence* of screens is a choreography. User flows and journey maps make that choreography visible, inspectable, and improvable. This chapter covers flow diagramming, service blueprints, the jobs-to-be-done framework, and the distinction between happy paths and error recovery paths.
 
 ---
@@ -24,12 +25,15 @@ JTBD reframes UX research from "who is the user?" to "what job is the user hirin
 ## Mapping the Journey
 
 ### User Flows
+
 A **user flow** is a step-by-step diagram of the path a user takes to accomplish a specific goal. It includes decision points (if/else), system actions, and state changes.
 
 ### Journey Maps
+
 A **journey map** adds emotional context to the flow: at each step, what is the user *thinking*, *feeling*, and *doing*? Where are the pain points (frustration, confusion, delay)? Where are the delight points (surprise, satisfaction, relief)?
 
 ### Service Blueprints
+
 A **service blueprint** extends the journey map to include backstage processes — the systems, APIs, databases, and human actions that support each step of the user-facing flow. This makes the entire system visible, from user input to server response.
 
 ---
@@ -39,6 +43,7 @@ A **service blueprint** extends the journey map to include backstage processes �
 User flows, journey maps, and service blueprints are the UX equivalent of architecture diagrams. They make the invisible (the user's experience over time) visible and inspectable.
 
 ## Chapter Checklist
+
 - Can you diagram the user flow for every core task in your product?
 - Have you identified the emotional peaks and valleys in your user journey?
 - Are your personas based on research data, or are they fictional stereotypes?

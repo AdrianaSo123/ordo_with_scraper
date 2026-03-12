@@ -22,7 +22,7 @@ Each phase concentrates intelligence further. The process is subtractive, not ad
 The same knowledge serves two kinds of reader:
 
 | Dimension | Human Reader | LLM Reader |
-|---|---|---|
+| --- | --- | --- |
 | **Learns through** | People, stories, emotional anchors | Constraints, invariants, explicit rules |
 | **Remembers via** | Narrative ("Hoare's billion-dollar mistake") | Pattern matching ("NEVER use null without guard") |
 | **Encoding format** | Book chapters with practitioner stories | `.context/` packs with dense specifications |

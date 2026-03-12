@@ -3,7 +3,7 @@
 ## Proposed Chapter Outline
 
 | # | Chapter | Practitioner(s) | Focus |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 0 | Content as Infrastructure | Karen McGrane | Structured content, content models, CMS architecture |
 | 1 | Information Architecture | Richard Saul Wurman (deeper) | Organization, labeling, navigation, search systems |
 | 2 | Microcopy | Kinneret Yifrah | Button text, error messages, empty states, tooltips |
@@ -16,5 +16,6 @@
 | 9 | Measuring Content | Content analytics | Readability scores, engagement metrics, content ROI |
 
 ## Status
+
 - **Current state:** Not started
 - **Dependencies:** Books IV + V (UX + Product)

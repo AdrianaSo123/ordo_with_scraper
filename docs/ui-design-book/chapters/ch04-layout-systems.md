@@ -1,6 +1,7 @@
 # Chapter 4 — Layout Systems: The Architecture of Space
 
 ## Abstract
+
 Layout is the first thing users perceive and the last thing most engineers think about systematically. This chapter traces layout from the manuscript grid through Frank Chimero's *The Shape of Design*, Rachel Andrew's CSS Grid advocacy, and the modern reality of container queries, subgrid, and intrinsic layout. The principle: **layout is not positioning — it is spatial architecture.**
 
 ---
@@ -67,7 +68,7 @@ This is the CSS realization of Müller-Brockmann's baseline grid: every element,
 Modern layout combines multiple CSS mechanisms, each suited to different problems:
 
 | Layout Need | Best Tool | Rationale |
-|-------------|-----------|-----------|
+| ------------- | ----------- | ----------- |
 | Page-level structure | CSS Grid | Two-dimensional, named regions, explicit control |
 | Content distribution in a row/column | Flexbox | One-dimensional, auto-adapting to content sizes |
 | Text flow | Normal flow | Default block/inline, intentional line wrapping |
@@ -85,6 +86,7 @@ Layout is the spatial architecture of an interface. It determines what users see
 A layout system that uses only one mechanism (all Flexbox, or all Grid, or all absolute positioning) is like a building with only one type of structural member. Different spatial problems require different spatial solutions.
 
 ## Chapter Checklist
+
 - Does your page-level layout use CSS Grid with named areas?
 - Do your component internals use Flexbox for content distribution?
 - Is whitespace intentional (created by tokens) or accidental (created by overly large components)?

@@ -8,7 +8,7 @@
 
 ### Bad Prompt
 
-```
+```text
 Help me improve my development workflow.
 ```
 
@@ -20,7 +20,7 @@ The problem is that "improve my workflow" gives me no information about what you
 
 ### Good Prompt
 
-```
+```text
 Chapter 2 identifies five control surface layers in software history:
 machine code → assembly → high-level languages → frameworks → orchestration
 language.
@@ -61,7 +61,7 @@ The question "where is rigor MISSING" is doing heavy lifting. It asks me to reas
 
 ### Bad Prompt
 
-```
+```text
 Why do we need structure in AI prompts?
 ```
 
@@ -71,7 +71,7 @@ I produce an argument for structured prompts that sounds like a blog post introd
 
 ### Good Prompt
 
-```
+```text
 Chapter 2 argues that at every control surface transition, rigor does not
 disappear — it moves. When we went from assembly to high-level languages,
 rigor moved from register management to type systems. When we went from raw
@@ -112,7 +112,7 @@ The instruction "do not use abstract language — name specific files, commands,
 
 ### Bad Prompt
 
-```
+```text
 How should our team start using AI in our development process?
 ```
 
@@ -122,7 +122,7 @@ I generate a phased adoption plan that reads like a consultant's slide deck. "Ph
 
 ### Good Prompt
 
-```
+```text
 I am writing a migration note for my team as part of the exercise in Chapter 2.
 The note should document our transition from framework-level control surfaces to
 orchestration-level control surfaces.
@@ -167,7 +167,7 @@ The acceptance criteria for each migration action are meta-level good practice �
 
 ### Bad Prompt
 
-```
+```text
 Are we doing AI development the right way?
 ```
 
@@ -177,7 +177,7 @@ I have no way to answer this. I do not know who "we" is, what you are building, 
 
 ### Good Prompt
 
-```
+```text
 Chapter 2 defines a maturity signal: "whether language directives can be traced
 to reproducible outcomes."
 

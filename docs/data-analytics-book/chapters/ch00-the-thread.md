@@ -1,6 +1,7 @@
 # Chapter 0 — The Thread: From Counting to Intelligence
 
 ## Abstract
+
 Data and analytics is the discipline of converting raw observations into decisions. This book traces the evolution from basic web analytics through experimentation frameworks, data pipelines, and the AI-augmented analytics stack that transforms data from retrospective reporting to predictive intelligence.
 
 ---

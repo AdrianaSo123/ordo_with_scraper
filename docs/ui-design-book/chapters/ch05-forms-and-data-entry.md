@@ -1,6 +1,7 @@
 # Chapter 5 — Forms and Data Entry: The Hardest UI Problem
 
 ## Abstract
+
 Forms are the most valuable and most error-prone surfaces in any application. They are where users *give* data rather than *receive* it, and every friction point risks abandonment. This chapter traces form design from Luke Wroblewski's *Web Form Design* through inline validation research, multi-step progressive disclosure, and the modern reality of accessible, keyboard-navigable, error-tolerant form systems.
 
 ---
@@ -10,6 +11,7 @@ Forms are the most valuable and most error-prone surfaces in any application. Th
 **Luke Wroblewski** published *Web Form Design: Filling in the Blanks* in 2008 — the definitive text on form usability. His research-backed recommendations became industry standards:
 
 ### Label Placement
+
 Wroblewski tested three label positions: above the field, to the left, and to the right. Labels *above* the field consistently produced the fastest completion times because the eye travel between label and field is minimal — the two are in the same vertical scan line.
 
 ```html
@@ -21,9 +23,11 @@ Wroblewski tested three label positions: above the field, to the left, and to th
 ```
 
 ### Input Length as Affordance
+
 Field width should suggest the expected input length. A zip code field should be short. A street address field should be long. An email field should be medium. When all fields are the same width, the user loses a visual cue about what's expected.
 
 ### One Column: No Exceptions
+
 Multi-column forms consistently produce errors. Users scan left-to-right in the first row, then lose their place when they drop to the second row. Single-column forms enforce linear scanning, reducing errors.
 
 **What frustrated him:** Forms designed for visual compactness rather than completion success. Compact forms save screen space but cost conversion.
@@ -66,6 +70,7 @@ Long forms should not be presented as a single page. **Progressive disclosure** 
 Multi-step forms (wizards) work because they reduce the number of fields visible at any one time. Each step has a clear scope: "Contact Information" → "Shipping Address" → "Payment" → "Review."
 
 The key UX requirements:
+
 - **Progress indicator**: Users must always know how many steps remain
 - **Back navigation**: Users must be able to revisit previous steps
 - **State persistence**: Data entered in previous steps must be preserved
@@ -78,6 +83,7 @@ The key UX requirements:
 Forms are the highest-stakes UI surface because they directly affect conversion, data quality, and user trust. Form design is not a visual problem — it is an interaction architecture problem.
 
 ## Chapter Checklist
+
 - Are all labels placed above their corresponding fields?
 - Does field width suggest expected input length?
 - Is validation triggered on blur, not on keypress or on submit?

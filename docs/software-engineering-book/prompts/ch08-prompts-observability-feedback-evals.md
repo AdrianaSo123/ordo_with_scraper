@@ -8,7 +8,7 @@
 
 ### Bad Prompt
 
-```
+```text
 Add monitoring to my AI app.
 ```
 
@@ -18,7 +18,7 @@ I add a health endpoint and some `console.log` statements. Maybe a request count
 
 ### Good Prompt
 
-```
+```text
 Design an observability signal stack for the chat API route using Chapter 8's
 four signal classes.
 
@@ -77,7 +77,7 @@ The owner requirement addresses the anti-pattern Chapter 8 calls "signals withou
 
 ### Bad Prompt
 
-```
+```text
 How do I know if my AI app is working well?
 ```
 
@@ -87,7 +87,7 @@ I list quality indicators: response accuracy, user satisfaction, error rates. Th
 
 ### Good Prompt
 
-```
+```text
 Design an eval loop for the chat API that converts runtime signals into
 iterative improvements.
 
@@ -131,7 +131,7 @@ The four-step pattern creates a closed loop. Step 4 (validation) feeds back to s
 
 ### Bad Prompt
 
-```
+```text
 My AI responses are sometimes slow. How do I fix this?
 ```
 
@@ -141,7 +141,7 @@ I suggest caching, model selection, or prompt optimization without knowing what 
 
 ### Good Prompt
 
-```
+```text
 Observability data shows that 12% of chat API requests exceed 5 seconds
 end-to-end. The breakdown:
 - Provider API call: 3.2s average (p95 = 4.8s)
@@ -189,7 +189,7 @@ The three-category structure (prompt-level, architecture-level, operational) ens
 
 ### Bad Prompt
 
-```
+```text
 Help me debug issues in my API.
 ```
 
@@ -199,7 +199,7 @@ I suggest `console.log` statements. The industry has spent decades building obse
 
 ### Good Prompt
 
-```
+```text
 Implement request correlation across the chat API request lifecycle.
 
 Requirements:
@@ -242,7 +242,7 @@ The explicit propagation path (where requestId must appear) prevents me from imp
 
 ### Bad Prompt
 
-```
+```text
 How do I make sure things don't break when the model changes?
 ```
 
@@ -252,7 +252,7 @@ I suggest version pinning and testing. These are correct but incomplete. The dee
 
 ### Good Prompt
 
-```
+```text
 Chapter 8 describes orchestration drift risk: prompt contracts, model
 behavior, and process assumptions evolving at different speeds.
 

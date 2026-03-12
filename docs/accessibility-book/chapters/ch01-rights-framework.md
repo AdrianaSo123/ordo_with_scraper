@@ -1,6 +1,7 @@
 # Chapter 1 — The Rights Framework: Why Accessibility Is Not Optional
 
 ## Abstract
+
 Accessibility is a civil right, not a feature request. This chapter traces the legal and ethical framework from Section 504 through the ADA, the UN Convention, and modern enforcement actions that make accessibility a legal requirement in most markets.
 
 ---
@@ -20,7 +21,7 @@ Roberts established the framework that governs digital accessibility today: acce
 ## The Legal Landscape
 
 | Law/Standard | Year | Scope | Key Requirement |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Section 504 | 1973 | US federal programs | No discrimination based on disability |
 | ADA | 1990 | US public/private | Accessible public accommodations |
 | Section 508 | 1998 (updated 2017) | US federal IT | WCAG 2.0 AA compliance for federal technology |
@@ -39,6 +40,7 @@ The **social model** distinguishes between *impairment* (a physical or cognitive
 This reframing transforms accessibility from "helping disabled people" to "removing barriers from the environment." The barrier is in the product, not in the person.
 
 ## Chapter Checklist
+
 - Can you cite the legal accessibility requirements that apply to your product's markets?
 - Does your organization treat accessibility as a right, or as a feature to be prioritized?
 - Is accessibility included in your definition of "done" for every feature?

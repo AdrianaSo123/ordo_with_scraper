@@ -1,6 +1,7 @@
 # Chapter 0 — The Thread: From Craft to Component
 
 ## Abstract
+
 Every component library, every design system, every button with a hover state exists because someone, somewhere, watched a user fail. UI design is not decoration — it is the discipline of making software *usable* by making it *visible*. This chapter traces the thread connecting the practitioners who turned interface design from an afterthought into a discipline: from Doug Engelbart's first mouse demo to Brad Frost's Atomic Design.
 
 ---
@@ -50,4 +51,5 @@ Each chapter follows the series convention: *Practitioner → Principle → Engi
 ---
 
 ## Reader Exercise: The Interface Inventory
+
 Pick any web application you use daily. Open DevTools. Count the distinct component types (buttons, inputs, cards, modals, dropdowns). For each, note: does it have hover, focus, active, disabled, loading, and error states? How many are missing? This inventory is the starting point for understanding why UI design is engineering.

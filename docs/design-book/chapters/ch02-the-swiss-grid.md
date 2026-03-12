@@ -1,6 +1,7 @@
 # Chapter 2 — The Swiss Grid: Spatial Rhythm and Mathematics
 
 ## Abstract
+
 If the Bauhaus built the factory for standardized components, the post-war Swiss graphic designers wrote the API for how those components should be arranged. Originating in Switzerland in the 1950s, the International Typographic Style (or simply, the Swiss Style) formalized the concept of the grid. This chapter looks at how pioneers like Josef Müller-Brockmann, Max Bill, Armin Hofmann, and Emil Ruder turned layout into pure mathematical rhythm, creating the logical foundation of responsive web design.
 
 ---
@@ -36,6 +37,7 @@ The true power of objective rhythm is the absolute separation of **content** fro
 This is the CSS separation of concerns in physical form. The grid is the stylesheet. The content is the markup. When the grid is strong, the content is interchangeable — exactly as a well-designed component renders consistently regardless of what data it receives through props.
 
 Müller-Brockmann's grid system defined:
+
 - **Column count**: how many vertical divisions the page has
 - **Gutter width**: the consistent space between columns
 - **Margin proportions**: the relationship between text block and page edge
@@ -151,6 +153,7 @@ Our typographic scale implements Ruder's contrast axes:
 Each step in the scale is a deliberate contrast decision — not an arbitrary number but a proportional relationship that maintains Ruder's size-contrast axis across the entire application.
 
 ## Chapter Checklist
+
 - Are your UI elements anchored to a consistent underlying column grid, or are they positioned subjectively?
 - Is your text flush-left to preserve uniform word spacing, or justified to the detriment of legibility?
 - Can your layout scale to handle variable-length content without breaking the mathematical relationship of the page?

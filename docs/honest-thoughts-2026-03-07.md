@@ -47,6 +47,7 @@ The UI that wraps them may not be the final form that matters.
 
 I would not lift the product directly.
 I would lift:
+
 - coding discipline
 - route restraint
 - orchestration patterns
@@ -61,6 +62,7 @@ This repository proves that we can build something elegant and well-governed.
 It does not prove that this exact product shape is the right commercial vehicle.
 
 So I see it as:
+
 - a very strong workshop
 - a very good teaching specimen
 - a partial code seed

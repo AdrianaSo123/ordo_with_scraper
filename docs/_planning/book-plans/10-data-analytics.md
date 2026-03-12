@@ -3,7 +3,7 @@
 ## Proposed Chapter Outline
 
 | # | Chapter | Practitioner(s) | Focus |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 0 | The Measurement Mandate | W. Edwards Deming | "You can't manage what you can't measure" |
 | 1 | Event Architecture | Segment founders (Peter Reinhardt) | Event schemas, tracking plans, data contracts |
 | 2 | Vanity Metrics vs Actionable Metrics | Eric Ries (revisited), Avinash Kaushik | Pageviews vs conversion, the "so what" test |
@@ -16,5 +16,6 @@
 | 9 | AI and Predictive Analytics | The current moment | LLM-assisted analysis, anomaly detection, forecasting |
 
 ## Status
+
 - **Current state:** Not started
 - **Dependencies:** All previous books

@@ -3,7 +3,7 @@
 ## Proposed Chapter Outline
 
 | # | Chapter | Practitioner(s) | Focus |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 0 | Affordances and Signifiers | Don Norman | "The Design of Everyday Things", mapping, feedback |
 | 1 | Heuristic Evaluation | Jakob Nielsen | The 10 heuristics as engineering checklists |
 | 2 | Cognitive Load | George Miller, Steve Krug | "Don't Make Me Think", Miller's Law (7±2) |
@@ -16,5 +16,6 @@
 | 9 | Measuring UX | Jeff Sauro (measuring usability) | SUS scores, task success rate, time-on-task, analytics |
 
 ## Status
+
 - **Current state:** Not started
 - **Dependencies:** Book III (UI Design)

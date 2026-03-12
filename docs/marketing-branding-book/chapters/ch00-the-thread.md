@@ -1,6 +1,7 @@
 # Chapter 0 — The Thread: From Mass Communication to Precision Positioning
 
 ## Abstract
+
 Marketing and branding are the disciplines of making value visible. This book traces the evolution from mass advertising through positioning theory, brand architecture, content marketing, and the AI-augmented marketing stack. The principle: **a brand is not a logo — it is a promise that is either kept or broken with every interaction.**
 
 ---

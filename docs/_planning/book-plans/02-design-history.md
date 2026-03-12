@@ -3,7 +3,7 @@
 ## Proposed Chapter Outline (Expanded)
 
 | # | Chapter | Practitioner(s) | Focus |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 0 | Before the Bauhaus | Piet Mondrian, Theo van Doesburg, El Lissitzky | De Stijl + Constructivism → CSS Grid origins |
 | 1 | The Bauhaus Experiment | Walter Gropius, Herbert Bayer, László Moholy-Nagy | Typography as infrastructure, universal design |
 | 2 | The Swiss Grid | Josef Müller-Brockmann, Massimo Vignelli | Mathematical spatial rhythm → responsive layout |
@@ -16,5 +16,6 @@
 | 9 | **NEW: Industrial Design** | Dieter Rams, Charles & Ray Eames | 10 Principles → Apple design language, form follows function |
 
 ## Status
+
 - **Current state:** 7 chapters drafted (~4-5K each), editorial sprints complete
 - **Action needed:** Deepen each to 8-12K, add 3 new chapters (7, 8, 9)

@@ -71,4 +71,5 @@ You can read non-linearly, but the method in Chapter 5 is worth reading before C
 ---
 
 ## Reader Exercise: The Timeline Diagram
+
 Draw a timeline from 1965 to the present. Place each practitioner at their point of origin. Annotate each node with two things: what was breaking, and what vocabulary they introduced to name the problem. Draw a single horizontal arrow beneath the timeline labeled: *the thread — complexity outpacing tools, practitioners naming the failures.* Compare your diagram to The Thread section above and note which connections surprised you.

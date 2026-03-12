@@ -6,7 +6,7 @@ Every chapter across all 10 books follows this structure. No exceptions.
 
 ### Structure
 
-```
+```text
 # Chapter N — [Title]
 
 ## The Practitioner(s)
@@ -44,12 +44,14 @@ Every chapter across all 10 books follows this structure. No exceptions.
 Every completed book produces two outputs:
 
 ### 1. Human Book (Markdown chapters)
+
 - Full narrative with practitioner stories
 - Code examples with explanation
 - Exercises and checklists
 - Located in: `docs/{book-name}/chapters/`
 
 ### 2. LLM Context Pack (Dense specifications)
+
 - No narrative, no stories — pure constraints
 - Named patterns with minimal code
 - Anti-pattern catalog
@@ -58,7 +60,7 @@ Every completed book produces two outputs:
 
 ### Context Pack Structure
 
-```
+```text
 .context/
 ├── PRINCIPLES.md      ← "ALWAYS do X. NEVER do Y."
 ├── PATTERNS.md        ← Named patterns + 3-line code examples
@@ -107,7 +109,7 @@ Every chapter is subject to an editorial sprint after drafting:
 Each book maps to website features:
 
 | Book | Website Feature |
-|---|---|
+| --- | --- |
 | Design History | Temporal Interface (Theme Switcher) |
 | UI Design | Component Showcase |
 | UX Design | User Journey Visualizer |

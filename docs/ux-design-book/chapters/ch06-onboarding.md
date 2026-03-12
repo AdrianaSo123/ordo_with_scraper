@@ -1,6 +1,7 @@
 # Chapter 6 — Onboarding and First-Run Experience: The First Five Minutes
 
 ## Abstract
+
 Users decide whether to keep using a product within minutes. This chapter covers onboarding patterns: progressive onboarding, empty states, time-to-value optimization, and the distinction between feature tours (which rarely work) and contextual guidance (which does).
 
 ---
@@ -16,12 +17,15 @@ Hulick's bowling lane metaphor: users are rolling a ball toward pins (their goal
 ## Onboarding Patterns
 
 ### Progressive Onboarding
+
 Reveal features only when the user is ready for them. A new user sees the core workflow. Advanced features appear after the user demonstrates competence with basics. This reduces cognitive load (Chapter 2) and prevents feature overwhelm (Hick's Law).
 
 ### Empty States
+
 The first screen a new user sees has no data — empty dashboards, empty lists, empty feeds. This "empty state" is a critical design opportunity. An empty state with a call to action ("Create your first project") converts. An empty state with just placeholder text ("No items yet") does nothing.
 
 ### Time-to-Value
+
 The metric that matters most in onboarding: how long between sign-up and the user's first valuable experience. A project management tool's time-to-value is the time between account creation and creating the first task. Every unnecessary step (profile photos, team setup, preference wizards) between sign-up and value extends this gap and increases abandonment.
 
 ---
@@ -31,6 +35,7 @@ The metric that matters most in onboarding: how long between sign-up and the use
 The first five minutes determine whether a user becomes a customer or a churned statistic. Onboarding is not a tour — it is the shortest path to value.
 
 ## Chapter Checklist
+
 - Can a new user reach a meaningful outcome within 3 minutes of sign-up?
 - Do empty states include clear calls to action?
 - Is your onboarding progressive (basic first, advanced later)?

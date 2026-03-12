@@ -1,6 +1,7 @@
 # Chapter 4 — Named Frameworks as Compressed Programs
 
 ## Abstract
+
 Names like 12-Factor, GoF, and Uncle Bob are compressed packets of design intent. When invoked clearly, they align humans and models quickly and reduce orchestration ambiguity.
 
 ---
@@ -59,6 +60,7 @@ This compression is valuable because it increases alignment speed. But compressi
 > When I read the phrase "GoF refactor" in a prompt, I am not looking up a definition. I am activating a cluster of associated patterns — Observer, Strategy, Decorator, the reasoning about why coupling matters — built up across years of training examples. When you say "make the code better," I activate something far broader and far less specific. Framework names are compression that works *for me* as much as they work between humans. They are the fastest path to shared intent, because they constrain my optimization target before I generate a single character. A well-named directive is not just convenient communication. It is prompt engineering.
 
 ## The Contract Pattern
+
 Use this pattern whenever you invoke a named framework:
 
 1. Framework name (semantic macro)
@@ -69,28 +71,35 @@ Use this pattern whenever you invoke a named framework:
 Without steps 2–4, the macro is underspecified. Different readers—human or model—will fill gaps differently.
 
 ## Repository Example: Three Framework Macros
+
 This repo provides three concrete cases.
 
 ### Case 1: 12-Factor
+
 The directive produced an audit, a sprint plan, and phased implementation. The result included config hardening, release workflows, health/readiness routes, disposability handling, parity tooling, and admin process scripts.
 
 ### Case 2: GoF
+
 The directive produced explicit pattern upgrades in runtime code: Observer event bus, Decorator-based provider wrappers, Chain of Responsibility for provider errors, and later Template Method + Facade for route lifecycle.
 
 ### Case 3: Uncle Bob (Robert C. Martin) framing
+
 This shifted implementation toward SRP and module boundaries, reducing route-level monoliths and improving testability. The decomposition from a single route handler into `validation.ts`, `policy.ts`, `orchestrator.ts`, and `http-facade.ts` was driven directly by the SOLID audit sprint.
 
 In each case, the framework name accelerated orientation. In each successful case, validation gates and artifact discipline converted orientation into verified outcomes.
 
 ## Practical Lens
+
 Use framework names as a start condition, then immediately force local precision. When a sprint plan says "GoF refactor," the next sentence should specify which pattern, which files, and what acceptance criteria prove it worked. A framework name without local contract is ambition without accountability.
 
 ## Failure Modes
+
 - **Name-only prompting**: invokes a framework but gives no concrete boundaries.
 - **Dogmatic transfer**: applies framework rules mechanically without contextual adaptation.
 - **Validation gap**: declares compliance without measurable evidence.
 
 ## Exercise
+
 Pick one named framework you often use and write:
 
 1. A one-line invocation using only the framework name.
@@ -99,9 +108,11 @@ Pick one named framework you often use and write:
 Execute both on a non-trivial task and compare correction load. You should see a large reduction in rework with the qualified version.
 
 ## Reader Exercise: Compression Comparison
+
 Create a side-by-side flow diagram: left side "name-only directive," right side "name + scope + local interpretation + acceptance checks." Show where ambiguity is removed. Then apply the 4-step contract pattern to one framework you use in your own work.
 
 ## Chapter Checklist
+
 - Does the chapter show why semantic compression is valuable?
 - Does it show how ambiguity appears and how to control it?
 - Does it tie framework claims to concrete repository outcomes?

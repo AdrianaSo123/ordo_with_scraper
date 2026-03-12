@@ -1,6 +1,7 @@
 # Chapter 6 — The Motion and Fluid Web Era: Design as a Calculus
 
 ## Abstract
+
 If the Swiss Grid taught us how to arrange static elements mathematically, the modern web demands that those mathematics adapt seamlessly over time and space. The contemporary era of design engineering has moved past simple breakpoints. Utilizing CSS math functions (`clamp()`), finite state machines, and fluid scaling, modern visual design is no longer a static blueprint — it is a live calculus equation solving for infinite viewport variables.
 
 ---
@@ -145,6 +146,7 @@ In our Next.js architecture, we leverage fluid typography across our entire appl
 Each token defines its own adaptation range. The typography scale is never static and never jumps — it flows continuously from the smallest phone to the largest desktop, maintaining proportional relationships at every viewport width.
 
 ## Chapter Checklist
+
 - Does your typography jump sharply at standard breakpoints, or does it fluidly transition with the viewport?
 - Are your UI animations serving a purely decorative purpose, or do they semantically explain state shifts?
 - Do your animations respect the `prefers-reduced-motion` accessibility query?

@@ -3,7 +3,7 @@
 ## Proposed Chapter Outline
 
 | # | Chapter | Practitioner(s) | Focus |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 0 | The Product Mindset | Marty Cagan | Empowered teams, product discovery vs delivery |
 | 1 | Continuous Discovery | Teresa Torres | Opportunity solution trees, weekly customer interviews |
 | 2 | Prioritization Frameworks | Rice Brynjolfsson, Shreyas Doshi | RICE, impact/effort, the "No" framework |
@@ -16,5 +16,6 @@
 | 9 | AI as Product Collaborator | The current moment | Using LLMs for spec generation, user research synthesis |
 
 ## Status
+
 - **Current state:** Not started
 - **Dependencies:** Book IV (UX Design)

@@ -3,6 +3,7 @@
 This roadmap addresses all audit findings: secret handling, duplication, SRP violations, brittle streaming parser, weak type boundaries, and UI/transport coupling.
 
 ## Sprint Order
+
 1. `sprint-00-testing-foundation.md`
 2. `sprint-01-secret-safety.md`
 3. `sprint-02-shared-chat-policy.md`
@@ -13,6 +14,7 @@ This roadmap addresses all audit findings: secret handling, duplication, SRP vio
 8. `sprint-07-type-safety-and-regression.md`
 
 ## Definition of Done (global)
+
 - New behavior is specified by tests first (red-green-refactor).
 - `npm run lint` and `npm run build` pass.
 - New tests pass locally.

@@ -1,6 +1,7 @@
 # Chapter 1 — Interaction Principles: Engelbart, Raskin, and the Humane Interface
 
 ## Abstract
+
 Before there were design systems, there were interaction principles — fundamental rules about how humans perceive, process, and control digital systems. This chapter traces the lineage from Doug Engelbart's 1968 "Mother of All Demos" through Jef Raskin's *The Humane Interface*, Larry Tesler's war on modes, and Ben Shneiderman's Eight Golden Rules. Together, they established the invariants that every successful interface obeys.
 
 ---
@@ -35,6 +36,7 @@ This is the origin of the tension that runs through all UI design: accessibility
 His 2000 book *The Humane Interface* codified principles that are now fundamental to UI engineering:
 
 ### Habituation and Automaticity
+
 Raskin observed that users develop habits through repeated interaction. Once a habit forms, it becomes automatic — the user acts without conscious thought. This has two implications:
 
 1. **Consistent interfaces are learnable**: If a button always appears in the same location and always does the same thing, the user habituates quickly and their interaction becomes automatic.
@@ -43,6 +45,7 @@ Raskin observed that users develop habits through repeated interaction. Once a h
 This is why **consistent component APIs** matter in design systems. A `<Button>` component that sometimes triggers navigation and sometimes triggers a modal — without visual differentiation — will cause habituated users to make errors.
 
 ### The Locus of Attention
+
 Raskin introduced the concept of a singular attention focus: users can only attend to one thing at a time. If a system changes state outside the user's locus of attention, they will not notice. This is why inline validation (showing errors next to the field) is more effective than alert boxes (which appear outside the user's focus).
 
 Modern translation: **toast notifications** work for confirmation. They fail for critical errors, because users habituate to dismissing them.
@@ -98,7 +101,7 @@ In component engineering, this translates to explicit visual state management:
 ### Mapping to Component Engineering
 
 | Rule | Component Implementation |
-|------|------------------------|
+| ------ | ------------------------ |
 | Consistency | Design tokens, component APIs, naming conventions |
 | Universal usability | Keyboard navigation, screen reader support, responsive layout |
 | Informative feedback | Loading states, success/error indicators, progress bars |
@@ -148,6 +151,7 @@ function SubmitButton({ isLoading, isSuccess, isError }) {
 The button communicates four states: default, loading, success, and error. The `aria-busy` and `aria-live` attributes communicate these states to screen readers. No user should ever click a button and see nothing happen.
 
 ## Chapter Checklist
+
 - Does every interactive element provide visible feedback on interaction?
 - Are your components modeless, or do they make their current mode visually explicit?
 - Can a user undo any non-destructive action?

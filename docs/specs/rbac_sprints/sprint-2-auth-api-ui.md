@@ -11,7 +11,7 @@
 **What:** Create `src/middleware.ts` — cookie presence check only, no DB.
 
 | Item | Detail |
-|------|--------|
+| ------ | -------- |
 | **Create** | `src/middleware.ts` — route matcher config from §3.3; check `lms_session_token` cookie; 401 for protected routes without cookie; pass everything else |
 | **Spec** | §3.3, §5, MW-1–6, NEG-ARCH-3, NEG-ARCH-4 |
 | **Tests (new)** | Middleware unit tests: cookie absent + protected route → 401; cookie present → passes; public routes → passes; page routes → passes |
@@ -24,7 +24,7 @@
 **What:** Create the 4 auth route handlers.
 
 | Item | Detail |
-|------|--------|
+| ------ | -------- |
 | **Create** | `src/app/api/auth/register/route.ts` — POST, delegates to `register()` |
 | **Create** | `src/app/api/auth/login/route.ts` — POST, delegates to `login()` |
 | **Create** | `src/app/api/auth/logout/route.ts` — POST, delegates to `logout()` |
@@ -39,7 +39,7 @@
 **What:** Create the two auth UI pages.
 
 | Item | Detail |
-|------|--------|
+| ------ | -------- |
 | **Create** | `src/app/login/page.tsx` — email + password form, inline errors, redirect to `/` on success |
 | **Create** | `src/app/register/page.tsx` — email + password + name form, inline field validation, redirect to `/` on success |
 | **Spec** | §3.6, UI-4, UI-5, TEST-PAGE-03–06 |
@@ -53,7 +53,7 @@
 **What:** Update navigation to reflect auth state.
 
 | Item | Detail |
-|------|--------|
+| ------ | -------- |
 | **Modify** | `src/components/AccountMenu.tsx` — unauthenticated: "Sign In" / "Register" links; authenticated: user info + conversation history; ADMIN: + simulation panel |
 | **Modify** | `src/components/SiteNav.tsx` — login/register CTA for anonymous users |
 | **Modify** | `src/app/layout.tsx` — pass user to ChatProvider for context |

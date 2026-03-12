@@ -1,6 +1,7 @@
 # Chapter 8 — Typography: The Invisible Infrastructure
 
 ## Abstract
+
 Typography is the most pervasive component in any interface — it appears on every screen, in every context, at every scale. This chapter traces the history of type from Gutenberg's movable type through Caslon, Bodoni, the sans-serif revolution, Frutiger's systematic approach, and the modern reality of variable fonts, optical sizing, and typographic scale systems that make text the structural backbone of design rather than an afterthought.
 
 ---
@@ -112,6 +113,7 @@ Typography is the invisible infrastructure of every interface. The history trace
 - Variable fonts give us continuous adaptation (the equivalent of fluid design)
 
 A modern typographic system must define:
+
 1. **A type scale**: proportional sizes from caption to hero
 2. **Weight and width tokens**: systematic, not ad hoc
 3. **Line height and letter spacing**: tied to size (smaller text needs more spacing)
@@ -141,6 +143,7 @@ A modern typographic system must define:
 ```
 
 ## Chapter Checklist
+
 - Is your typographic scale based on a mathematical ratio, or are font sizes chosen ad hoc?
 - Do your line heights decrease as font size increases (tighter leading for display text)?
 - Are you loading fonts efficiently (font-display: swap, preloading critical fonts)?

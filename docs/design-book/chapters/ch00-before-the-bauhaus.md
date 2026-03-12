@@ -1,6 +1,7 @@
 # Chapter 0 — Before the Bauhaus: The People Who Mathematized Art
 
 ## Abstract
+
 Design is not magic; it is mathematics. Before graphic design was recognized as a formalized discipline, a small group of uncompromising painters and architects attempted to reduce visual communication to its most fundamental, objective truths. This chapter examines the pioneers of the De Stijl and Constructivist movements — and their precursors in the Arts and Crafts movement — who traded the canvas for the grid, laying the invisible foundation for what we now call computational design engineering.
 
 ---
@@ -110,6 +111,7 @@ In our companion website, we do not allow designers or developers to arbitrarily
 Just as the Constructivists saw themselves as engineers of form, we treat our design tokens as the infrastructure of our aesthetics — where every value represents a deliberate, calculable choice within a unified system.
 
 ## Chapter Checklist
+
 - Are your layouts built on an objective, underlying mathematical grid, or are elements placed subjectively via magic numbers?
 - Is color used to convey structural meaning, or merely for decoration?
 - Can your visual hierarchy be described as a set of rules rather than a set of exceptions?

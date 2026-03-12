@@ -7,6 +7,7 @@ Use this template for every chapter across all 10 books.
 # Chapter N — [Title]
 
 ## Abstract
+
 [2-3 sentences. What this chapter covers and why it matters for product development.]
 
 ---
@@ -60,6 +61,7 @@ Use this template for every chapter across all 10 books.
 ---
 
 ## Chapter Checklist
+
 - [ ] [Verifiable claim 1 — phrased as a yes/no question]
 - [ ] [Verifiable claim 2]
 - [ ] [Verifiable claim 3]

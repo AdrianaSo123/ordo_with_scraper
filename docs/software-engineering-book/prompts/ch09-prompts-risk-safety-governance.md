@@ -8,7 +8,7 @@
 
 ### Bad Prompt
 
-```
+```text
 Set up some quality checks for my code.
 ```
 
@@ -18,7 +18,7 @@ I add a linter and maybe a test runner. They will be configured with defaults. T
 
 ### Good Prompt
 
-```
+```text
 Implement the three-layer composite governance gate described in Chapter 9.
 
 Layer 1 — TypeScript Strict Mode:
@@ -75,7 +75,7 @@ The final invariant — "fix the code, do not weaken the gate" — prevents the 
 
 ### Bad Prompt
 
-```
+```text
 Make sure my API keys are safe.
 ```
 
@@ -85,7 +85,7 @@ I suggest `.env` files and `.gitignore`. This is the bare minimum and does not a
 
 ### Good Prompt
 
-```
+```text
 Risk domain: Secret and Config Risk (Chapter 9, domain 1)
 
 Perform a security audit of secret handling in this codebase:
@@ -128,7 +128,7 @@ The scan-secrets.mjs script converts a one-time audit into a repeatable governan
 
 ### Bad Prompt
 
-```
+```text
 How do I prevent my AI prompts from drifting?
 ```
 
@@ -138,7 +138,7 @@ I suggest versioning your prompts and testing them. These are real practices, bu
 
 ### Good Prompt
 
-```
+```text
 Risk domain: Orchestration Drift Risk (Chapter 9, domain 4)
 
 Orchestration drift occurs when prompt contracts, model behavior, and process
@@ -190,7 +190,7 @@ The artifact-reality drift analysis is particularly valuable because it turns ex
 
 ### Bad Prompt
 
-```
+```text
 How do I make sure AI-generated code is safe to deploy?
 ```
 
@@ -200,7 +200,7 @@ I list general practices: code review, testing, CI gates. These are correct for 
 
 ### Good Prompt
 
-```
+```text
 A team member used an AI assistant to generate 400 lines of code across
 4 files in 20 minutes. The code compiles, tests pass, and a cursory manual
 review shows nothing obviously wrong.
@@ -249,7 +249,7 @@ The AI-specific PR checklist in step 4 is the operational artifact. A normal rev
 
 ### Bad Prompt
 
-```
+```text
 What does AI governance look like?
 ```
 
@@ -259,7 +259,7 @@ I describe policy frameworks, ethics boards, and organizational practices. These
 
 ### Good Prompt
 
-```
+```text
 Jack Clark's governance thesis from Chapter 9: as AI systems generate more
 code, governance must shift from "did a human review this?" to "can the
 system make AI output observable enough for meaningful human oversight?"

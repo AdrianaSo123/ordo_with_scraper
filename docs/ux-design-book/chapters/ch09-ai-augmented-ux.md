@@ -1,6 +1,7 @@
 # Chapter 9 — AI-Augmented UX: Using Models in the Design Process
 
 ## Abstract
+
 AI is not just the *subject* of UX design — it is an increasingly powerful *tool* for UX practitioners. This chapter covers using AI for research synthesis, persona generation, heuristic evaluation, prototype testing, and the ethical boundaries of AI-generated user insights.
 
 ---
@@ -57,6 +58,7 @@ The practitioner's role is to *concentrate* the AI's energy: frame specific rese
 AI augments every phase of UX practice: research, synthesis, evaluation, and testing. But it amplifies the practitioner's skill, not replaces it. A skilled UX researcher using AI produces dramatically more insight per hour. An unskilled researcher using AI produces plausible-sounding conclusions that may be wrong.
 
 ## Chapter Checklist
+
 - Are you using AI for research synthesis (transcription, theme extraction)?
 - Is AI-generated analysis validated by human practitioners?
 - Do you use AI heuristic evaluation as a pre-screening step?

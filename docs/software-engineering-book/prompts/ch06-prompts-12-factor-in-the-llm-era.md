@@ -8,7 +8,7 @@
 
 ### Bad Prompt
 
-```
+```text
 Move my config to environment variables.
 ```
 
@@ -20,7 +20,7 @@ This is "compliance theater" for Factor III. The config moved, but the operation
 
 ### Good Prompt
 
-```
+```text
 Factor: III (Config) — "Store config in the environment"
 Scope: All runtime configuration for the AI provider integration.
 
@@ -62,7 +62,7 @@ The validation requirement in item 5 ("list ALL failing vars, not just the first
 
 ### Bad Prompt
 
-```
+```text
 Set up a deployment pipeline for my Next.js app.
 ```
 
@@ -72,7 +72,7 @@ I generate a CI/CD configuration file — probably GitHub Actions — that build
 
 ### Good Prompt
 
-```
+```text
 Factor: V (Build, Release, Run) — strict stage separation with release metadata.
 
 Context: Next.js App Router application deployed via Docker.
@@ -114,7 +114,7 @@ The release manifest with a health endpoint is operationally powerful — it mea
 
 ### Bad Prompt
 
-```
+```text
 Make sure my app shuts down properly.
 ```
 
@@ -124,7 +124,7 @@ I add a SIGTERM handler that calls `process.exit(0)`. This is technically gracef
 
 ### Good Prompt
 
-```
+```text
 Factor: IX (Disposability) — fast startup and graceful shutdown for a
 Next.js application with streaming AI responses.
 
@@ -170,7 +170,7 @@ The invariant "shutdown behavior is exclusively in the startup script, not in ro
 
 ### Bad Prompt
 
-```
+```text
 Make dev and prod the same.
 ```
 
@@ -180,7 +180,7 @@ I suggest Docker. "Use Docker to ensure parity." This is correct but incomplete 
 
 ### Good Prompt
 
-```
+```text
 Factor: X (Dev/Prod Parity) — specifically for LLM-backed applications.
 
 Parity dimensions to audit:
@@ -224,7 +224,7 @@ The parity check script turns an audit finding into a repeatable command. This i
 
 ### Bad Prompt
 
-```
+```text
 Add some admin scripts to my app.
 ```
 
@@ -234,7 +234,7 @@ I generate a handful of utility scripts: maybe a database seed, a cache clear, a
 
 ### Good Prompt
 
-```
+```text
 Factor: XII (Admin Processes) — run admin/management tasks as one-off processes.
 
 Create three admin scripts that run in the same environment as the application:

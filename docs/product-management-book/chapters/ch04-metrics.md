@@ -1,6 +1,7 @@
 # Chapter 4 — Metrics That Matter: OKRs, North Stars, and Vanity Metrics
 
 ## Abstract
+
 Not all metrics are created equal. This chapter covers the discipline of choosing metrics that drive decisions: John Doerr's OKRs, the North Star metric concept, and the critical distinction between vanity metrics (they go up and to the right but don't inform decisions) and actionable metrics (they change what you do).
 
 ---
@@ -23,13 +24,14 @@ The North Star is not a revenue metric — it is a *value* metric. Revenue follo
 ## Vanity vs. Actionable Metrics
 
 | Vanity Metric | Why It's Misleading | Actionable Alternative |
-|---------------|--------------------|-----------------------|
+| --------------- | -------------------- | ----------------------- |
 | Total sign-ups | Always increases, never decreases | Weekly active users |
 | Page views | Doesn't indicate engagement | Time on page, scroll depth |
 | App downloads | Installed ≠ used | Day-7 retention rate |
 | Social followers | Follower count ≠ engagement | Engagement rate per post |
 
 ## Chapter Checklist
+
 - Do you have a North Star metric that captures user value?
 - Are your OKRs specific and measurable?
 - Can you distinguish vanity metrics from actionable metrics in your dashboard?

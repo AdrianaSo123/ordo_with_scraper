@@ -3,7 +3,7 @@
 ## Proposed Chapter Outline
 
 | # | Chapter | Practitioner(s) | Focus |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 0 | Component Anatomy | Brad Frost (Atomic Design) | Atoms → molecules → organisms → templates → pages |
 | 1 | Layout Systems | Rachel Andrew (CSS Grid spec editor) | Grid, Flexbox, container queries as engineering specs |
 | 2 | Color Systems | Josef Albers, Lea Verou | HSL → OKLCH, design tokens, P3 gamut, `color-mix()` |
@@ -16,5 +16,6 @@
 | 9 | Design System Architecture | Jina Anne (design tokens), Dan Mall | Token → component → pattern library → governance |
 
 ## Status
+
 - **Current state:** Not started
 - **Dependencies:** Book II (Design History)

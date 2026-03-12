@@ -8,7 +8,7 @@
 
 ### Bad Prompt
 
-```
+```text
 Summarize what happened in this project.
 ```
 
@@ -18,7 +18,7 @@ I read whatever files I have access to and produce a narrative summary. The summ
 
 ### Good Prompt
 
-```
+```text
 Analyze this repository's evolution using the four-phase model from
 Chapter 10:
 
@@ -64,7 +64,7 @@ The "would have been riskier" analysis adds a counterfactual that makes the sequ
 
 ### Bad Prompt
 
-```
+```text
 What went wrong in this project?
 ```
 
@@ -74,7 +74,7 @@ I scan for error-related files, test failures, or comments mentioning problems. 
 
 ### Good Prompt
 
-```
+```text
 Chapter 10 identifies three specific failures in this project's evolution:
 
 1. Graceful shutdown was missing from the streaming route.
@@ -117,7 +117,7 @@ The Chapter 9 risk-domain mapping connects this case study to the governance fra
 
 ### Bad Prompt
 
-```
+```text
 Help me write a case study for my project.
 ```
 
@@ -127,7 +127,7 @@ I ask what the project does and produce a narrative description: it was built, c
 
 ### Good Prompt
 
-```
+```text
 I want to create a Chapter 10-style case study for my project: [describe
 project briefly — stack, team size, timeline].
 
@@ -178,7 +178,7 @@ The evidence inventory (section 4) applies Chapter 10's core principle: maturity
 
 ### Bad Prompt
 
-```
+```text
 What lessons can I learn from this project?
 ```
 
@@ -188,7 +188,7 @@ I generate broad lessons: "testing is important," "refactoring should be increme
 
 ### Good Prompt
 
-```
+```text
 Chapter 10 identifies four process-level lessons from this repository's
 evolution. Evaluate whether each lesson holds in this codebase's current
 state, and propose a fifth lesson based on evidence I haven't considered:
@@ -241,7 +241,7 @@ The acceptance criterion that Lesson 5 "is genuinely different from Lessons 1–
 
 ### Bad Prompt
 
-```
+```text
 How do I onboard new team members to this project?
 ```
 
@@ -251,7 +251,7 @@ I create a standard onboarding guide: clone the repo, install dependencies, run 
 
 ### Good Prompt
 
-```
+```text
 Design a case-study-based onboarding document for a new contributor to
 this repository, using Chapter 10's methodology.
 

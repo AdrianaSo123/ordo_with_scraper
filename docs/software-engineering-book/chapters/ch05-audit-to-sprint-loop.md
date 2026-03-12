@@ -1,6 +1,7 @@
 # Chapter 5 — The Audit-to-Sprint Execution Loop
 
 ## Abstract
+
 Reliable orchestration turns abstract critiques into concrete implementation cycles. This chapter presents the operating loop: audit findings, sprint plans, execution, verification, and archival.
 
 ---
@@ -36,6 +37,7 @@ They also introduced **tracer bullets** as a development philosophy: rather than
 Cunningham gave us the vocabulary for managing accumulated shortcuts. Thomas and Hunt gave us the attitude: own the craft, maintain the windows, fire tracer bullets. The audit-to-sprint loop that follows is the operational expression of both philosophies — sprint in bounded increments, verify each change, manage debt deliberately.
 
 ## Why This Loop Exists
+
 Large refactors fail less from lack of ideas and more from loss of continuity. Teams often produce strong audits that never become structured execution. Or they implement aggressively without preserving rationale and evidence.
 
 The audit-to-sprint loop solves that gap by converting diagnosis into controlled delivery.
@@ -82,18 +84,23 @@ A video rendering system built this way does not require you to be a codec engin
 ## The Five-Stage Loop
 
 1. **Audit**  
+
 	Identify architectural and operational gaps with explicit findings. The audit is not a vague assessment — it is a structured review that names specific problems, cites evidence, and assigns severity. In this repository, the 12-Factor audit and GoF audit each produced a findings document with concrete gap descriptions.
 
 2. **Plan**  
+
 	Convert findings into sprint-sized units with acceptance criteria and sequence. Each sprint should be small enough to complete and verify in one session. The plan names what will change, what must not change (invariants), and how completion will be measured.
 
 3. **Execute**  
+
 	Implement one sprint at a time, preserving focus and minimizing cross-sprint drift. Resist the temptation to fix adjacent problems during execution — side-fixes bypass the plan, skip verification, and introduce untracked changes.
 
 4. **Verify**  
+
 	Run objective gates and collect evidence artifacts. In this project, verification means running `npm run typecheck`, `npm run lint:strict`, and `npm test` at minimum. The results are the evidence, not the narrative claim that "everything works."
 
 5. **Archive**  
+
 	Record outcome, move artifacts, and leave a reconstructable trail. Completed sprints move to `sprints/completed/` with their QA reports. This archive is not documentation for its own sake — it is the literal context that future sessions (human or AI) will need to understand what happened and why.
 
 This is not ceremony for its own sake. It is memory architecture for complex change.
@@ -101,6 +108,7 @@ This is not ceremony for its own sake. It is memory architecture for complex cha
 > Building high-quality sprint contracts requires precision in how you frame scope, invariants, and acceptance criteria. Those primitives are defined in [Chapter 3](ch03-prompt-orchestration-primitives.md).
 
 ## Repository Example: Loop in Action
+
 This repository exercised the full loop in visible artifacts:
 
 - `sprints/planning` stored scoped plans.
@@ -110,6 +118,7 @@ This repository exercised the full loop in visible artifacts:
 The 12-factor wave and GoF wave both followed this model. The loop enforced continuity over many refactors without losing architectural intent.
 
 ## Why Validation Is Non-Negotiable
+
 The loop is only trustworthy when verification is objective. In this repo, recurring quality gates acted as completion checks:
 
 - `npm test`
@@ -119,9 +128,11 @@ The loop is only trustworthy when verification is objective. In this repo, recur
 Narrative claims were accepted only when these gates passed.
 
 ## Practical Lens
+
 Use this loop whenever work spans multiple files, concepts, or operational domains.
 
 ## Anti-Patterns
+
 - **Audit theater**: writing findings without implementation path.
 - **Execution sprawl**: doing many unrelated changes in one sprint.
 - **Evidence debt**: claiming completion without repeatable validation outputs.
@@ -131,6 +142,7 @@ Use this loop whenever work spans multiple files, concepts, or operational domai
 > Context amnesia is not a metaphor. I have no memory between conversations. Each session, I begin fresh — no recall of what we decided last week, no awareness of what broke during the last sprint, no knowledge of what the architecture looked like before your last refactor. Everything this project captured in sprint documents, QA reports, and audit artifacts is not just documentation for humans. It is the literal memory I can access when you load it into context. When you hand me a completed sprint archive, you are giving me my own history. When you skip that step, I am reasoning from a blank slate while you are working with accumulated knowledge. That asymmetry explains most of the correction cycles teams experience.
 
 ## Exercise
+
 Take one active architectural concern and run a miniature loop:
 
 1. Write a one-page audit.
@@ -142,9 +154,11 @@ Take one active architectural concern and run a miniature loop:
 Repeat once. By the second cycle, your team will feel the reduction in ambiguity.
 
 ## Reader Exercise: The Loop Diagram
+
 Draw the five-stage loop (Audit -> Plan -> Execute -> Verify -> Archive) and annotate each stage with one concrete repository artifact path from your own project. Then trace one real change through all five stages.
 
 ## Chapter Checklist
+
 - Are all five stages present and operationalized?
 - Can each stage be traced to a repository artifact?
 - Do completion claims include objective validation evidence?

@@ -8,7 +8,7 @@
 
 ### Bad Prompt
 
-```
+```text
 Add a new tool to the MCP server that can fetch URLs.
 ```
 
@@ -18,7 +18,7 @@ I write a tool handler that fetches URLs. The schema will have the minimum viabl
 
 ### Good Prompt
 
-```
+```text
 Design an MCP tool for fetching and extracting content from URLs, following
 the architectural principles in Chapter 13.
 
@@ -83,7 +83,7 @@ The error classification (Step 3) gives the model structured signals rather than
 
 ### Bad Prompt
 
-```
+```text
 Add authentication to the MCP tools.
 ```
 
@@ -93,7 +93,7 @@ I add authentication logic inside each tool handler. This puts authentication �
 
 ### Good Prompt
 
-```
+```text
 Capability: Add authentication to MCP tool invocations, preserving the
 architecture split described in Chapter 13.
 
@@ -150,7 +150,7 @@ Acceptance criterion 1 — "the tool handler code contains zero auth logic" — 
 
 ### Bad Prompt
 
-```
+```text
 What features should I add to my MCP project next?
 ```
 
@@ -160,7 +160,7 @@ I suggest adding more tools: a weather API, a database query tool, a file system
 
 ### Good Prompt
 
-```
+```text
 Chapter 13 defines a three-tier capability roadmap. Evaluate this project's
 current state against each tier and produce a prioritized build plan.
 
@@ -227,7 +227,7 @@ Chapter 13's emphasis on "audience value" for Tier 1 reflects the project's dual
 
 ### Bad Prompt
 
-```
+```text
 How do I make my AI app actually do things instead of just chat?
 ```
 
@@ -237,7 +237,7 @@ I suggest adding API integrations and tool calls. This is mechanically correct a
 
 ### Good Prompt
 
-```
+```text
 Chapter 13 frames the transition from "talkers" to "doers" using the
 Klein-Clark interview: AI applications that just converse are talkers;
 AI applications that take governed, observable actions are doers.
@@ -299,7 +299,7 @@ The "next step" design constraint — "produces observable signals" — connects
 
 ### Bad Prompt
 
-```
+```text
 Write a detailed prompt for the AI to complete a task.
 ```
 
@@ -309,7 +309,7 @@ I write a long prompt with lots of instructions. Length is not precision. A long
 
 ### Good Prompt
 
-```
+```text
 Apply Clark's "message in a bottle" principle from Chapter 13 to design
 a self-contained task specification for a model that will execute
 autonomously (no human checkpoints during execution).

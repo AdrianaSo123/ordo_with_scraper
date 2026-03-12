@@ -3,7 +3,7 @@
 ## Proposed Chapter Outline
 
 | # | Chapter | Practitioner(s) | Focus |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 0 | Brand as Constraint System | Wally Olins | Brand is not a logo — it's an invariant set |
 | 1 | The Headline Principle | David Ogilvy | "80% of the money you spend is in the headline" |
 | 2 | Permission Marketing | Seth Godin | Interruption → invitation paradigm shift |
@@ -16,5 +16,6 @@
 | 9 | AI-Assisted Brand | The current moment | Using LLMs for copy, voice consistency, A/B testing |
 
 ## Status
+
 - **Current state:** Not started
 - **Dependencies:** Books IX + VII (Content Strategy + Entrepreneurship)

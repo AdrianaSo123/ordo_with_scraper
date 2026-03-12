@@ -1,6 +1,7 @@
 # Chapter 3 — Component Architecture: From Atoms to Organisms
 
 ## Abstract
+
 A single button is easy to design. A thousand buttons used consistently across a product is an engineering problem. This chapter traces component architecture from Brad Frost's Atomic Design through Dan Abramov's presentational/container split, Nathan Curtis's design token systems, and the modern reality of headless components and compound patterns. The principle: **components are contracts, not templates.**
 
 ---
@@ -87,6 +88,7 @@ Tokens centralize those decisions:
 When the brand color changes, one token changes. Every component that references `--color-primary-600` updates automatically.
 
 Curtis also established the concept of **token tiers**:
+
 - **Global tokens**: raw values (`--blue-600: oklch(...)`)
 - **Alias tokens**: semantic names that reference global tokens (`--color-primary: var(--blue-600)`)
 - **Component tokens**: component-specific references (`--btn-bg: var(--color-primary)`)
@@ -139,6 +141,7 @@ Component architecture is the discipline of managing reuse at scale:
 A modern component library applies all four: tokens define the design decisions, headless components handle the interaction logic, presentational components apply the visual rendering, and the atomic taxonomy manages the complexity of composition.
 
 ## Chapter Checklist
+
 - Are your components reusable in isolation, or do they depend on specific page context?
 - Do your design tokens centralize all visual decisions (color, spacing, typography, shadow)?
 - Are your components separated into behavior (logic/a11y) and presentation (visual)?

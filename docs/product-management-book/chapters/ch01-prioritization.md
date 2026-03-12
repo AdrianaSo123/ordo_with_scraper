@@ -1,6 +1,7 @@
 # Chapter 1 — Prioritization: The Art of Saying No
 
 ## Abstract
+
 The product manager's most important skill is not adding features — it is *not* adding features. This chapter covers prioritization frameworks from Marty Cagan's *Inspired*, the RICE model, opportunity scoring, and the discipline of maintaining a short list of bets rather than a long list of requests.
 
 ---
@@ -10,6 +11,7 @@ The product manager's most important skill is not adding features — it is *not
 **Marty Cagan** (Silicon Valley Product Group) published *Inspired* to address a failure he saw in most product teams: they were building features that customers *requested* instead of solving problems that customers *had*. Customers request features based on their current understanding of what's possible. Product teams should identify the underlying problem and discover solutions the customer never imagined.
 
 Cagan's four risks that product discovery must address:
+
 1. **Value risk**: will customers buy/use it?
 2. **Usability risk**: can customers figure it out?
 3. **Feasibility risk**: can engineering build it?
@@ -41,7 +43,7 @@ RICE forces explicit tradeoffs: a high-impact feature that affects few users sco
 Traditional roadmaps list features and timelines. Outcome-driven roadmaps list *outcomes* and *bets*:
 
 | Quarter | Outcome | Key Bet | Success Metric |
-|---------|---------|---------|----------------|
+| --------- | --------- | --------- | ---------------- |
 | Q1 | Reduce onboarding drop-off | Redesign first-run flow | 30% improvement in Day-1 retention |
 | Q2 | Increase engagement | Add collaborative features | 20% increase in weekly active users |
 | Q3 | Expand market | Launch mobile app | 10K new mobile-only users |
@@ -55,6 +57,7 @@ This approach separates the *what* (outcome) from the *how* (bet). If the bet do
 Prioritization is the product management equivalent of resource allocation in engineering. Every feature you build is a feature you *don't* build. Every sprint spent on one bet is a sprint not spent on another.
 
 ## Chapter Checklist
+
 - Can you rank your feature backlog by RICE score (or equivalent)?
 - Is your roadmap organized by outcomes, not features?
 - Does every feature address at least one of Cagan's four risks?

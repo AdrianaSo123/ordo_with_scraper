@@ -1,9 +1,11 @@
 # Chapter 10 — Case Study: IS601 Demo
 
 ## Abstract
+
 This chapter narrates the transformation of this repository from baseline scaffold to a pattern-driven, operationally mature AI application.
 
 ## Why This Case Study Matters
+
 Many books explain principles in isolation. This case study shows what it looks like when principles are executed under real constraints, in sequence, with verification pressure.
 
 The important value here is not that every change was perfect on the first attempt. The value is that the process was structured enough to absorb corrections while still moving forward.
@@ -11,6 +13,7 @@ The important value here is not that every change was perfect on the first attem
 This project’s teaching value is the architecture pairing itself: Next.js as application/runtime shell, MCP as capability/tool protocol, and operational scripts as reliability spine.
 
 ## Initial State
+
 The project began as a straightforward Next.js application scaffold. At that point, the architecture was serviceable but not yet intentionally optimized for:
 
 - strict operational reliability,
@@ -23,22 +26,26 @@ From there, the system was evolved through successive intent-driven passes.
 ## Evolution Phases
 
 ### Phase 1: Feature Delivery
+
 - Claude chat integration
 - calculator tool enforcement for math
 - streaming behavior improvements
 
 ### Phase 2: Structural Cleanup
+
 - SRP-oriented decomposition
 - shared modules for policy/config/validation
 - expanded test coverage and safer boundaries
 
 ### Phase 3: 12-Factor Operational Hardening
+
 - config and secret controls
 - build/release/run discipline
 - readiness/liveness endpoints
 - parity and admin process scripts
 
 ### Phase 4: GoF Pattern Upgrades
+
 - Observer for observability event bus
 - Decorator for provider cross-cutting behavior
 - Chain of Responsibility for provider error routing
@@ -47,11 +54,13 @@ From there, the system was evolved through successive intent-driven passes.
 This sequence mattered: each phase built on the guarantees produced by the previous one.
 
 ## Practical Lens
+
 Use this case study as a repeatable migration template: deliver capability, stabilize structure, harden operations, then optimize extensibility.
 
 > The audit-to-sprint loop that drove each phase is defined in [Chapter 5](ch05-audit-to-sprint-loop.md). The 12-factor and GoF principles applied in Phases 3 and 4 are covered in [Chapter 6](ch06-12-factor-in-the-llm-era.md) and [Chapter 7](ch07-gof-for-ai-native-systems.md).
 
 ## Evidence-Driven Outcomes
+
 The project’s maturity claims are backed by repository artifacts, not narrative assertion:
 
 - sprint plans and execution history under `sprints/`
@@ -76,6 +85,7 @@ No refactoring process is linear. Three specific things broke during this projec
 These failures are not embarrassments. They are the expected output of running structured audits against real systems. The process surfaces them in bounded, fixable form before production pressure makes them costly.
 
 ## Timeline Snapshot
+
 1. Baseline Next.js setup and validation.
 2. Claude chat + calculator tool enforcement.
 3. Streaming and responsiveness improvements.
@@ -84,17 +94,20 @@ These failures are not embarrassments. They are the expected output of running s
 6. GoF passes adding Observer/Decorator/Chain and Template/Facade structures.
 
 ## Lessons from the Process
+
 1. **High-level directives become reliable only when converted into sprint-scale acceptance criteria.** A directive like "apply 12-Factor" is meaningless until it becomes "centralize config in `env.ts` with startup validation, passing `npm run typecheck`." The conversion is the work.
 2. **Architecture quality grows faster when operational quality is improved in parallel.** Structural refactors are safer when health endpoints, graceful shutdown, and release integrity are already in place. Build the operational floor before reshaping the rooms.
 3. **Pattern refactors are safer after strong regression gates are in place.** The GoF passes in Phase 4 would have been riskier without the test coverage and CI gates established in Phases 2 and 3. Order matters.
 4. **Durable artifacts reduce context loss across long, multi-phase execution.** Each sprint's QA report became the starting context for the next sprint's audit. Without those artifacts, every session would have started from scratch.
 
 ## Repository Evidence
+
 - 12-factor completion evidence: `sprints/completed/QA-AUDIT-12FACTOR.md`
 - GoF pass evidence: `sprints/completed/sprint-gof-01-observer-decorator-chain.md` and `sprints/completed/sprint-gof-02-template-facade.md`
 - Quality evidence: repository scripts and repeated `test/lint/build` gates.
 
 ## Exercise
+
 Create a case-study timeline for one of your own repositories with four phases:
 
 1. capability delivery,
@@ -105,11 +118,13 @@ Create a case-study timeline for one of your own repositories with four phases:
 For each phase, require one evidence artifact and one validation command set.
 
 ## Chapter Checklist
+
 - Does the chapter describe sequence, not only outcomes?
 - Are maturity claims backed by concrete artifacts?
 - Can the process be reused by another team without hidden context?
 
 ## Reader Exercise: Phase Timeline
+
 Draw a phase timeline diagram with four bands: feature delivery, structural cleanup, 12-factor hardening, and GoF refactors. Annotate each band with one artifact and one validation gate from your own project.
 
 When all three hold, this case study functions as method, not just story.

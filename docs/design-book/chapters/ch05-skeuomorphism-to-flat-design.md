@@ -1,6 +1,7 @@
 # Chapter 5 — Skeuomorphism to Flat Design: Reducing the Noise
 
 ## Abstract
+
 By the late 2000s, screens became high resolution enough to render photographic realism. The industry embraced Skeuomorphism — making digital UI look like physical objects. This chapter explores why that era died, how Microsoft's Metro design and Apple's iOS 7 replaced it, how Google's Material Design codified the physical metaphor into a strict z-axis physics engine, and how the tension between realism and abstraction continues to shape modern interface design.
 
 ---
@@ -103,6 +104,7 @@ A base card uses `var(--shadow-sm)`. When hovered, it elevates to `var(--shadow-
 This is not a subjective choice about "what looks nice." It is the application of Material Design's physics system: mapping z-index elevation to shadow diffusion.
 
 ## Chapter Checklist
+
 - Are drop shadows in your application arbitrarily sized, or do they map to a deliberate elevation hierarchy?
 - Is there unnecessary texture or gradient noise (skeuomorphism) that can be removed in favor of clear typography?
 - When you use flat design, is it immediately obvious which elements are actionable?

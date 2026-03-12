@@ -1,6 +1,7 @@
 # Chapter 5 — Cognitive Accessibility: Clarity, Predictability, and Recovery
 
 ## Abstract
+
 Cognitive accessibility ensures that people with cognitive disabilities — attention disorders, memory impairments, learning disabilities, or neurodivergent processing styles — can understand and operate the interface. This is the least-addressed category of accessibility and the most universally beneficial.
 
 ---
@@ -14,6 +15,7 @@ Cognitive accessibility ensures that people with cognitive disabilities — atte
 - **Distraction minimization**: avoid autoplay, animations respect `prefers-reduced-motion`
 
 ## Chapter Checklist
+
 - Is your copy written at a reading level appropriate for your audience?
 - Can every action be undone or cancelled?
 - Does your interface respect `prefers-reduced-motion`?

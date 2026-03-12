@@ -1,6 +1,7 @@
 # Chapter 7 — Navigation and Wayfinding: Helping Users Know Where They Are
 
 ## Abstract
+
 Navigation is the skeletal system of an interface — invisible when it works, debilitating when it fails. This chapter traces navigation design from information architecture theory through Steve Krug's *Don't Make Me Think*, breadcrumb patterns, and modern challenges like mobile hamburger menus, mega-menus, and command palettes. The principle: **the user should always know where they are, where they can go, and how to get back.**
 
 ---
@@ -12,12 +13,15 @@ Navigation is the skeletal system of an interface — invisible when it works, d
 For navigation, Krug's three key principles:
 
 ### 1. The Trunk Test
+
 On any page, the user should be able to answer: *What site is this? What page am I on? What are the major sections? What are my options at this level? Where am I in the hierarchy? How can I search?* If any answer is unclear, the navigation has failed.
 
 ### 2. Click Conventions
+
 Users don't read pages — they scan. Navigation must use the conventions users expect: horizontal top bar for primary navigation, vertical sidebar for secondary, breadcrumbs for hierarchy, clear active-state indicators for current position.
 
 ### 3. The Back Button
+
 Users rely on the browser's back button as their primary undo mechanism. Navigation that breaks back-button behavior (hash routes that don't register as history entries, modals that don't create history states) violates users' most fundamental navigation expectation.
 
 ---
@@ -27,7 +31,7 @@ Users rely on the browser's back button as their primary undo mechanism. Navigat
 Navigation exists on a spectrum from **structural** (the site's skeleton) to **contextual** (links and actions relevant to the current content):
 
 | Type | Purpose | Example |
-|------|---------|---------|
+| ------ | --------- | --------- |
 | Global | Available on every page | Main nav bar, footer |
 | Local | Specific to a section | Sidebar within a docs section |
 | Contextual | Actions related to current content | "Edit this page", "Related articles" |
@@ -51,6 +55,7 @@ The pattern works because it leverages **recognition** (the palette shows option
 Navigation is the interface's structural skeleton. Users tolerate imperfect visual design far more readily than they tolerate getting lost. The hierarchy of navigation needs is: *know where I am* → *know where I can go* → *get there efficiently* → *get back easily*.
 
 ## Chapter Checklist
+
 - Does your global navigation have 7 or fewer primary items?
 - Can the user determine their current position on any page (active states, breadcrumbs)?
 - Does every navigation change register as a browser history entry?

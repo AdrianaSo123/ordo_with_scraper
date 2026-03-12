@@ -1,6 +1,7 @@
 # Chapter 9 — Risk, Safety, and Operational Governance
 
 ## Abstract
+
 High-velocity orchestration requires strong guardrails. This chapter covers practical governance: secrets, failure domains, safety checks, and deployment discipline.
 
 ---
@@ -28,15 +29,19 @@ Clark named the governance problem at the macro level. This chapter translates h
 ## Risk Domains for Orchestration-Driven Systems
 
 ### 1) Secret and Config Risk
+
 Missing or leaked credentials can break availability or expose systems.
 
 ### 2) Release Integrity Risk
+
 Unverified artifacts or ambiguous run stages can produce non-reproducible deployments.
 
 ### 3) Runtime Safety Risk
+
 Improper shutdown behavior or weak health signaling can cause cascading failure during deploy or scaling events.
 
 ### 4) Orchestration Drift Risk
+
 Orchestration drift is the most novel risk in AI-native systems and the least covered by traditional operations tooling.
 
 It happens when prompt contracts, model behavior, and process assumptions evolve at different speeds. A prompt that assumed a particular response structure may silently break downstream validation after a model update. A changed model version may alter tool-selection behavior in ways that no existing test catches. A process improvement may invalidate assumptions that were hardcoded in earlier sprint artifacts.
@@ -104,7 +109,7 @@ Run with: `npm run lhci:dev` (requires running server)
 
 These three tools form a layered defense:
 
-```
+```text
 TypeScript  →  Does the code mean what the types say it means?
 ESLint      →  Does the code follow the team's structural policy?
 Lighthouse  →  Does the delivered application serve users correctly?
@@ -117,9 +122,11 @@ This composite gate is the governance response to AI-generated code velocity. Th
 > The audit-to-sprint loop that structures governance implementation is in [Chapter 5](ch05-audit-to-sprint-loop.md).
 
 ## Practical Lens
+
 Treat governance controls as first-class system components with explicit owners. Clark's macro-level framing — that society needs oversight technologies for AI-assisted work — translates in this project to a specific three-tool stack: TypeScript for structural correctness, ESLint for policy compliance, Lighthouse for runtime delivery. The connection is not that Clark recommended these specific tools; it is that his governance principle (make AI output observable and verifiable) is precisely what these tools implement at the codebase level.
 
 ## Repository Example: Executable Guardrails
+
 This repository uses executable controls rather than narrative-only guidance:
 
 - Environment validation: `scripts/validate-env.ts`
@@ -133,6 +140,7 @@ These are governance mechanisms because they can fail builds, block unsafe start
 > The audit-to-sprint loop that structures governance implementation is in [Chapter 5](ch05-audit-to-sprint-loop.md).
 
 ## Governance Operating Model
+
 A practical operating model for orchestration-heavy teams:
 
 1. Define guardrails as code.
@@ -143,12 +151,14 @@ A practical operating model for orchestration-heavy teams:
 This model keeps velocity high while reducing fragility.
 
 ## Anti-Patterns
+
 - Governance only in slide decks.
 - Safety checks that are optional in local workflows.
 - Risk controls with no ownership.
 - Post-incident fixes that do not become reusable guardrails.
 
 ## Exercise
+
 Create a governance matrix for one service with columns:
 
 - risk domain,
@@ -160,12 +170,14 @@ Create a governance matrix for one service with columns:
 Then run one simulated failure in each domain and confirm the control activates as expected.
 
 ## Chapter Checklist
+
 - Are guardrails executable and automated?
 - Are controls integrated into default workflows?
 - Are failures deterministic and observable?
 - Are governance outcomes captured in durable artifacts?
 
 ## Reader Exercise: Governance Control Matrix
+
 Create a governance control matrix diagram with rows for risk domains and columns for enforcement point, owner, automation hook, and evidence artifact. Then run one simulated failure in each domain and confirm the control activates as expected.
 
 When all four answers are yes, governance stops being friction and becomes reliability infrastructure.

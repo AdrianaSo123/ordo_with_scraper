@@ -1,6 +1,7 @@
 # Chapter 6 — Feedback and State: Making the Invisible Visible
 
 ## Abstract
+
 Every system has state. The user's job is to understand that state. The interface's job is to make that state visible. This chapter traces feedback design from Don Norman's *The Design of Everyday Things* through loading patterns, error hierarchies, optimistic UI, and the modern reality of streaming, skeleton screens, and real-time state synchronization. The principle: **if the system changed state and the user didn't notice, the interface failed.**
 
 ---
@@ -10,7 +11,9 @@ Every system has state. The user's job is to understand that state. The interfac
 **Don Norman** published *The Design of Everyday Things* in 1988, introducing concepts that became foundational to interaction design:
 
 ### The Gulf of Execution and the Gulf of Evaluation
+
 Norman identified two gaps between users and systems:
+
 - **Gulf of Execution**: the distance between what the user *wants to do* and what the interface *allows them to do*
 - **Gulf of Evaluation**: the distance between the system's *actual state* and the user's *understanding* of that state
 
@@ -21,7 +24,7 @@ Feedback bridges the Gulf of Evaluation. If the user clicks "Submit" and nothing
 Every interactive element should communicate these states:
 
 | State | Visual Treatment | ARIA |
-|-------|-----------------|------|
+| ------- | ----------------- | ------ |
 | Default | Base styling | — |
 | Loading | Spinner, skeleton, disabled input | `aria-busy="true"` |
 | Success | Confirmation message, checkmark, color shift | `role="status"` |
@@ -68,7 +71,7 @@ This technique reduces perceived latency to zero for common operations. The trad
 Not all errors are equal. A type error in a form field is informational. A failed payment is critical. A network timeout is systemic. Each severity requires different treatment:
 
 | Severity | Treatment | Duration |
-|----------|-----------|----------|
+| ---------- | ----------- | ---------- |
 | Informational | Inline hint (below field) | Persistent until corrected |
 | Warning | Banner with dismiss action | Until dismissed |
 | Error | Inline + summary (top of form) | Persistent until corrected |
@@ -84,6 +87,7 @@ The principle: error severity should map to visual weight. An error that prevent
 Feedback is the interface's voice. It communicates what happened, what's happening now, and what to do next. Without feedback, the interface is a black box — the user presses buttons in the dark and hopes.
 
 ## Chapter Checklist
+
 - Does every interactive element communicate loading, success, and error states?
 - Are loading states spatial (skeletons) rather than abstract (spinners) where content layout is predictable?
 - Is your error hierarchy stratified by severity (informational → critical)?

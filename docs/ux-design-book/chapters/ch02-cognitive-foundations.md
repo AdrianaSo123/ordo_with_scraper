@@ -1,6 +1,7 @@
 # Chapter 2 — Cognitive Foundations: How Users Think
 
 ## Abstract
+
 UX design is applied cognitive science. Users do not behave rationally — they behave *predictably irrationally*. This chapter traces the cognitive models that underpin every UX decision: cognitive load theory, mental models, Fitts's Law, Hick's Law, and the peak-end rule. The principle: **design for the brain users actually have, not the brain you wish they had.**
 
 ---
@@ -10,6 +11,7 @@ UX design is applied cognitive science. Users do not behave rationally — they 
 **George Miller** published "The Magical Number Seven, Plus or Minus Two" in 1956, establishing that human short-term memory can hold approximately 7±2 items simultaneously. This finding directly informed UI design: navigation with more than ~7 items exceeds working memory capacity, forcing users to *read* rather than *scan*.
 
 ### Cognitive Load Theory
+
 **John Sweller** extended Miller's work into cognitive load theory (1988): learning and task performance degrade when working memory is overloaded. Three types of cognitive load:
 
 - **Intrinsic**: the inherent complexity of the task
@@ -23,11 +25,13 @@ UX design can reduce only *extraneous* load — the noise introduced by the inte
 ## Fitts's Law (1954) and Hick's Law (1952)
 
 ### Fitts's Law
+
 The time to reach a target is a function of the **distance to the target** divided by the **size of the target**. Large, close targets are fast to hit. Small, distant targets are slow.
 
 UI implications: primary action buttons should be large and positioned where the cursor/thumb naturally rests. Destructive actions should be small and distant from primary actions — making accidental activation physically unlikely.
 
 ### Hick's Law
+
 The time to make a decision increases logarithmically with the number of choices. Two choices are fast. Ten choices involve noticeable deliberation. Fifty choices cause paralysis.
 
 UI implications: progressive disclosure (reveal options only when relevant), categorization (group 50 items into 5 groups of 10), and defaults (pre-select the most common choice) all reduce decision time.
@@ -55,6 +59,7 @@ UX implication: the most important moments in a user journey are the *best* mome
 Cognitive science is not optional reading for UX practitioners — it is the operating manual for the system you are designing for (the human brain).
 
 ## Chapter Checklist
+
 - Does any screen present more than 7±2 options simultaneously?
 - Are primary actions large and positioned for easy reach (Fitts's Law)?
 - Do you use progressive disclosure to reduce choice overload (Hick's Law)?

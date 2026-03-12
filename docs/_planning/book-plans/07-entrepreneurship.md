@@ -3,7 +3,7 @@
 ## Proposed Chapter Outline
 
 | # | Chapter | Practitioner(s) | Focus |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 0 | The Solo Founder Thesis | Paul Graham | Essays on startups, doing things that don't scale |
 | 1 | AI as Co-Founder | The current moment | You + AI = a 10-person team's output |
 | 2 | Validated Learning | Eric Ries | Lean Startup applied to AI-augmented development |
@@ -16,5 +16,6 @@
 | 9 | Scaling Past Founder | Ben Horowitz ("The Hard Thing") | Building teams, delegating judgment, preserving culture |
 
 ## Status
+
 - **Current state:** Not started
 - **Dependencies:** Books V + I (Product + Engineering)

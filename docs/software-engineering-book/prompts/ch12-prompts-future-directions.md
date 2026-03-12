@@ -8,7 +8,7 @@
 
 ### Bad Prompt
 
-```
+```text
 What should my AI strategy be for the next year?
 ```
 
@@ -18,7 +18,7 @@ I produce a broad strategy document citing trends: "adopt agents," "invest in RA
 
 ### Good Prompt
 
-```
+```text
 Using Chapter 12's three-horizon model, create a 12-month orchestration
 roadmap for this specific project.
 
@@ -65,7 +65,7 @@ The "we'll know this is working when" success signal converts each roadmap item 
 
 ### Bad Prompt
 
-```
+```text
 What will AI development look like in 5 years?
 ```
 
@@ -75,7 +75,7 @@ I produce confident predictions about a timeframe I have no reliable basis for p
 
 ### Good Prompt
 
-```
+```text
 Apply Chapter 12's three-horizon model with explicit confidence calibration:
 
 For each prediction:
@@ -123,7 +123,7 @@ Chapter 12's own model note — "I am trained on a snapshot of the world... trea
 
 ### Bad Prompt
 
-```
+```text
 How do I future-proof my architecture?
 ```
 
@@ -133,7 +133,7 @@ I recommend abstraction layers, plugin systems, and modular design. These are ge
 
 ### Good Prompt
 
-```
+```text
 Chapter 12 identifies three categories of change that AI-native systems
 must absorb:
 
@@ -190,7 +190,7 @@ The rating system (HIGH/MEDIUM/LOW) prevents binary thinking. A system does not 
 
 ### Bad Prompt
 
-```
+```text
 What should I focus on next for my AI project?
 ```
 
@@ -200,7 +200,7 @@ I suggest the most popular current AI feature: "add RAG," "implement agents," "b
 
 ### Good Prompt
 
-```
+```text
 Chapter 12 offers four strategic recommendations. Evaluate each one against
 this project's current state and produce a prioritized implementation plan:
 

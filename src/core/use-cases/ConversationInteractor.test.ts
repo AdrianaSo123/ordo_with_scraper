@@ -58,7 +58,7 @@ describe("ConversationInteractor", () => {
 
   describe("create", () => {
     it("creates a new conversation with generated id", async () => {
-      const conv = await interactor.create("usr_1", "My Chat");
+      await interactor.create("usr_1", "My Chat");
       expect(convRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({ userId: "usr_1", title: "My Chat" }),
       );

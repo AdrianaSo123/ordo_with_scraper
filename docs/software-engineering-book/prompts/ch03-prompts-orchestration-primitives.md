@@ -8,7 +8,7 @@
 
 ### Bad Prompt
 
-```
+```text
 Look at my code and help me make it better.
 ```
 
@@ -20,7 +20,7 @@ I will find three or four surface-level improvements. I will miss the architectu
 
 ### Good Prompt
 
-```
+```text
 Role: Architecture auditor performing a SOLID compliance review.
 
 Review src/app/api/chat/route.ts against Single Responsibility Principle.
@@ -54,7 +54,7 @@ This is role framing in action. Same code, same model, fundamentally different o
 
 ### Bad Prompt
 
-```
+```text
 Fix the error handling in my chat API.
 ```
 
@@ -66,7 +66,7 @@ This is not malice. It is my optimization function. "Fix the error handling" doe
 
 ### Good Prompt
 
-```
+```text
 Scope: Modify ONLY the error-handling path in src/app/api/chat/route.ts.
 
 In-bounds:
@@ -101,7 +101,7 @@ The out-of-bounds list is more important than the in-bounds list. Every item in 
 
 ### Bad Prompt
 
-```
+```text
 Refactor the chat module to use better patterns.
 ```
 
@@ -113,7 +113,7 @@ I am guessing at your constraints. My guesses are reasonable. They are also wron
 
 ### Good Prompt
 
-```
+```text
 Refactor src/lib/chat/anthropic-client.ts to introduce Chain of
 Responsibility for error handling.
 
@@ -142,7 +142,7 @@ Invariant #5 is surprisingly precise. The streaming response type is a contract 
 
 ### Bad Prompt
 
-```
+```text
 Add health check endpoints to my Next.js app.
 ```
 
@@ -154,7 +154,7 @@ I do not know whether you need separate liveness and readiness checks (12-Factor
 
 ### Good Prompt
 
-```
+```text
 Add health check endpoints following 12-Factor conventions.
 
 Required endpoints:
@@ -191,7 +191,7 @@ The file path specification (`.../live/route.ts` and `.../ready/route.ts`) elimi
 
 ### Bad Prompt
 
-```
+```text
 Do a full 12-factor audit of my app, make a plan, implement the fixes,
 and run all the tests.
 ```
@@ -204,7 +204,7 @@ Multi-phase work in a single prompt produces degraded quality in every phase bec
 
 ### Good Prompt
 
-```
+```text
 Phase 1 of 4: 12-Factor Audit
 
 Audit this Next.js application against all 12 factors. For each factor,
@@ -237,7 +237,7 @@ Sequencing across prompts is how you compensate for my context window limitation
 
 ### Bad Prompt
 
-```
+```text
 Make sure everything works after the refactor.
 ```
 
@@ -249,7 +249,7 @@ I might suggest "run your tests" at the end, as an afterthought. I will not spec
 
 ### Good Prompt
 
-```
+```text
 Verification phase for the error-handling refactor in src/lib/chat/
 anthropic-client.ts.
 
@@ -283,7 +283,7 @@ The manual inspection in step 4 covers what the automated tools cannot: whether 
 
 ### Bad Prompt
 
-```
+```text
 Can you remember what we decided about the error handling approach for next time?
 ```
 
@@ -295,7 +295,7 @@ This is why artifact discipline exists: not as documentation overhead, but as *m
 
 ### Good Prompt
 
-```
+```text
 Create a sprint completion artifact for the error-handling refactor.
 
 The artifact should be saved to sprints/completed/sprint-error-handling-chain.md

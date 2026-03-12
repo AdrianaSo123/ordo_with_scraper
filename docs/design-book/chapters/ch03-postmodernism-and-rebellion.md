@@ -1,6 +1,7 @@
 # Chapter 3 — Postmodernism and Rebellion: Why We Break the Grid
 
 ## Abstract
+
 By the 1980s, the strict mathematical rationality of the Swiss Style felt oppressive to a new generation of designers. The grid, once seen as an objective tool for universal communication, was now viewed as corporate and emotionally bankrupt. This chapter examines the Postmodern "New Wave" designers like David Carson, Paula Scher, April Greiman, and Neville Brody, who proved that rules must be thoroughly understood before they can be effectively broken, and that chaos itself can serve as a functional UI state.
 
 ---
@@ -115,6 +116,7 @@ We use CSS transforms and absolute positioning to break out of the document flow
 This is the digital equivalent of Carson's layouts. The baseline grid forces organization, while the intentional visual breach creates immediate friction. Yet, by using `aria-hidden` and `role="alert"`, the underlying DOM remains as clean and structural as the Swiss intended.
 
 ## Chapter Checklist
+
 - Are you breaking the grid intentionally to communicate priority, or accidentally due to a lack of structural discipline?
 - Does your UI have moments of intentional tension or asymmetry to draw the eye?
 - Are you conflating "legibility" (easy to read) with "communication" (the actual meaning conveyed)?

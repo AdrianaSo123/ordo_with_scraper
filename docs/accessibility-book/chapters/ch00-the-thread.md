@@ -1,6 +1,7 @@
 # Chapter 0 — The Thread: From Accommodation to Universal Design
 
 ## Abstract
+
 Accessibility is not charity. It is not compliance. It is the discipline of building products that work for everyone — including the 1.3 billion people worldwide who experience significant disability. This book traces accessibility from the civil rights framework through assistive technology innovation, WCAG standards, inclusive design methodology, and the engineering practices that make accessibility a quality attribute rather than a retrofit.
 
 ---
@@ -33,4 +34,5 @@ Accessibility is not charity. It is not compliance. It is the discipline of buil
 ---
 
 ## Reader Exercise: The Five-Minute Audit
+
 Turn off your mouse. Navigate your product using only Tab, Shift+Tab, Enter, Space, Escape, and arrow keys. Can you reach every interactive element? Can you activate every button? Can you close every modal? This five-minute exercise reveals more accessibility issues than most automated tools.

@@ -8,7 +8,7 @@
 
 ### Bad Prompt
 
-```
+```text
 Tell me about design patterns and who invented them.
 ```
 
@@ -20,7 +20,7 @@ I do this because the prompt has no scope, no purpose, and no acceptance criteri
 
 ### Good Prompt
 
-```
+```text
 I am building a Next.js application with server components and API routes that
 call external AI providers. I need to understand the Gang of Four design
 patterns well enough to recognize when my route handlers are accumulating
@@ -53,7 +53,7 @@ The practitioner history grounding also changes my output quality. When I connec
 
 ### Bad Prompt
 
-```
+```text
 What is technical debt?
 ```
 
@@ -63,7 +63,7 @@ I produce Cunningham's metaphor, probably with the financial analogy, probably w
 
 ### Good Prompt
 
-```
+```text
 Ward Cunningham coined "technical debt" in 1992. He was precise about the
 distinction between deliberate debt (shipping imperfect code to learn from
 usage) and debt incurred through ignorance (shipping code you do not fully
@@ -99,7 +99,7 @@ The numbered structure (8–10 items, three sub-points each) gives me a clear co
 
 ### Bad Prompt
 
-```
+```text
 Tell me about Barbara Liskov.
 ```
 
@@ -109,7 +109,7 @@ Biography mode. Turing Award in 2008. Invented data abstraction. The substitutio
 
 ### Good Prompt
 
-```
+```text
 Barbara Liskov formalized the substitution principle in 1987: if S is a subtype
 of T, then objects of type T may be replaced with objects of type S without
 altering any of the desirable properties of the program.
@@ -148,7 +148,7 @@ Third, the concrete example request forces generation instead of description. I 
 
 ### Bad Prompt
 
-```
+```text
 How do I explain to my team why we should care about software engineering
 principles?
 ```
@@ -159,7 +159,7 @@ I generate a motivational speech. "Principles reduce technical debt." "Good arch
 
 ### Good Prompt
 
-```
+```text
 I am preparing a 15-minute presentation for my engineering team about why
 we are adopting structured AI-assisted development practices. The team is
 skeptical — they think "prompt engineering" is a fad and that real engineers
@@ -200,7 +200,7 @@ The explicit connection requirement ("connect to our practice of...") prevents m
 
 ### Bad Prompt
 
-```
+```text
 What do all these software engineering people have in common?
 ```
 
@@ -210,7 +210,7 @@ I produce a list of platitudes. "They were all passionate about quality." "They 
 
 ### Good Prompt
 
-```
+```text
 Chapter 0 of this book identifies a thread connecting practitioners from Hoare
 (1965) through Anthropic (2023): they were all practitioners first, they all
 solved vocabulary problems (not just technical ones), they were all responding

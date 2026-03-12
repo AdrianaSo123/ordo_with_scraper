@@ -1,6 +1,7 @@
 # Chapter 7 — Color Theory: From Newton's Prism to Design Tokens
 
 ## Abstract
+
 Color is the most emotionally powerful and technically treacherous element in design. This chapter traces the history of systematic color theory — from Newton's optics through Goethe's perceptual color, Itten's Bauhaus curriculum, Munsell's measurement system, and Pantone's industrial standardization — to the modern reality of digital color: perceptual uniformity, color spaces, accessibility contrast ratios, and design token systems that make color decisions systematic rather than subjective.
 
 ---
@@ -46,7 +47,7 @@ Each contrast is an independent variable that can be activated or suppressed in 
 Itten's seven contrasts map directly to design token categories:
 
 | Itten Contrast | Design Token |
-|---|---|
+| --- | --- |
 | Hue | `--color-primary`, `--color-secondary`, `--color-accent` |
 | Light–dark | `--color-foreground`, `--color-background` |
 | Warm–cool | Palette temperature (warm grays vs. cool grays) |
@@ -145,6 +146,7 @@ Color is the most commonly mismanaged element in design systems. The history tel
 A modern color system must honor all five: define colors in perceptually uniform spaces (Munsell), test them in context (Goethe), reason about contrast types explicitly (Itten), ensure accessibility compliance (WCAG), and name them systematically (Pantone/tokens).
 
 ## Chapter Checklist
+
 - Are your colors defined in a perceptually uniform color space (OKLCH/OKLAB), or only in sRGB hex?
 - Have you tested every foreground/background combination for WCAG contrast compliance?
 - Can you identify which of Itten's seven contrasts your palette activates?

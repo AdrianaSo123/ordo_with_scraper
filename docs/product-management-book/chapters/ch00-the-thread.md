@@ -1,6 +1,7 @@
 # Chapter 0 — The Thread: From Instinct to Evidence
 
 ## Abstract
+
 Product management is the discipline of deciding *what* to build — and, more importantly, what *not* to build. This book traces the evolution of product thinking from the factory floor through lean startup methodology, outcome-driven roadmaps, and the AI-augmented decision frameworks that define the current moment.
 
 ---
@@ -32,4 +33,5 @@ Product management is the discipline of deciding *what* to build — and, more i
 ---
 
 ## Reader Exercise: The One-Sentence Product
+
 Describe your product (or a product you admire) in one sentence using this template: *"[Product name] helps [specific audience] [achieve specific outcome] by [unique mechanism]."* If you cannot fill in all four blanks, the product strategy is unclear.

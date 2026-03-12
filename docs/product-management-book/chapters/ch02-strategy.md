@@ -1,6 +1,7 @@
 # Chapter 2 — Strategy: Positioning and Competitive Advantage
 
 ## Abstract
+
 Product strategy is the discipline of choosing *where to play* and *how to win*. This chapter covers Michael Porter's competitive forces, April Dunford's positioning framework, and the blue ocean strategy — all applied to software products in the AI era.
 
 ---
@@ -18,6 +19,7 @@ For software products, Porter's forces map to: barriers to entry (technical moat
 **What frustrated her:** Products that positioned themselves by their features rather than by the problem they solved uniquely well.
 
 ## Chapter Checklist
+
 - Can you name your top 3 competitive alternatives?
 - Can you articulate your unique differentiation in one sentence?
 - Does your positioning reflect customer language, not internal terminology?

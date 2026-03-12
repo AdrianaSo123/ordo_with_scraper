@@ -1,6 +1,7 @@
 # Chapter 3 — Information Architecture: Organizing for Findability
 
 ## Abstract
+
 Information architecture is the structural design of shared information environments. It determines whether users can *find* things and *understand* where they are. This chapter traces IA from Richard Saul Wurman's coinage through Peter Morville's faceted classification, card sorting methodologies, and the modern challenges of AI-augmented search and filter systems.
 
 ---
@@ -10,6 +11,7 @@ Information architecture is the structural design of shared information environm
 **Richard Saul Wurman** coined the term "information architect" in 1976, before the web existed. His argument: the explosion of available information created an "information anxiety" — the gap between what people *understood* and what they *thought they should understand*.
 
 Wurman proposed that information can be organized in exactly five ways (LATCH):
+
 - **Location**: organized by place (maps, floor plans)
 - **Alphabet**: organized A–Z (dictionaries, indexes)
 - **Time**: organized chronologically (timelines, schedules)
@@ -41,12 +43,15 @@ The IA-specific contribution is **findability**: can users locate what they need
 Three mechanisms serve findability:
 
 ### Taxonomy (Classification)
+
 How content is categorized. Flat taxonomies (tags) allow flexible grouping. Hierarchical taxonomies (categories → subcategories) provide structural navigation. Faceted taxonomies (multiple independent dimensions — color, size, price, brand) allow users to filter from any angle.
 
 ### Navigation (Browsing)
+
 How users move through the structure. Global navigation exposes the top-level taxonomy. Local navigation shows the current section's structure. Breadcrumbs show the path from root to current position.
 
 ### Search (Direct Retrieval)
+
 How users bypass the structure. Search serves users who know what they want but not where it lives. Effective search requires: autocomplete, typo tolerance, result ranking, and faceted filtering of results.
 
 ---
@@ -56,6 +61,7 @@ How users bypass the structure. Search serves users who know what they want but 
 Information architecture is the invisible skeleton of every product. Users don't see the IA — they feel its presence (when things are easy to find) or its absence (when they are lost).
 
 ## Chapter Checklist
+
 - Can you describe your product's LATCH model (location, alphabet, time, category, hierarchy)?
 - Can a new user find any piece of content within 3 interactions?
 - Does your search support autocomplete, typo tolerance, and result filtering?

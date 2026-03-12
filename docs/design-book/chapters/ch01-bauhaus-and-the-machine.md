@@ -1,6 +1,7 @@
 # Chapter 1 — The Bauhaus Experiment: Typography as Infrastructure
 
 ## Abstract
+
 If the Constructivists and De Stijl pioneers dreamed of universal visual mathematics, the Bauhaus built the factory to mass-produce it. Founded in Weimar, Germany in 1919 by Walter Gropius, the Bauhaus school sought to completely unite art and industrial technology. This chapter examines how figures like Gropius, Herbert Bayer, László Moholy-Nagy, and Josef Albers stripped away centuries of typographic ornamentation to create "universal" standards — principles that today map directly to global design systems and system fonts.
 
 ---
@@ -109,6 +110,7 @@ This ensures that every component inherits a unified, clean, geometric sans-seri
 Albers's color relativity is honored in our system by defining color tokens that are tested in multiple contexts — light mode, dark mode, high contrast mode — rather than specified once in isolation.
 
 ## Chapter Checklist
+
 - Does your UI rely on unnecessary decorative flourishes (like excessive drop shadows or varied typefaces) to look "good"?
 - Is your typography treated as a systemic, global configuration rather than per-page inline styling?
 - Does your typography maximize function and readability, or is it distracting the user?

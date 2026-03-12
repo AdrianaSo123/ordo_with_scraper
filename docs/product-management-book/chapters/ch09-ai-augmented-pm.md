@@ -1,6 +1,7 @@
 # Chapter 9 — AI-Augmented Product Management: Decisions at Machine Speed
 
 ## Abstract
+
 AI augments every phase of product management: competitive analysis, demand forecasting, feature prioritization, and customer feedback synthesis. This chapter covers how product managers can use AI as an intelligence multiplier while maintaining human judgment for strategic decisions.
 
 ---
@@ -22,6 +23,7 @@ The constraint: AI excels at *synthesis* (combining many inputs) and *generation
 The PM's value shifts from *information gathering* (which AI can do faster) to *judgment and context application* (which requires human understanding of business, market, and user needs). The PM who understands their customers, market, and business context can use AI to amplify that understanding. The PM who relies on AI for judgment will make plausible-sounding but contextually wrong decisions.
 
 ## Chapter Checklist
+
 - Are you using AI for feedback synthesis and competitive monitoring?
 - Is AI-generated analysis validated against your domain knowledge?
 - Have you maintained human judgment for strategic decisions (positioning, pricing, roadmap)?

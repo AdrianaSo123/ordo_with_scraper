@@ -5,7 +5,7 @@
 Currently ch00 (60K words) contains ALL practitioners. Redistribute as follows:
 
 | Chapter | Practitioner(s) | Rationale |
-|---|---|---|
+| --- | --- | --- |
 | ch00 — The Thread (Preface) | Brief timeline only (2-3 pages) | Sets up the "frustrated practitioners" pattern without hoarding all stories |
 | ch01 — Why This Moment Matters | Fred Brooks | "No Silver Bullet" directly frames the AI moment (essential vs accidental complexity) |
 | ch02 — Control Surfaces | Tony Hoare, Edsger Dijkstra | Earliest computation pioneers match control surface history |
@@ -22,5 +22,6 @@ Currently ch00 (60K words) contains ALL practitioners. Redistribute as follows:
 | ch13 — MCP Architecture | Jordan Walke, Guillermo Rauch, Anders Hejlsberg, Anthropic | The React/Next/TypeScript/MCP stack this chapter describes = their combined work |
 
 ## Status
+
 - **Current state:** Drafted, editorial sprints complete
 - **Action needed:** Redistribute ch00, expand ch01–ch04 to 8-12K each

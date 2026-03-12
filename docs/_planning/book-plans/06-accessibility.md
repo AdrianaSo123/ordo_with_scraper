@@ -3,7 +3,7 @@
 ## Proposed Chapter Outline
 
 | # | Chapter | Practitioner(s) | Focus |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 0 | The Case for Inclusion | Vint Cerf (hearing-impaired internet pioneer) | Accessibility as engineering requirement, not afterthought |
 | 1 | WCAG as Engineering Spec | Gregg Vanderheiden | Perceivable, Operable, Understandable, Robust |
 | 2 | Semantic HTML | Steve Faulkner (HTML spec editor) | Landmark roles, heading hierarchy, document outline |
@@ -16,5 +16,6 @@
 | 9 | Legal and Compliance | Lainey Feingold | ADA, Section 508, EAA, the business case for compliance |
 
 ## Status
+
 - **Current state:** Not started
 - **Dependencies:** Books III + IV (UI + UX Design)

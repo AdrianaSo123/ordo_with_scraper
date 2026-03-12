@@ -1,6 +1,7 @@
 # Chapter 0 — The Thread: From Risk to Leverage
 
 ## Abstract
+
 Entrepreneurship is the discipline of creating value under uncertainty. This book traces the evolution from the lone inventor myth through the lean startup revolution, platform economics, and the AI-leverage era — where the cost of building has collapsed but the cost of deciding *what* to build remains unchanged.
 
 ---

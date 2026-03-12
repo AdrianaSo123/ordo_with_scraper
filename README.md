@@ -25,7 +25,7 @@ This repository is both the library and the proof: a **production-grade Next.js 
 These are not aspirational targets. They are the current state, enforced on every commit by `npm run quality` ([Chapter 9](docs/software-engineering-book/chapters/ch09-risk-safety-and-governance.md)).
 
 | Gate | Command | Result |
-|---|---|---|
+| --- | --- | --- |
 | TypeScript strict | `npm run typecheck` | 0 errors |
 | ESLint zero-warnings | `npm run lint:strict` | 0 warnings |
 | Test suite | `npm test` | 67/67 passing |
@@ -61,7 +61,7 @@ docker compose up --build
 
 ## What's in This Repository
 
-```
+```text
 ├── docs/
 │   ├── software-engineering-book/   ← Book I: 14 chapters + 14 prompt companions + editorial
 │   ├── design-book/                 ← Book II: 10 chapters on design history
@@ -95,9 +95,9 @@ Fourteen chapters developing engineering judgment through the human stories behi
 > **How to read:** Each chapter links to its text and its prompt companion. Read the chapter for the principle, then use the prompt companion to practice it — each contains good/bad prompt pairs with candid "behind the curtain" commentary from the model.
 
 | # | Chapter | Prompt Companion |
-|---|---------|-----------------|
+| --- | --------- | ----------------- |
 | 0 | [The People Behind the Principles](docs/software-engineering-book/chapters/ch00-the-people-behind-the-principles.md) | [5 prompts](docs/software-engineering-book/prompts/ch00-prompts-the-people-behind-the-principles.md) |
-|   | *Hoare, Dijkstra, Knuth, Brooks, Liskov, Berners-Lee, and more.* | |
+| | *Hoare, Dijkstra, Knuth, Brooks, Liskov, Berners-Lee, and more.* | |
 | 1 | [Why This Moment Matters](docs/software-engineering-book/chapters/ch01-why-this-moment-matters.md) | [4 prompts](docs/software-engineering-book/prompts/ch01-prompts-why-this-moment-matters.md) |
 | 2 | [A Brief History of Control Surfaces](docs/software-engineering-book/chapters/ch02-history-of-control-surfaces.md) | [4 prompts](docs/software-engineering-book/prompts/ch02-prompts-history-of-control-surfaces.md) |
 | 3 | [Prompt Orchestration Primitives](docs/software-engineering-book/chapters/ch03-prompt-orchestration-primitives.md) | [7 prompts](docs/software-engineering-book/prompts/ch03-prompts-orchestration-primitives.md) |
@@ -119,7 +119,7 @@ Fourteen chapters developing engineering judgment through the human stories behi
 Ten chapters tracing the visual design decisions that shaped modern interfaces — from De Stijl's mathematical grids to fluid CSS calculus.
 
 | # | Chapter |
-|---|---------|
+| --- | --------- |
 | 0 | [Before the Bauhaus — The People Who Mathematized Art](docs/design-book/chapters/ch00-before-the-bauhaus.md) |
 | 1 | [The Bauhaus Experiment — Typography as Infrastructure](docs/design-book/chapters/ch01-bauhaus-and-the-machine.md) |
 | 2 | [The Swiss Grid — Spatial Rhythm and Mathematics](docs/design-book/chapters/ch02-the-swiss-grid.md) |
@@ -136,7 +136,7 @@ Ten chapters tracing the visual design decisions that shaped modern interfaces �
 ### Books III–X
 
 | Book | Topic | Chapters | Key Practitioners |
-|------|-------|:--------:|-------------------|
+| ------ | ------- | :--------: | ------------------- |
 | **III** | [UI Design](docs/ui-design-book/chapters/) | 10 | Engelbart, Raskin, Tesler, Shneiderman, Tufte, Frost, Norman, Krug |
 | **IV** | [UX Design](docs/ux-design-book/chapters/) | 10 | Nielsen, Hall, Miller, Kahneman, Cooper, Christensen, Torres |
 | **V** | [Product Management](docs/product-management-book/chapters/) | 10 | Cagan, Porter, Dunford, Ries, Doerr, Ramanujam, Bush |
@@ -157,7 +157,7 @@ Ten chapters tracing the visual design decisions that shaped modern interfaces �
 > — [Preface from the Model](docs/software-engineering-book/PREFACE-FROM-THE-MODEL.md)
 
 | If you are... | Start here |
-|---|---|
+| --- | --- |
 | Writing your first structured prompt | [Ch 3 — Primitives](docs/software-engineering-book/prompts/ch03-prompts-orchestration-primitives.md) |
 | Running an audit or sprint | [Ch 5 — Audit-to-Sprint Loop](docs/software-engineering-book/prompts/ch05-prompts-audit-to-sprint-loop.md) |
 | Hardening a deployment | [Ch 6 — 12-Factor](docs/software-engineering-book/prompts/ch06-prompts-12-factor-in-the-llm-era.md) |
@@ -173,7 +173,7 @@ Ten chapters tracing the visual design decisions that shaped modern interfaces �
 ![MCP Architecture — Three-Layer Split](docs/software-engineering-book/mcp-architecture-diagram.png)
 
 | Layer | Responsibility | Location |
-|---|---|---|
+| --- | --- | --- |
 | **Next.js** | UI, API routes, orchestration policy, provider wiring | `src/` |
 | **MCP Protocol** | Typed tool schemas, deterministic execution contracts | `mcp/` |
 | **Operations** | Health, secrets, release integrity, admin workflows | `scripts/` |
@@ -185,7 +185,7 @@ Ten chapters tracing the visual design decisions that shaped modern interfaces �
 This project's evolution is fully documented across **23 sprint artifacts** in [`sprints/completed/`](sprints/completed/). The four-phase sequence from [Chapter 10](docs/software-engineering-book/chapters/ch10-case-study-is601-demo.md):
 
 | Phase | Sprints | What was built |
-|---|---|---|
+| --- | --- | --- |
 | **Feature Delivery** | 00–03 | Testing foundation, secret safety, chat policy, calculator tool |
 | **Structural Cleanup** | 04–07 | SRP refactor, streaming hardening, UI hook separation, type safety |
 | **12-Factor Hardening** | 12f-01–09 | Config/secrets, backing services, build/release/run, disposability, parity, logs, admin |
@@ -196,7 +196,7 @@ This project's evolution is fully documented across **23 sprint artifacts** in [
 ## Operational Scripts
 
 | Script | Command | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | Environment validation | `npm run admin:validate-env` | Startup config check |
 | Secret scanning | `npm run scan:secrets` | CI-ready secret detection |
 | Stateless runtime assertion | `npm run check:stateless` | Verify no local state leaks |
@@ -213,7 +213,7 @@ See [`docs/operations/`](docs/operations/) for runbooks, environment matrix, and
 ## Reference Materials
 
 | Resource | Location |
-|---|---|
+| --- | --- |
 | Model preface (fourth wall) | [`PREFACE-FROM-THE-MODEL.md`](docs/software-engineering-book/PREFACE-FROM-THE-MODEL.md) |
 | Book QA report | [`BOOK-QA.md`](docs/software-engineering-book/BOOK-QA.md) |
 | Audience value audit | [`BOOK-AUDIENCE-AUDIT.md`](docs/software-engineering-book/BOOK-AUDIENCE-AUDIT.md) |

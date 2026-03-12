@@ -8,7 +8,7 @@
 
 ### Bad Prompt
 
-```
+```text
 Help me plan and build a new feature for my app.
 ```
 
@@ -18,7 +18,7 @@ I simultaneously play architect, implementer, verifier, and operations steward �
 
 ### Good Prompt
 
-```
+```text
 I'm working solo on this project and need to add a new MCP tool (a URL
 shortener). I'll use explicit role switching as described in Chapter 11.
 
@@ -51,7 +51,7 @@ The negative scope question — "what should this tool NOT do?" — is architect
 
 ### Bad Prompt
 
-```
+```text
 Break this feature into tasks.
 ```
 
@@ -61,7 +61,7 @@ I produce a task list: "Create file X, add function Y, write tests for Z, update
 
 ### Good Prompt
 
-```
+```text
 Role: Orchestration Lead (Chapter 11)
 
 The Architecture Lead decided: the URL shortener will be an MCP tool in
@@ -108,7 +108,7 @@ The handoff-to-Verifier question at the end defines what "done" means in terms a
 
 ### Bad Prompt
 
-```
+```text
 Build me a video transcoding service. I don't know much about video codecs.
 ```
 
@@ -118,7 +118,7 @@ I build a video transcoding service using reasonable defaults. The codec choices
 
 ### Good Prompt
 
-```
+```text
 I need to build a video transcoding service but I don't have deep codec
 expertise. I'll use the CEO operating model from Chapter 11.
 
@@ -156,7 +156,7 @@ The question about researchers and engineers (question 2) applies the Chapter 0 
 
 ### Bad Prompt
 
-```
+```text
 I finished the implementation. Please review it.
 ```
 
@@ -166,7 +166,7 @@ I review whatever code I can see, looking for obvious issues. Without a handoff 
 
 ### Good Prompt
 
-```
+```text
 Role: Verifier (Chapter 11)
 
 I'm handing off the URL shortener implementation for verification.
@@ -217,7 +217,7 @@ This is the Verifier role operating as described in Chapter 11: owning objective
 
 ### Bad Prompt
 
-```
+```text
 Help me run a sprint for my project.
 ```
 
@@ -227,7 +227,7 @@ I create a list of things to build and help you build them. This is a work sessi
 
 ### Good Prompt
 
-```
+```text
 Guide me through a complete Chapter 11 ritual cycle for this project.
 We will execute all four rituals in sequence.
 

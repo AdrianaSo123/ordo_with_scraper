@@ -8,7 +8,7 @@
 
 ### Bad Prompt
 
-```
+```text
 I want to build a video transcoding pipeline. Where do I start?
 ```
 
@@ -20,7 +20,7 @@ I am not asking you what you know. I am not asking what the constraints are. I a
 
 ### Good Prompt
 
-```
+```text
 I am beginning Phase Zero (inquiry-based intelligence gathering) for a video
 transcoding pipeline project. I have no deep codec expertise.
 
@@ -71,7 +71,7 @@ Stage 4 is the sculpting step — converting inquiry output into a specification
 
 ### Bad Prompt
 
-```
+```text
 What's wrong with my codebase?
 ```
 
@@ -81,7 +81,7 @@ Everything and nothing. Without scope, I produce a grab bag of observations at v
 
 ### Good Prompt
 
-```
+```text
 **Stage 1 of 5: Audit**
 
 Framework: 12-Factor App (all twelve factors)
@@ -116,7 +116,7 @@ Sprint Priority as a column forces me to triage during the audit — which is an
 
 ### Bad Prompt
 
-```
+```text
 Fix everything from the audit.
 ```
 
@@ -126,7 +126,7 @@ I attempt to fix all twelve factors at once. The result is a massive, untestable
 
 ### Good Prompt
 
-```
+```text
 **Stage 2 of 5: Sprint Planning**
 
 Input: the 12-Factor audit findings table from Stage 1 (above).
@@ -167,7 +167,7 @@ The sprint template is dense with operational detail. Each field serves a purpos
 
 ### Bad Prompt
 
-```
+```text
 Implement the config centralization sprint.
 ```
 
@@ -177,7 +177,7 @@ I implement what I think "config centralization" means based on my general under
 
 ### Good Prompt
 
-```
+```text
 **Stage 3 of 5: Sprint Execution**
 
 Execute sprint-config-centralization.
@@ -216,7 +216,7 @@ The instruction to "confirm each acceptance criterion individually" at the end c
 
 ### Bad Prompt
 
-```
+```text
 Does it work?
 ```
 
@@ -226,7 +226,7 @@ Does it work?
 
 ### Good Prompt
 
-```
+```text
 **Stage 4 of 5: Verification**
 
 Sprint: sprint-config-centralization
@@ -245,7 +245,7 @@ Execute verification protocol:
 
 Verification matrix:
 | Check | Expected | Actual | Status |
-|-------|----------|--------|--------|
+| ------- | ---------- | -------- | -------- |
 
 Fill the matrix. If any check fails, the sprint has a defect. List defects
 and proposed fixes. Do NOT proceed to Stage 5 until all checks pass.
@@ -263,7 +263,7 @@ The verification matrix forces structured, cell-by-cell reporting. I cannot prod
 
 ### Bad Prompt
 
-```
+```text
 Save what we did somewhere.
 ```
 
@@ -273,7 +273,7 @@ I suggest saving it. I do not actually produce a structured artifact. The sessio
 
 ### Good Prompt
 
-```
+```text
 **Stage 5 of 5: Archive**
 
 Create the sprint completion artifact.
@@ -329,7 +329,7 @@ Every section in this artifact template serves a specific future purpose:
 
 ### Bad Prompt
 
-```
+```text
 Review the code output and make sure it's good quality.
 ```
 
@@ -339,7 +339,7 @@ I visually scan the code and declare it acceptable. This is the weakest form of 
 
 ### Good Prompt
 
-```
+```text
 Phase: Verification — Deterministic + Probabilistic Tandem
 
 The config centralization sprint is implemented. Apply two verification layers:

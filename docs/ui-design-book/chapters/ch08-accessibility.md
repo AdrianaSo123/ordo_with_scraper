@@ -1,6 +1,7 @@
 # Chapter 8 — Accessibility: The Non-Negotiable Foundation
 
 ## Abstract
+
 Accessibility is not a feature — it is a quality of engineering. An interface that cannot be used by people with disabilities is not a finished product; it is a prototype with incomplete interaction coverage. This chapter traces accessibility from Section 508 and WCAG through Léonie Watson's advocacy, the modern implementation of ARIA, keyboard patterns, and the engineering discipline of building accessibility into the component model from the start.
 
 ---
@@ -20,27 +21,35 @@ The principle: **use the right HTML element first. Add ARIA only when no native 
 The Web Content Accessibility Guidelines organize accessibility requirements under four principles (POUR):
 
 ### 1. Perceivable
+
 Information must be presentable in ways that users can perceive. This includes:
+
 - **Text alternatives** for images (`alt` attributes)
 - **Captions** for video and audio
 - **Sufficient contrast** (4.5:1 for text, 3:1 for large text)
 - **Content that does not rely solely on color** to convey meaning
 
 ### 2. Operable
+
 Users must be able to operate the interface. This includes:
+
 - **Keyboard accessibility**: every interactive element reachable via Tab, activatable via Enter/Space
 - **No keyboard traps**: focus must never become stuck in a component
 - **Sufficient time**: users must have enough time to read and act
 - **Seizure safety**: no content that flashes more than 3 times per second
 
 ### 3. Understandable
+
 Content and operation must be understandable. This includes:
+
 - **Readable language**: page language declared (`lang` attribute)
 - **Predictable behavior**: navigation, naming, and interaction are consistent
 - **Input assistance**: error identification, labels, and suggestions
 
 ### 4. Robust
+
 Content must be robust enough to work with current and future assistive technologies. This means:
+
 - **Valid HTML**: parsing errors confuse assistive technology
 - **ARIA used correctly**: invalid ARIA is worse than no ARIA
 - **Tested with real assistive technology**: not just automated tools
@@ -52,7 +61,7 @@ Content must be robust enough to work with current and future assistive technolo
 Every component must specify its keyboard interaction. The WAI-ARIA Authoring Practices provide standard patterns:
 
 | Component | Key | Action |
-|-----------|-----|--------|
+| ----------- | ----- | -------- |
 | Button | Enter, Space | Activate |
 | Link | Enter | Navigate |
 | Checkbox | Space | Toggle |
@@ -83,7 +92,7 @@ Implementing these patterns ensures that keyboard users (including screen reader
 Accessibility requires *layered* testing — no single tool catches everything:
 
 | Layer | Tool | Catches |
-|-------|------|---------|
+| ------- | ------ | --------- |
 | Automated | axe-core, Lighthouse | ~30% of issues (missing alt text, low contrast, missing labels) |
 | Semi-automated | Screen reader testing | Interaction flow, reading order, live region behavior |
 | Manual | Keyboard-only navigation | Focus traps, unreachable elements, invisible states |
@@ -98,6 +107,7 @@ Accessibility requires *layered* testing — no single tool catches everything:
 Accessibility is not an add-on. It is a quality of the component architecture. Components that are built with semantic HTML, keyboard patterns, and ARIA attributes from the start are accessible by default. Components that are built with `<div>` and decorated later require expensive retrofitting.
 
 ## Chapter Checklist
+
 - Can every interactive element be reached and activated via keyboard?
 - Does every image have a meaningful `alt` attribute (or `alt=""` for decorative images)?
 - Do all text/background combinations meet WCAG AA contrast (4.5:1)?

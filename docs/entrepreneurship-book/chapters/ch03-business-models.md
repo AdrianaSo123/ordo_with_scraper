@@ -1,6 +1,7 @@
 # Chapter 3 — Business Models: How Value Becomes Revenue
 
 ## Abstract
+
 A product that people love but nobody pays for is a hobby. This chapter covers Alexander Osterwalder's Business Model Canvas, revenue models, and the unit economics that determine whether a business can sustain itself.
 
 ---
@@ -22,11 +23,13 @@ A product that people love but nobody pays for is a hobby. This chapter covers A
 The canvas forces founders to articulate *all nine* elements — not just the value proposition (which is where most founders start and stop).
 
 ## Unit Economics
+
 - **CAC**: Customer Acquisition Cost — how much it costs to acquire one customer
 - **LTV**: Lifetime Value — how much revenue one customer generates over their lifetime
 - **LTV/CAC ratio**: must be >3 for a sustainable business
 
 ## Chapter Checklist
+
 - Can you fill in all nine blocks of the Business Model Canvas?
 - Is your LTV/CAC ratio >3 (or on a credible path to it)?
 - Can you describe your revenue model in one sentence?

@@ -1,6 +1,7 @@
 # Chapter 9 — Industrial Design: Dieter Rams, Eames, and the Physical Origins of Digital Product Thinking
 
 ## Abstract
+
 Digital product design did not emerge from software. It emerged from industrial design — the discipline of making physical products that are functional, manufacturable, and humane. This chapter traces industrial design from the early 20th century through the Eames Office, Dieter Rams at Braun, the Memphis revolt, and their direct influence on Apple, Google, and the principles that now govern component-based software architecture.
 
 ---
@@ -71,7 +72,7 @@ Rams articulated his design philosophy in ten principles that became the industr
 Each principle has a direct software equivalent:
 
 | Rams Principle | Software Equivalent |
-|---|---|
+| --- | --- |
 | Innovative | Use new platform capabilities, don't replicate old patterns |
 | Useful | Features serve real user needs, validated by research |
 | Aesthetic | Visual polish is not optional — it signals quality and care |
@@ -110,6 +111,7 @@ Loewy gave us MAYA (advance boldly but preserve familiarity). The Eameses gave u
 Modern product design — software or physical — succeeds when it honors all four voices: pushing the boundary of what's possible (Loewy), respecting material and technological constraints (Eames), simplifying relentlessly (Rams), and leaving room for personality and joy (Sottsass).
 
 ## Chapter Checklist
+
 - Does your product follow the MAYA principle — is it as advanced as possible while remaining recognizable to your users?
 - Can you identify the constraints your design must satisfy (technical, user, business, accessibility)?
 - Does every component justify its existence (Rams's "as little design as possible")?

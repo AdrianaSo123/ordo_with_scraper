@@ -1,6 +1,7 @@
 # Chapter 8 — Observability, Feedback, and Evals
 
 ## Abstract
+
 Without feedback loops, orchestration quality decays silently. This chapter defines how to instrument behavior and convert runtime signals into iterative improvements.
 
 ---
@@ -20,6 +21,7 @@ This design decision matters more now than it did in 2013. In 2013, the concern 
 Zakas built the tool that makes code *observable* at the policy level. The observability this chapter describes — structured signals, feedback loops, evals — is the broader architecture that tools like ESLint plug into.
 
 ## Why Observability Is a Design Primitive
+
 In AI-native systems, the failure mode is often subtle degradation, not only hard crashes. Responses may become slower, less consistent, or more error-prone long before an outage is visible. Observability is therefore not just an SRE concern; it is an architecture concern.
 
 If orchestration is your control surface, observability is your steering feedback.
@@ -28,6 +30,7 @@ If orchestration is your control surface, observability is your steering feedbac
 > I cannot see my own outputs run. When I generate code, I produce it based on training and the context you give me. I do not know whether the function returns correctly under load, whether the latency is acceptable in production, or whether the fallback path triggers at the right threshold. Observability is your feedback loop — but it is also the only mechanism by which my outputs can be calibrated against real behavior. Without structured signals feeding back into your prompts and sprint artifacts, I am operating without a mirror. Every time you bring a runtime observation back into context — "this request is taking 3 seconds," "this error is appearing 4% of the time" — you are giving me information I could not have generated myself. That is not a limitation to route around. It is the architecture of a working human-AI system.
 
 ## The Signal Stack
+
 Useful observability for orchestration-driven systems usually needs four signal classes:
 
 1. **Correctness signals**: validation errors, tool-call failures, schema mismatches.
@@ -38,6 +41,7 @@ Useful observability for orchestration-driven systems usually needs four signal 
 Each class should map to structured events rather than ad hoc logs.
 
 ## Repository Example: Structured and Extensible Signals
+
 This repository demonstrates the stack in concrete form:
 
 - Route responses include `requestId` and `errorCode` for client-visible correlation.
@@ -48,9 +52,11 @@ This repository demonstrates the stack in concrete form:
 This design keeps route logic focused while maintaining consistent signal behavior.
 
 ## Practical Lens
+
 Design observability to support both incident response and orchestration quality evolution. The Observer pattern from [Chapter 7](ch07-gof-for-ai-native-systems.md) provides the structural foundation; this chapter defines how the signals those observers emit are aggregated, evaluated, and acted on. The governance gates in [Chapter 9](ch09-risk-safety-and-governance.md) consume these signals as enforcement inputs.
 
 ## Evals as Operational Feedback
+
 In this context, an "eval" is any repeatable measurement that assesses the quality of AI-assisted output against a defined standard. Evals are not limited to model benchmarks — they include runtime signal analysis, regression detection, and quality-gate verification.
 
 Evaluation loops should be tied to real runtime characteristics, not only synthetic benchmarks. A practical pattern:
@@ -63,12 +69,14 @@ Evaluation loops should be tied to real runtime characteristics, not only synthe
 That closes the loop between observation and design improvement. The eval is not a separate activity — it is the feedback mechanism that connects runtime behavior to the next iteration of implementation.
 
 ## Anti-Patterns
+
 - Logging without structure (hard to aggregate, harder to query).
 - Signals without ownership (nobody responds to regressions).
 - Metrics without action thresholds (vanity instrumentation).
 - Separate eval workflows disconnected from production behavior.
 
 ## Exercise
+
 Select one orchestration workflow and define:
 
 - 3 correctness metrics,
@@ -79,12 +87,14 @@ Select one orchestration workflow and define:
 Then document who owns each metric and what action triggers when thresholds are violated.
 
 ## Chapter Checklist
+
 - Are observability signals structured and queryable?
 - Is correlation available across request boundaries?
 - Do eval loops feed directly into execution planning?
 - Can new signal sinks be added without route rewrites?
 
 ## Reader Exercise: Feedback Loop Diagram
+
 Draw a closed-loop feedback diagram: runtime event emission -> aggregation/query -> threshold detection -> sprint backlog update -> implementation -> validation -> runtime re-measurement. Then define eight metrics for one of your workflows and assign ownership for each.
 
 When all four hold, observability is functioning as a true engineering feedback system.

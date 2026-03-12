@@ -8,7 +8,7 @@
 
 ### Bad Prompt
 
-```
+```text
 Add logging to my API routes.
 ```
 
@@ -20,7 +20,7 @@ My default is to solve the immediate problem (add logging) without considering t
 
 ### Good Prompt
 
-```
+```text
 Pattern: Observer (GoF)
 Problem: Route handlers in src/app/api/chat/route.ts emit metrics and log
 events inline. Adding a new observability sink requires modifying route code.
@@ -70,7 +70,7 @@ The grep command in the acceptance criteria is a zero-tolerance enforcement: no 
 
 ### Bad Prompt
 
-```
+```text
 Add retry logic and timing to my API calls.
 ```
 
@@ -80,7 +80,7 @@ I add retry logic and timing directly to the provider call function. Now that fu
 
 ### Good Prompt
 
-```
+```text
 Pattern: Decorator (GoF)
 Problem: The Anthropic provider call in src/lib/chat/anthropic-client.ts
 needs cross-cutting behavior (timing, error shaping, retry logic) but
@@ -125,7 +125,7 @@ The "same function signature" invariant is what makes the decorators composable.
 
 ### Bad Prompt
 
-```
+```text
 Improve error handling in my chat API.
 ```
 
@@ -135,7 +135,7 @@ I add more catch blocks with more conditions. The if/else tree grows. Adding a n
 
 ### Good Prompt
 
-```
+```text
 Pattern: Chain of Responsibility (GoF)
 Problem: Error handling in src/lib/chat/anthropic-client.ts uses nested
 if/else blocks that mix classification logic with response construction.
@@ -189,7 +189,7 @@ The "chain is defined in one place" requirement prevents me from scattering hand
 
 ### Bad Prompt
 
-```
+```text
 Reduce duplication in my API routes.
 ```
 
@@ -199,7 +199,7 @@ I extract duplicated code into shared utility functions. This addresses the symp
 
 ### Good Prompt
 
-```
+```text
 Patterns: Template Method + Facade (GoF)
 Problem: Multiple API routes duplicate lifecycle concerns: request correlation
 ID generation, error envelope construction, observability event emission,
@@ -253,7 +253,7 @@ The facade's `handleRoute(config, handler)` signature gives me a clear API to im
 
 ### Bad Prompt
 
-```
+```text
 Should I use design patterns in my AI app?
 ```
 
@@ -263,7 +263,7 @@ Should I use design patterns in my AI app?
 
 ### Good Prompt
 
-```
+```text
 I have applied four GoF patterns to my codebase (Observer, Decorator, Chain
 of Responsibility, Template Method + Facade). Before I commit these changes,
 I need an honest cost-benefit assessment.

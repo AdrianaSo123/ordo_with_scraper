@@ -8,7 +8,7 @@
 
 ### Bad Prompt
 
-```
+```text
 Add a dark mode toggle to my Next.js app.
 ```
 
@@ -22,7 +22,7 @@ I fill every gap with my most probable default. That is the feature request as c
 
 ### Good Prompt
 
-```
+```text
 Role: Senior front-end engineer implementing a Next.js App Router feature.
 
 Scope: Add a dark mode toggle to the existing layout. The toggle must:
@@ -62,7 +62,7 @@ This is Chapter 1's thesis in action: language as specification, not conversatio
 
 ### Bad Prompt
 
-```
+```text
 Review this code and tell me if it's good.
 ```
 
@@ -74,7 +74,7 @@ This is what Chapter 1 calls theater. It feels like engineering review. It produ
 
 ### Good Prompt
 
-```
+```text
 Role: Code reviewer applying Chapter 1's standard: claims are only real when
 tied to validation artifacts.
 
@@ -114,7 +114,7 @@ The classification system (structural risk / type safety gap / maintainability c
 
 ### Bad Prompt
 
-```
+```text
 Explain how language and code and testing work together.
 ```
 
@@ -124,7 +124,7 @@ I produce an abstract explanation that sounds like a textbook introduction. "Lan
 
 ### Good Prompt
 
-```
+```text
 Chapter 1 describes three layers:
 1. Language intent layer (prompt specifications, framework directives)
 2. Implementation layer (code changes, module structure)
@@ -158,7 +158,7 @@ The gap identification is the most valuable part. Asking me to find "one place w
 
 ### Bad Prompt
 
-```
+```text
 Why should our team use better prompts when working with AI?
 ```
 
@@ -168,7 +168,7 @@ Motivational content. "Better prompts lead to better results." "Specification re
 
 ### Good Prompt
 
-```
+```text
 I need to demonstrate to my engineering team — in 20 minutes with a live
 demo — that specification-style prompting produces measurably better output
 than conversational prompting.

@@ -1,6 +1,7 @@
 # Chapter 0 — The Thread: From Usability to Experience Architecture
 
 ## Abstract
+
 Book III defined the components. This book defines the *experience* — the complete arc of a user's interaction with a product, from first encounter to mastery to departure. UX design is the discipline of making that arc intentional rather than accidental. This chapter traces the thread from the human factors engineers of the 1940s through the cognitive scientists of the 1980s to the behavioral economists of the 2000s.
 
 ---
@@ -35,4 +36,5 @@ Each era expanded the definition of what "experience" means: from "can they use 
 ---
 
 ## Reader Exercise: The Experience Audit
+
 Pick a product you use daily (banking app, email, task manager). Map your complete experience: how did you find it? What was onboarding like? What friction do you encounter weekly? What would make you leave? This audit is the foundation of UX thinking.

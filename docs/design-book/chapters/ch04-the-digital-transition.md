@@ -1,6 +1,7 @@
 # Chapter 4 — The Digital Transition: Translating Physics to Pixels
 
 ## Abstract
+
 For centuries, graphic designers worked with continuous physical space — paper, metal type, ink. The advent of the personal computer dragged design into a discrete, digitized medium. This chapter looks at Susan Kare, Bill Atkinson, Muriel Cooper, and the Xerox PARC team, who mapped intuitive physical metaphors to pixel grids, establishing the rules of visual affordance and digital wayfinding that every modern interface inherits.
 
 ---
@@ -74,6 +75,7 @@ To help users navigate the virtual world, early GUI designers relied heavily on 
 This mapped directly to physical reality. Kare's job was to design icons that looked familiar and inviting. She pioneered digital **affordance** — designing visual elements that suggest how they should be used. The Macintosh Finder interface was arguably the first massive success of digital interaction design.
 
 Affordance in digital design operates through visual signals:
+
 - A raised button suggests it can be pressed
 - A text field with a blinking cursor suggests it can receive input
 - A scrollbar suggests there is more content below
@@ -127,6 +129,7 @@ We map these visual affordances explicitly. Crucially, we do not just rely on `:
 The scale transform on `:active` replicates the physical affordance of pressing a key, mapped into pixel adjustments. The `:focus-visible` ring draws a literal halo around the element for keyboard accessibility — Kare's affordance principle, expressed as CSS state transitions.
 
 ## Chapter Checklist
+
 - Do interactive elements on your page have clear, distinct hover, active, and focus states?
 - Or do users have to guess what can be clicked and what is just static information?
 - Are you communicating state clearly (success, error, loading, disabled) across both visual styles and semantic HTML?

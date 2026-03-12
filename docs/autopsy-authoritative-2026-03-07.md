@@ -8,6 +8,7 @@ Purpose: document what this product actually is, what it proves, and why it shou
 
 `is601_demo` is primarily a **teaching and proof artifact**.
 It is a repository that combines:
+
 - a large educational library
 - prompt companion material
 - a smaller Next.js + MCP application
@@ -21,12 +22,14 @@ Its strongest value is as a **disciplined reference implementation**.
 The repository presents itself as a product-development library and a proof that the methods in the books can be embodied in a working system.
 
 That means it is best understood as:
+
 - educational authority infrastructure
 - demonstration code
 - architecture teaching material
 - a smaller example of AI-app discipline
 
 This is clear in:
+
 - `README.md`
 - `docs/software-engineering-book/chapters/ch10-case-study-is601-demo.md`
 
@@ -42,6 +45,7 @@ That makes it more teachable and more maintainable.
 ## 2. The code decomposition is stronger
 
 The chat stack is better separated into:
+
 - validation
 - policy
 - orchestration
@@ -53,6 +57,7 @@ This is the kind of structure worth preserving.
 ## 3. It has real quality discipline
 
 The project demonstrates:
+
 - type checking
 - linting
 - test gates
@@ -65,6 +70,7 @@ For a demo repository, that is unusually mature.
 ## 4. It proves a methodology well
 
 This project is good at proving:
+
 - architecture cleanup can be systematic
 - operational hardening matters
 - patterns can be introduced intentionally
@@ -75,6 +81,7 @@ This project is good at proving:
 ## 1. Product identity is muddy
 
 The repo has multiple overlapping identities:
+
 - product development library
 - Studio Ordo-adjacent site
 - AI systems console
@@ -102,6 +109,7 @@ That is not bad, but it means the center of gravity is content and pedagogy, not
 ## What should survive
 
 Keep these assets:
+
 - the smaller codebase posture
 - the chat decomposition patterns
 - the operational scripts discipline
@@ -112,6 +120,7 @@ Keep these assets:
 
 Do not mistake this repository for the business platform.
 Do not carry forward:
+
 - conceptual dashboard theater
 - product identity drift
 - too many parallel narratives
@@ -125,6 +134,7 @@ It is valuable because it is smaller, cleaner, and more disciplined.
 But it is not the authoritative source of business reality.
 
 Use it as:
+
 - a code posture reference
 - a decomposition reference
 - an educational content asset

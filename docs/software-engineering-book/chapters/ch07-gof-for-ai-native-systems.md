@@ -1,6 +1,7 @@
 # Chapter 7 — GoF Patterns for AI-Native Systems
 
 ## Abstract
+
 Classical patterns still matter in LLM systems, especially where orchestration complexity grows. This chapter shows how GoF patterns increase composability and reduce route-level fragility.
 
 ---
@@ -34,6 +35,7 @@ This principle — the L in SOLID — is the foundation of testable architecture
 Knuth gave us the precision ethic: measure before you optimize, and never sacrifice correctness for cleverness. Liskov gave us the substitution principle that makes GoF patterns safe to apply. Without substitutability, patterns are indirection without guarantees. With it, they are composable structure.
 
 ## Why GoF Still Works Here
+
 AI-native systems can feel novel, but they still fail for familiar reasons: duplication, implicit coupling, unclear boundaries, and mixed concerns in route handlers. GoF patterns remain useful because they manage structure under change.
 
 In orchestration-heavy systems, change is constant. Prompts evolve, providers evolve, and operational requirements evolve. The engineering question is not whether change happens; it is whether the codebase remains legible and safe while change happens.
@@ -41,15 +43,19 @@ In orchestration-heavy systems, change is constant. Prompts evolve, providers ev
 ## Pattern Set Applied in This Repository
 
 ### Observer
+
 Observability emission moved into a typed event bus so producers and sinks are decoupled. This enables adding sinks without rewriting route logic.
 
 ### Decorator
+
 Provider calls are wrapped with composable cross-cutting behavior (timing, error shaping), reducing duplication and keeping core provider responsibility narrow.
 
 ### Chain of Responsibility
+
 Provider error handling now flows through explicit handlers (model-not-found, transient retry, default throw), replacing brittle branching sprawl.
 
 ### Template Method + Facade
+
 Route lifecycle flow was centralized into a reusable algorithm and helper facade, reducing route duplication and standardizing response/error telemetry behavior.
 
 These patterns are not decorative. They reduce correction load and improve predictability.
@@ -70,11 +76,13 @@ The test count did not change significantly after any of these refactors. The co
 > I implemented both versions. Working with the pre-refactor route handler — the one mixing emission concerns, business logic, provider invocation, and error shaping in a single function — required holding all of those concerns simultaneously in context. When I generated a change to the error handling path, I had to reason about whether it affected the telemetry logic sitting beside it. After the refactors, each module had a narrow contract. Changing error handling did not require re-reading metric emission. That reduction in reasoning surface applies to me as much as it applies to the next developer. Narrow modules are not a style preference. They are cognitive load management — for both of us.
 
 ## Practical Lens
+
 Use patterns only when they reduce accidental complexity and sharpen module boundaries. A pattern that makes the code harder to trace is not simplifying — it is adding a layer of indirection without earning it. The test: can a new contributor follow control flow through the pattern without needing a guide?
 
 > The Observer pattern enables the observability signals discussed in [Chapter 8](ch08-observability-feedback-and-evals.md). The governance implications of these structural boundaries are central to [Chapter 9](ch09-risk-safety-and-governance.md).
 
 ## Repository Example
+
 Pattern upgrades in this repository map directly to concrete modules:
 
 - Observer event bus: `src/lib/observability/events.ts`
@@ -85,6 +93,7 @@ Pattern upgrades in this repository map directly to concrete modules:
 Route files became thinner and more consistent after template/facade adoption, while provider resilience logic became easier to reason about after the handler chain was made explicit.
 
 ## Tradeoffs and Guardrails
+
 - **Do not pattern-stack blindly.** Every pattern adds abstraction cost.
 - **Prefer explicitness over cleverness.** If a new engineer cannot trace control flow quickly, the pattern application is too dense.
 - **Keep tests close to behavior seams.** Pattern seams are ideal test boundaries.
@@ -92,6 +101,7 @@ Route files became thinner and more consistent after template/facade adoption, w
 The target is not “more patterns.” The target is cleaner change surfaces.
 
 ## Exercise
+
 Choose one route-level concern currently duplicated in your codebase and refactor it through either:
 
 1. Template Method + Facade, or
@@ -104,11 +114,13 @@ Then measure:
 - regression pass stability after refactor.
 
 ## Chapter Checklist
+
 - Are claimed patterns visible as explicit structures in code?
 - Did pattern adoption reduce duplication and clarify boundaries?
 - Are pattern outcomes validated by regression gates?
 
 ## Reader Exercise: Pattern-to-Module Mapping
+
 Create a pattern-to-module diagram with four lanes: Observer, Decorator, Chain of Responsibility, Template+Facade. Map each lane to concrete files and one measurable outcome. Then identify one duplication pattern in your own codebase and choose which GoF pattern would address it.
 
 When the checklist above passes, GoF is not legacy theory; it is operational leverage for modern systems.
