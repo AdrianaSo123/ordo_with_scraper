@@ -1246,7 +1246,7 @@ export function createSearchMyConversationsTool(/* deps */): ToolDescriptor {
 3. Map `EmbeddingRecord` results to `ConversationSearchResult`
 4. Return formatted text for Claude to include in response
 
-### 9.6 Library Cross-Reference `[CONVO-060]`
+### 9.6 Library Cross-Reference `[CONVO-045]`
 
 When a conversation passage mentions content from the library (detected
 by overlapping terms with book chunk headings), the search result can
@@ -1319,8 +1319,8 @@ All conversation operations are scoped by user ID:
 
 - Not embedded or searchable (too transient, not authenticated)
 - Garbage-collectible: `WHERE user_id LIKE 'anon_%' AND updated_at < ?`
-- On registration: future enhancement to migrate `anon_{uuid}` → real
-  user ID
+- On registration: `anon_{uuid}` → real user ID migration
+  (see Section 5.6 — implemented in Sprint 0, CONVO-080)
 
 ### 11.4 Summary Content
 
@@ -1372,7 +1372,7 @@ append-only writer, not a pub/sub event bus. Used inline at the point
 of action:
 
 ```typescript
-// src/core/use-cases/ConversationEventEmitter.ts
+// src/core/use-cases/ConversationEventRecorder.ts
 export interface ConversationEventRepository {
   record(event: {
     conversationId: string;
