@@ -45,6 +45,7 @@ docs/_specs/
 | [Chat Runtime Hardening](chat-runtime-hardening/) | **Complete** | 4 (0–3) | Documentation alignment, local command dependencies, stale attachment reaping, and failed-send regression coverage for the chat runtime |
 | [Shell Navigation And Design System](shell-navigation-and-design-system/) | **Complete** | 5 (0–4) | Canonical shell route truth, shared brand/navigation primitives, command-surface unification, shell token discipline, and final QA evidence |
 | [Footer Information Architecture](footer-information-architecture/) | **Draft** | 0 planned | Footer-only informational navigation contract, command-surface parity, and truthful page inventory rules for chat-first UX |
+| [Global Search And Content Access](global-search-and-content-access/) | **In Progress** | 3 planned (0–2) | Shell-owned global search, shared public/member content access policy, and role-aware convergence across routes, tools, and library retrieval |
 | [Conversation Lane Routing](conversation-lane-routing/) | **Draft** | 0 planned | Durable organization-vs-individual routing state for prompts, analytics, and next-step recommendation |
 | [Progressive Contact Capture](progressive-contact-capture/) | **Draft** | 0 planned | In-thread, lane-aware contact capture with structured persistence and event telemetry |
 | [FAB Shell Refactor](fab-shell-refactor/) | **Draft** | 4 planned (0–3) | Floating chat FAB refactor with explicit shell ownership, command-driven theme controls, styling contract cleanup, and stable browser verification |
@@ -52,7 +53,13 @@ docs/_specs/
 | [Customer Workflow And Deal Flow](customer-workflow-and-deal-flow/) | **Draft** | 5 planned (0–4) | Unified runtime contract for organization, individual, and development workflows from routing through qualification, founder review, and downstream deal or training handling |
 | [Live Eval And Funnel Validation](live-eval-and-funnel-validation/) | **In Progress** | 4 planned (0–3) | Real-model, seeded-data, tool-aware evaluation program for MCP reliability, customer funnel completion, and anonymous-to-signed-in continuity |
 | [Flexible Graphing System](flexible-graphing-system/) | **Draft** | 3 planned (0–2) | Quantitative graph generation for time series, comparisons, distributions, and arbitrary structured data, separate from Mermaid diagrams |
+| [Deferred Job Orchestration](deferred-job-orchestration/) | **Draft** | 4 planned (0–3) | Durable queue-backed execution for long-running MCP tasks with chat-native status updates, resumable event streams, and optional push notifications |
+| [Job Visibility And Control](job-visibility-and-control/) | **Draft** | 7 planned (0–3 + TD-A/TD-C/TD-D) | Transcript-native job updates, a first-class Jobs page in the account surface, and prose-first agent status responses |
+| [Blog Article Production Pipeline](blog-article-production-pipeline/) | **Draft** | 5 planned (0–4) | Native article-generation pipeline for blog drafting, LLM QA, QA resolution, hero-image prompt synthesis, image generation, and orchestration through discrete MCP tools |
+| [Journal Publication Redesign](journal-publication-redesign/) | **Draft** | 5 planned (0–4) | Re-architect the public journal so the index, sections, archive, and article routes read like an intentional publication rather than product UI with editorial styling |
+| [Journal Editorial Operations](journal-editorial-operations/) | **Draft** | 4 planned (0–3) | Add a proper journal management surface, explicit editorial metadata and workflow, revision history, and phased external route convergence from `/blog` to `/journal` |
 | [Platform Convergence And Spec Rationalization](platform-convergence-and-spec-rationalization/) | **Draft** | 5 planned (0–4) | Consolidate Platform V1 into a coherent active spec set, preserve the content/knowledge substrate, retire dashboard-first legacy modality, and archive superseded specs without losing historical context |
+| [Admin Platform](admin-platform/) | **In Progress** | 7 (0–6) | Calm, AI-first admin layer for a solopreneur: green baseline, admin shell and concierge, people and roles, system config and models, operator dashboard with unified notifications, jobs elevation, and final polish |
 
 ### Roadmap
 
