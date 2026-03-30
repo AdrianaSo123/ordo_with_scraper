@@ -46,7 +46,8 @@ describe("GetCapitalEventsCommand", () => {
 
   it("rejects invalid event_type", async () => {
     await expect(
-      command.execute({ limit: 10, event_type: "invalid_type" }, ADMIN_CONTEXT),
+      // Cast required: testing runtime validation with an intentionally invalid value.
+      command.execute({ limit: 10, event_type: "invalid_type" } as unknown as Parameters<typeof command.execute>[0], ADMIN_CONTEXT),
     ).rejects.toThrow("event_type must be one of:");
   });
 
@@ -54,7 +55,7 @@ describe("GetCapitalEventsCommand", () => {
     (mockExecutor as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ results: [] });
     await expect(
       command.execute({ limit: 10, event_type: "funding" }, ADMIN_CONTEXT),
-    ).resolves.toEqual({ results: [] });
+    ).resolves.toEqual({ ok: true, results: [] });
   });
 
   // --- Default limit ---
@@ -76,7 +77,7 @@ describe("GetCapitalEventsCommand", () => {
     );
 
     expect(mockExecutor).toHaveBeenCalledWith({ limit: 25, event_type: "acquisition" });
-    expect(result).toEqual({ results: [{ id: "e1" }] });
+    expect(result).toEqual({ ok: true, results: [{ id: "e1" }] });
   });
 
   // --- Error handling (Graceful degradation) ---
@@ -88,9 +89,10 @@ describe("GetCapitalEventsCommand", () => {
 
     const result = await command.execute({ limit: 10 }, ADMIN_CONTEXT);
     
-    expect(result.results).toEqual([]);
-    expect(result.error).toContain("service is currently unavailable");
-    expect(result.error).toContain("MCP process exited with code 1");
+    const failed = result as { ok: false; error: string };
+    expect(failed.ok).toBe(false);
+    expect(failed.error).toContain("unavailable");
+    expect(failed.error).toContain("MCP process exited with code 1");
   });
 
   it("still throws validation errors (they are not infrastructure failures)", async () => {
@@ -105,7 +107,7 @@ describe("GetCapitalEventsCommand", () => {
 
   it("never calls executor when validation fails", async () => {
     await command.execute({ limit: 0 }, ADMIN_CONTEXT).catch(() => {});
-    await command.execute({ limit: 10, event_type: "bogus" }, ADMIN_CONTEXT).catch(() => {});
+    await command.execute({ limit: 10, event_type: "bogus" } as unknown as Parameters<typeof command.execute>[0], ADMIN_CONTEXT).catch(() => {});
     expect(mockExecutor).not.toHaveBeenCalled();
   });
 
@@ -120,13 +122,13 @@ describe("GetCapitalEventsCommand", () => {
     });
 
     const result = await command.execute({ limit: 10 }, ADMIN_CONTEXT);
-    expect(result).toHaveProperty("results");
-    expect(result.results).toHaveLength(2);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.results).toHaveLength(2);
   });
 
   it("returns { results: [] } for empty data", async () => {
     (mockExecutor as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ results: [] });
     const result = await command.execute({ limit: 5 }, ADMIN_CONTEXT);
-    expect(result).toEqual({ results: [] });
+    expect(result).toEqual({ ok: true, results: [] });
   });
 });

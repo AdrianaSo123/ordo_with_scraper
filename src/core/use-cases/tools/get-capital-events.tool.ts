@@ -22,16 +22,22 @@ export function createGetCapitalEventsTool(): ToolDescriptor<
   GetCapitalEventsOutput
 > {
   // ---------------------------------------------------------------------------
-  // Inject keys from host environment into the MCP container
+  // Inject keys from host environment into the MCP container.
+  // OPENAI_API_KEY is omitted entirely when absent — passing an empty string
+  // is semantically different from not setting the variable.
   // ---------------------------------------------------------------------------
-  const wrappedExecutor = (args: GetCapitalEventsArgs) =>
-    executeGetCapitalEvents(args, {
-      env: {
-        ANTHROPIC_API_KEY: getAnthropicApiKey(),
-        // OPENAI_API_KEY is optional: the MCP server can use it but does not require it.
-        OPENAI_API_KEY: getOpenaiApiKeyOptional() ?? "",
-      },
-    });
+  const dockerExecutor = (args: GetCapitalEventsArgs) => {
+    // N-5: read keys at execution time so a missing key only fails this specific
+    // tool call — not the entire registry build at server startup.
+    const env: Record<string, string> = {
+      ANTHROPIC_API_KEY: getAnthropicApiKey(),
+    };
+    const openaiKey = getOpenaiApiKeyOptional();
+    if (openaiKey) {
+      env.OPENAI_API_KEY = openaiKey;
+    }
+    return executeGetCapitalEvents(args, { env });
+  };
 
   return {
     name: "get_capital_events",
@@ -54,7 +60,7 @@ export function createGetCapitalEventsTool(): ToolDescriptor<
         required: [],
       },
     },
-    command: new GetCapitalEventsCommand(wrappedExecutor),
+    command: new GetCapitalEventsCommand(dockerExecutor),
     roles: ["ADMIN"],
     category: "system",
   };

@@ -63,12 +63,11 @@ describe("get_capital_events REAL integration", () => {
       // graceful error message we implemented in Pass 4.
       const result = await executor("get_capital_events", { limit: 1 }, ADMIN_CONTEXT) as any;
 
-      // Verification: The result should either be valid data OR our professional graceful error,
-      // NOT a crash or a mock response.
-      expect(result).toHaveProperty("results");
+      // The result is either a successful response or a graceful degradation — never a crash.
+      expect(result).toHaveProperty("ok");
       
-      if (result.error) {
-        expect(result.error).toContain("service is currently unavailable");
+      if (!result.ok) {
+        expect(result.error).toContain("unavailable");
         console.log("Verified graceful fallback for missing infrastructure");
       } else {
         expect(Array.isArray(result.results)).toBe(true);
