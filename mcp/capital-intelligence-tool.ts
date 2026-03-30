@@ -22,13 +22,12 @@ export const CAPITAL_EVENT_TYPES = [
 export type CapitalEventType = (typeof CAPITAL_EVENT_TYPES)[number];
 
 export interface CapitalEvent {
-  id: string;
-  event_type: CapitalEventType;
+  title: string;
   company: string;
-  amount?: number;
-  date: string;
-  description: string;
-  source_url: string;
+  event_type: CapitalEventType;
+  funding_amount: string;
+  summary: string;
+  published_at: string;
 }
 
 export interface GetCapitalEventsArgs {
@@ -38,7 +37,7 @@ export interface GetCapitalEventsArgs {
 
 export interface McpClientOptions {
   dockerImage?: string;
-  dataPath?: string;
+  dataMount?: DataMount;
   timeoutMs?: number;
   env?: Record<string, string>;
 }
@@ -72,10 +71,17 @@ function getDockerImage(): string {
   return image;
 }
 
-// R4-3: read data path from env so it can be overridden per-deployment.
-// resolve("./data") is retained only as a local-development fallback.
-function getDataPath(): string {
-  return process.env.CAPITAL_DATA_PATH ?? resolve("./data");
+// R4-3: support either a named Docker volume (CAPITAL_DOCKER_VOLUME) or a
+// host bind-mount path (CAPITAL_DATA_PATH). Volume takes precedence so
+// deployments that share the scraper_data volume need zero local files.
+type DataMount =
+  | { type: "volume"; name: string }
+  | { type: "path"; path: string };
+
+function getDataMount(): DataMount {
+  const volume = process.env.CAPITAL_DOCKER_VOLUME;
+  if (volume) return { type: "volume", name: volume };
+  return { type: "path", path: process.env.CAPITAL_DATA_PATH ?? resolve("./data") };
 }
 
 // ── Deadline helper ─────────────────────────────────────────────────
@@ -141,12 +147,17 @@ function removeEnvFile(filePath: string): void {
 // ── Docker args builder ─────────────────────────────────────────────
 
 // R4-2: envFilePath is null when no credentials are passed — omit --env-file.
-function buildDockerArgs(image: string, dataPath: string, envFilePath: string | null): string[] {
+function buildDockerArgs(image: string, mount: DataMount, envFilePath: string | null): string[] {
   const args = ["run", "-i", "--rm"];
   if (envFilePath !== null) {
     args.push("--env-file", envFilePath);
   }
-  args.push("-v", `${dataPath}:/app/data`, image);
+  if (mount.type === "volume") {
+    args.push("--mount", `source=${mount.name},target=/app/data`);
+  } else {
+    args.push("-v", `${mount.path}:/app/data`);
+  }
+  args.push(image);
   return args;
 }
 
@@ -156,13 +167,13 @@ function isCapitalEvent(value: unknown): value is CapitalEvent {
   if (!value || typeof value !== "object") return false;
   const v = value as Record<string, unknown>;
   return (
-    typeof v.id === "string" &&
+    typeof v.title === "string" &&
+    typeof v.company === "string" &&
     typeof v.event_type === "string" &&
     (CAPITAL_EVENT_TYPES as readonly string[]).includes(v.event_type) &&
-    typeof v.company === "string" &&
-    typeof v.date === "string" &&
-    typeof v.description === "string" &&
-    typeof v.source_url === "string"
+    typeof v.funding_amount === "string" &&
+    typeof v.summary === "string" &&
+    typeof v.published_at === "string"
   );
 }
 
@@ -220,7 +231,7 @@ export async function executeGetCapitalEvents(
   options?: McpClientOptions,
 ): Promise<{ results: CapitalEvent[] }> {
   const image = options?.dockerImage ?? getDockerImage();
-  const dataPath = options?.dataPath ?? getDataPath();
+  const mount = options?.dataMount ?? getDataMount();
   const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const env = options?.env ?? {};
 
@@ -239,7 +250,7 @@ export async function executeGetCapitalEvents(
     // selectively, rather than mixed raw into the host process output.
     const transport = new StdioClientTransport({
       command: "docker",
-      args: buildDockerArgs(image, dataPath, envFilePath),
+      args: buildDockerArgs(image, mount, envFilePath),
       stderr: "pipe",
     });
 

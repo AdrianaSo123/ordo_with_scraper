@@ -68,8 +68,8 @@ describe("capital-intelligence-tool", () => {
 
   it("translates a successful MCP response to { results: [...] }", async () => {
     const events = [
-      { id: "e1", event_type: "funding", company: "Acme Corp", amount: 10_000_000, date: "2026-01-15", description: "Series B round", source_url: "https://example.com/1" },
-      { id: "e2", event_type: "acquisition", company: "Beta Inc", amount: 5_000_000, date: "2026-02-01", description: "Acquired by Acme", source_url: "https://example.com/2" },
+      { title: "Acme Series B", company: "Acme Corp", event_type: "funding", funding_amount: "$10M", summary: "Series B round", published_at: "2026-01-15T00:00:00Z" },
+      { title: "Beta acquired", company: "Beta Inc", event_type: "acquisition", funding_amount: "$5M", summary: "Acquired by Acme", published_at: "2026-02-01T00:00:00Z" },
     ];
     mockCallTool.mockResolvedValueOnce(
       makeTextResult(JSON.stringify({ success: true, data: events })),
@@ -94,7 +94,7 @@ describe("capital-intelligence-tool", () => {
 
   it("throws McpInvocationError when events are missing required fields", async () => {
     const malformedEvents = [
-      { event_type: "funding", company: "Acme Corp" }, // missing id, date, description, source_url
+      { event_type: "funding", company: "Acme Corp" }, // missing title, funding_amount, summary, published_at
     ];
     mockCallTool.mockResolvedValueOnce(
       makeTextResult(JSON.stringify({ success: true, data: malformedEvents })),
