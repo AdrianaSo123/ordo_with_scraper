@@ -1,7 +1,7 @@
-import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
 // ---------------------------------------------------------------------------
 // Types & Constants
@@ -103,7 +103,7 @@ export async function executeGetCapitalEvents(
     const result = await Promise.race([
       client.callTool({
         name: "get_capital_events",
-        arguments: args as any,
+        arguments: args as unknown as Record<string, unknown>,
       }),
       new Promise<never>((_, reject) =>
         setTimeout(
@@ -115,18 +115,18 @@ export async function executeGetCapitalEvents(
 
     // 6. Post-process the SDK response
     // Model Context Protocol returns a CallToolResult with a 'content' array.
-    const toolResult = result as any;
+    const toolResult = result as CallToolResult;
     if (!toolResult.content || toolResult.content.length === 0) {
       throw new McpInvocationError("Empty response from MCP tool");
     }
 
-    const firstContent = toolResult.content[0];
+    const firstContent = toolResult.content[0] as { type: string; text?: string };
     if (firstContent.type !== "text" || !firstContent.text) {
       throw new McpInvocationError("MCP tool returned non-text content");
     }
 
     // The capital intelligence server returns a JSON-stringified object { success, data, error }
-    let toolOutput: any;
+    let toolOutput: { success: boolean; data?: unknown[]; error?: string };
     try {
       toolOutput = JSON.parse(firstContent.text);
     } catch {
@@ -141,12 +141,13 @@ export async function executeGetCapitalEvents(
       throw new McpInvocationError("Invalid MCP tool output: expected 'data' array");
     }
 
-    return { results: toolOutput.data };
+    return { results: toolOutput.data as CapitalEvent[] };
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     // 7. Cleanup and Wrap
     if (err instanceof McpInvocationError) throw err;
-    throw new McpInvocationError(`MCP protocol error: ${err.message || String(err)}`);
+    const message = err instanceof Error ? err.message : String(err);
+    throw new McpInvocationError(`MCP protocol error: ${message}`);
   } finally {
     // 8. Close the connection cleanly
     try {

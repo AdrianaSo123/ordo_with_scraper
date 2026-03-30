@@ -97,6 +97,14 @@ export function getOpenaiApiKey(): string {
   return requireNonEmpty(value, "OPENAI_API_KEY/API__OPENAI_API_KEY");
 }
 
+/**
+ * Returns the OpenAI API key if configured, or undefined.
+ * Use when the key is genuinely optional (e.g. MCP sidecar injection).
+ */
+export function getOpenaiApiKeyOptional(): string | undefined {
+  return readPrimaryThenLegacy("OPENAI_API_KEY", "API__OPENAI_API_KEY");
+}
+
 export function getAnthropicModel(): string {
   return (
     readPrimaryThenLegacy("ANTHROPIC_MODEL", "API__ANTHROPIC_MODEL") ??

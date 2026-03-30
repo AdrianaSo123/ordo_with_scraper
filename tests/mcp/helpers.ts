@@ -10,7 +10,7 @@ import type { ToolExecutionContext } from "../../src/core/tool-registry/ToolExec
 // Mock child process factory
 // ---------------------------------------------------------------------------
 
-interface MockChildOptions {
+export interface MockChildOptions {
   stdoutData?: string;
   exitCode?: number;
   stderrData?: string;

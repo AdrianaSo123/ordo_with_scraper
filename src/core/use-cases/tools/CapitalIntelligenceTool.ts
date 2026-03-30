@@ -72,7 +72,7 @@ export class GetCapitalEventsCommand
 
   async execute(
     input: GetCapitalEventsInput,
-    _context?: ToolExecutionContext,
+    _context?: ToolExecutionContext, // Reserved for future audit logging
   ): Promise<GetCapitalEventsOutput> {
     try {
       const limit = validateLimit(input.limit);
@@ -95,10 +95,18 @@ export class GetCapitalEventsCommand
         throw err;
       }
 
-      // If it's an infrastructure/MCP error, return a graceful message to the LLM
+      // If it's an infrastructure/MCP error, return a graceful message to the LLM.
+      // Distinguish transient vs. permanent failures so the LLM can give correct advice.
+      const isPermanent =
+        message.includes("API_KEY") ||
+        message.includes("not found") ||
+        message.includes("No such image");
+      const advice = isPermanent
+        ? "Please contact the administrator to check the service configuration."
+        : "Please try again later.";
       return {
         results: [],
-        error: `The capital intelligence service is currently unavailable: ${message}. Please try again later or contact the administrator.`,
+        error: `The capital intelligence service is currently unavailable: ${message}. ${advice}`,
       };
     }
   }

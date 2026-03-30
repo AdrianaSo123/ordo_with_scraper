@@ -3,12 +3,13 @@ import {
   CAPITAL_EVENT_TYPES,
   executeGetCapitalEvents,
 } from "@mcp/capital-intelligence-tool";
-import { getAnthropicApiKey, getOpenaiApiKey } from "@/lib/config/env";
+import { getAnthropicApiKey, getOpenaiApiKeyOptional } from "@/lib/config/env";
 import {
   GetCapitalEventsCommand,
   type GetCapitalEventsInput,
   type GetCapitalEventsOutput,
 } from "./CapitalIntelligenceTool";
+import type { GetCapitalEventsArgs } from "@mcp/capital-intelligence-tool";
 
 /**
  * Factory for the get_capital_events tool descriptor.
@@ -23,11 +24,12 @@ export function createGetCapitalEventsTool(): ToolDescriptor<
   // ---------------------------------------------------------------------------
   // Inject keys from host environment into the MCP container
   // ---------------------------------------------------------------------------
-  const wrappedExecutor = (args: any) =>
+  const wrappedExecutor = (args: GetCapitalEventsArgs) =>
     executeGetCapitalEvents(args, {
       env: {
         ANTHROPIC_API_KEY: getAnthropicApiKey(),
-        OPENAI_API_KEY: getOpenaiApiKey() || "", // Openai is optional but requested by MCP server
+        // OPENAI_API_KEY is optional: the MCP server can use it but does not require it.
+        OPENAI_API_KEY: getOpenaiApiKeyOptional() ?? "",
       },
     });
 
