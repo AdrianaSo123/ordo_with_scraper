@@ -31,6 +31,7 @@ import { createAdminWebSearchTool } from "@/core/use-cases/tools/admin-web-searc
 import { createAdminPrioritizeLeadsTool } from "@/core/use-cases/tools/admin-prioritize-leads.tool";
 import { createAdminPrioritizeOfferTool } from "@/core/use-cases/tools/admin-prioritize-offer.tool";
 import { createAdminTriageRoutingRiskTool } from "@/core/use-cases/tools/admin-triage-routing-risk.tool";
+import { createGetCapitalEventsTool } from "@/core/use-cases/tools/get-capital-events.tool";
 import { createDraftContentTool, createPublishContentTool } from "@/core/use-cases/tools/admin-content.tool";
 import { createSearchMyConversationsTool } from "@/core/use-cases/tools/search-my-conversations.tool";
 import { createSetPreferenceTool } from "@/core/use-cases/tools/set-preference.tool";
@@ -91,6 +92,9 @@ export function createToolRegistry(corpusRepo: CorpusRepository, handler?: Searc
   const blogRepo = getBlogPostRepository();
   reg.register(createDraftContentTool(blogRepo));
   reg.register(createPublishContentTool(blogRepo));
+
+  // Admin-only: capital intelligence MCP integration
+  reg.register(createGetCapitalEventsTool());
 
   // Apply tools.json filtering
   const toolConfig = getInstanceTools();
