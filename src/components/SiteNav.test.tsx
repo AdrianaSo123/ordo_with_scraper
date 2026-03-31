@@ -68,7 +68,8 @@ describe("SiteNav", () => {
     const nav = screen.getByRole("navigation", { name: "Primary" });
     expect(nav).toHaveAttribute("data-shell-nav-tone", "quiet");
     expect(nav.className).toContain("ui-shell-rail");
-    expect(screen.getByTestId("shell-nav-drawer")).toBeInTheDocument();
+    expect(screen.getByTestId("workspace-menu")).toBeInTheDocument();
+    expect(screen.queryByTestId("shell-nav-drawer")).toBeNull();
   });
 
   it("uses the quiet nav tone on journal article routes", () => {
@@ -95,6 +96,9 @@ describe("SiteNav", () => {
     render(<SiteNav user={user} />);
 
     expect(screen.getByTestId("global-search")).toBeInTheDocument();
+    expect(screen.getByTestId("workspace-menu")).toBeInTheDocument();
+    expect(screen.queryByTestId("shell-nav-drawer")).toBeNull();
+    expect(screen.queryByTestId("account-menu")).toBeNull();
   });
 
   it("uses the unified home utility cluster on the homepage", () => {

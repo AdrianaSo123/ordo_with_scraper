@@ -41,25 +41,40 @@ async function registerAndSimulateAdmin(page: Page) {
 }
 
 test.describe("Admin shell responsive", () => {
-  test("desktop sidebar exposes the live admin route set", async ({ page }) => {
+  test("desktop admin uses the shared workspace menu without a duplicate sidebar", async ({ page }) => {
     await stubShellRequests(page);
     await registerAndSimulateAdmin(page);
 
     await page.goto("/admin");
 
-    const sidebar = page.locator('aside[aria-label="Admin"]');
+    const nav = page.getByRole("navigation", { name: "Primary" });
+    const trigger = page.locator('[data-shell-workspace-menu-trigger="true"]');
 
     await expect(page.getByRole("heading", { name: "Admin dashboard" })).toBeVisible();
-    await expect(sidebar.getByRole("link", { name: "Dashboard" })).toBeVisible();
-    await expect(sidebar.getByRole("link", { name: "Users" })).toBeVisible();
-    await expect(sidebar.getByRole("link", { name: "Leads" })).toBeVisible();
-    await expect(sidebar.getByRole("link", { name: "Journal" })).toBeVisible();
-    await expect(sidebar.getByRole("link", { name: "Prompts" })).toBeVisible();
-    await expect(sidebar.getByRole("link", { name: "Conversations" })).toBeVisible();
-    await expect(sidebar.getByRole("link", { name: "Jobs" })).toBeVisible();
-    await expect(sidebar.getByRole("link", { name: "System" })).toBeVisible();
+    await expect(page.locator('aside[aria-label="Admin"]')).toHaveCount(0);
+    await expect(nav.getByRole("button", { name: "Open navigation menu" })).toHaveCount(0);
+    await expect(nav.getByRole("button", { name: "Open account menu" })).toHaveCount(0);
+    await expect(trigger).toBeVisible();
 
-    await sidebar.getByRole("link", { name: "Users" }).click();
+    await trigger.click();
+
+    const dialog = page.getByRole("dialog", { name: "Workspace menu" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole("heading", { name: "Overview" })).toBeVisible();
+    await expect(dialog.getByRole("heading", { name: "Operations" })).toBeVisible();
+    await expect(dialog.getByRole("heading", { name: "Content" })).toBeVisible();
+    await expect(dialog.getByRole("heading", { name: "Governance" })).toBeVisible();
+    await expect(dialog.getByRole("heading", { name: "Platform" })).toBeVisible();
+    await expect(dialog.getByRole("link", { name: "Dashboard" })).toBeVisible();
+    await expect(dialog.getByRole("link", { name: "Users" })).toBeVisible();
+    await expect(dialog.getByRole("link", { name: "Leads" })).toBeVisible();
+    await expect(dialog.getByRole("link", { name: "Journal" })).toBeVisible();
+    await expect(dialog.getByRole("link", { name: "Prompts" })).toBeVisible();
+    await expect(dialog.getByRole("link", { name: "Conversations" })).toBeVisible();
+    await expect(dialog.getByRole("link", { name: "Global Jobs" })).toBeVisible();
+    await expect(dialog.getByRole("link", { name: "System" })).toBeVisible();
+
+    await dialog.getByRole("link", { name: "Users" }).click();
     await expect(page).toHaveURL(/\/admin\/users$/);
     await expect(page.getByRole("heading", { name: "Users" })).toBeVisible();
   });
@@ -75,7 +90,9 @@ test.describe("Admin shell responsive", () => {
 
       await expect(page.getByRole("heading", { name: "Admin dashboard" })).toBeVisible();
       await expect(page.locator('[data-admin-shell="true"]')).toBeVisible();
-      await expect(page.locator('aside[aria-label="Admin"]')).toBeHidden();
+      await expect(page.locator('aside[aria-label="Admin"]')).toHaveCount(0);
+      await expect(page.getByRole("navigation", { name: "Primary" }).getByRole("button", { name: "Open navigation menu" })).toHaveCount(0);
+      await expect(page.getByRole("navigation", { name: "Primary" }).getByRole("button", { name: "Open account menu" })).toHaveCount(0);
 
       const trigger = page.locator('[data-shell-workspace-menu-trigger="true"]');
       await expect(trigger).toBeVisible();

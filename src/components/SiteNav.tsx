@@ -6,14 +6,11 @@ import { usePathname } from "next/navigation";
 import { ShellBrand } from "@/components/shell/ShellBrand";
 import { GlobalSearchBar } from "@/components/GlobalSearchBar";
 import { NotificationFeed } from "@/components/NotificationFeed";
-import { ShellNavDrawer } from "@/components/ShellNavDrawer";
 import { ShellWorkspaceMenu } from "@/components/ShellWorkspaceMenu";
 import {
   resolveShellHomeHref,
 } from "@/lib/shell/shell-navigation";
 import type { GlobalSearchAction } from "@/lib/search/global-search";
-
-import { AccountMenu } from "./AccountMenu";
 import type { User as SessionUser } from "@/core/entities/user";
 
 interface SiteNavProps {
@@ -23,12 +20,12 @@ interface SiteNavProps {
 
 export function SiteNav({ user, searchAction }: SiteNavProps) {
   const pathname = usePathname();
-  const [isDesktopSurface, setIsDesktopSurface] = useState(() => {
+  const [showDesktopSearch, setShowDesktopSearch] = useState(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
       return true;
     }
 
-    return window.matchMedia("(min-width: 1024px)").matches;
+    return window.matchMedia("(min-width: 56rem)").matches;
   });
   const isJournalRoute = pathname === "/journal"
     || pathname.startsWith("/journal/")
@@ -43,25 +40,21 @@ export function SiteNav({ user, searchAction }: SiteNavProps) {
       return;
     }
 
-    const mediaQuery = window.matchMedia("(min-width: 1024px)");
-    const syncSurface = () => setIsDesktopSurface(mediaQuery.matches);
+    const mediaQuery = window.matchMedia("(min-width: 56rem)");
+    const syncSearchVisibility = () => setShowDesktopSearch(mediaQuery.matches);
 
-    syncSurface();
+    syncSearchVisibility();
 
     if (typeof mediaQuery.addEventListener === "function") {
-      mediaQuery.addEventListener("change", syncSurface);
-      return () => mediaQuery.removeEventListener("change", syncSurface);
+      mediaQuery.addEventListener("change", syncSearchVisibility);
+      return () => mediaQuery.removeEventListener("change", syncSearchVisibility);
     }
 
-    mediaQuery.addListener(syncSurface);
-    return () => mediaQuery.removeListener(syncSurface);
+    mediaQuery.addListener(syncSearchVisibility);
+    return () => mediaQuery.removeListener(syncSearchVisibility);
   }, []);
 
-  const useUnifiedHomeMenu = isHomeRoute;
-  const showSearch = !useUnifiedHomeMenu;
-  const showWorkspaceMenu = useUnifiedHomeMenu || !isDesktopSurface;
-  const showShellDrawer = !useUnifiedHomeMenu && isDesktopSurface;
-  const showAccountMenu = !useUnifiedHomeMenu && isDesktopSurface;
+  const showSearch = !isHomeRoute && showDesktopSearch;
 
   return (
     <nav
@@ -80,7 +73,6 @@ export function SiteNav({ user, searchAction }: SiteNavProps) {
         >
           <div className="shell-nav-brand-region" data-shell-nav-region="brand">
             <div className="shell-action-row">
-              {showShellDrawer ? <ShellNavDrawer user={user} tone={navTone} /> : null}
               <ShellBrand href={homeHref} compactOnMobile />
             </div>
           </div>
@@ -98,8 +90,7 @@ export function SiteNav({ user, searchAction }: SiteNavProps) {
             data-shell-nav-region="account-access"
           >
             <NotificationFeed user={user} />
-            {showWorkspaceMenu ? <ShellWorkspaceMenu user={user} tone={navTone} /> : null}
-            {showAccountMenu ? <AccountMenu user={user} /> : null}
+            <ShellWorkspaceMenu user={user} tone={navTone} />
           </div>
         </div>
       </div>

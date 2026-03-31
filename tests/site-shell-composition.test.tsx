@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AppShell } from "@/components/AppShell";
@@ -33,6 +33,10 @@ vi.mock("@/components/ShellWorkspaceMenu", () => ({
 
 vi.mock("@/components/NotificationFeed", () => ({
   NotificationFeed: () => <div data-testid="notification-feed" />,
+}));
+
+vi.mock("@/components/GlobalSearchBar", () => ({
+  GlobalSearchBar: () => <div data-testid="global-search" />,
 }));
 
 describe("site shell composition", () => {
@@ -81,14 +85,10 @@ describe("site shell composition", () => {
 
     const nav = screen.getByRole("navigation", { name: "Primary" });
     const footer = screen.getByRole("contentinfo");
-    const primaryLinksRegion = nav.querySelector('[data-shell-nav-region="primary-links"]');
 
-    expect(primaryLinksRegion).not.toBeNull();
-    fireEvent.click(within(primaryLinksRegion as HTMLElement).getByRole("button", { name: "Open navigation menu" }));
-
-    const drawer = screen.getByRole("dialog", { name: "Primary navigation" });
-
-    expect(within(drawer).getByRole("link", { name: /^Library/i })).toHaveAttribute("aria-current", "page");
+    expect(nav.querySelector('[data-shell-nav-region="primary-links"]')).toBeNull();
+    expect(within(nav).getByTestId("workspace-menu")).toBeInTheDocument();
+    expect(within(nav).getByTestId("notification-feed")).toBeInTheDocument();
     expect(within(footer).getByRole("link", { name: "Library" })).toHaveAttribute("href", "/library");
     expect(within(nav).queryByRole("link", { name: "Home" })).toBeNull();
     expect(within(nav).queryByRole("link", { name: "Dashboard" })).toBeNull();
@@ -101,14 +101,9 @@ describe("site shell composition", () => {
 
     const nav = screen.getByRole("navigation", { name: "Primary" });
     const footer = screen.getByRole("contentinfo");
-    const primaryLinksRegion = nav.querySelector('[data-shell-nav-region="primary-links"]');
 
-    expect(primaryLinksRegion).not.toBeNull();
-    fireEvent.click(within(primaryLinksRegion as HTMLElement).getByRole("button", { name: "Open navigation menu" }));
-
-    const drawer = screen.getByRole("dialog", { name: "Primary navigation" });
-
-    expect(within(drawer).getByRole("link", { name: /^Blog/i })).toHaveAttribute("href", "/blog");
+    expect(nav.querySelector('[data-shell-nav-region="primary-links"]')).toBeNull();
+    expect(within(nav).getByTestId("workspace-menu")).toBeInTheDocument();
     expect(within(footer).getByRole("link", { name: "Blog" })).toHaveAttribute("href", "/blog");
   });
 
@@ -144,17 +139,15 @@ describe("site shell composition", () => {
     renderShell();
 
     const nav = screen.getByRole("navigation", { name: "Primary" });
-    const primaryLinksRegion = nav.querySelector('[data-shell-nav-region="primary-links"]');
 
     expect(resolvePrimaryNavRoutes(baseUser).map((route) => route.id)).toEqual(["corpus", "blog"]);
     expect(within(nav).getByRole("link", { name: /studio ordo home/i })).toHaveAttribute("href", "/");
-    expect(primaryLinksRegion).not.toBeNull();
-    fireEvent.click(within(primaryLinksRegion as HTMLElement).getByRole("button", { name: "Open navigation menu" }));
-    const drawer = screen.getByRole("dialog", { name: "Primary navigation" });
+    expect(nav.querySelector('[data-shell-nav-region="primary-links"]')).toBeNull();
+    expect(within(nav).getByTestId("workspace-menu")).toBeInTheDocument();
+    expect(within(nav).queryByTestId("account-menu")).toBeNull();
+    expect(within(nav).getByTestId("global-search")).toBeInTheDocument();
     expect(within(nav).queryByRole("link", { name: "Home" })).toBeNull();
-    expect(within(drawer).getByRole("link", { name: /^Library/i })).toHaveAttribute("href", "/library");
-    expect(within(drawer).getByRole("link", { name: /^Blog/i })).toHaveAttribute("href", "/blog");
-    expect(within(drawer).queryByRole("link", { name: "Dashboard" })).toBeNull();
+    expect(within(nav).queryByRole("link", { name: "Dashboard" })).toBeNull();
   });
 
   it("keeps the home header on the unified utility cluster", () => {

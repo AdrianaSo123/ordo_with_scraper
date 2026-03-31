@@ -59,7 +59,7 @@ This feature formalizes the following product shape.
 5. **Unify navigation truth.** Shell routes, account menu sections, admin navigation groups, and job page links must derive from role-aware route metadata rather than local arrays. `[RNQ-024]`
 6. **Make role drift test-detectable.** The QA strategy must verify route exposure, job visibility, and action rights across all roles. `[RNQ-025]`
 7. **Prefer empty-state truth over false capability.** If a role has access to the self-service jobs surface but no current eligible job types, the page should explain that state rather than redirecting elsewhere. `[RNQ-026]`
-8. **Reduce mobile chrome fragmentation.** On narrow screens, global wayfinding and account controls should converge into one truthful shell surface instead of competing drawers and popovers, while notifications remain independently discoverable. `[RNQ-027]`
+8. **Reduce shell chrome fragmentation.** Global wayfinding and account controls should converge into one truthful shell surface instead of competing drawers, account rails, and admin sidebars, while notifications remain independently discoverable. `[RNQ-027]`
 
 ---
 
@@ -152,20 +152,22 @@ Rules:
 2. Secondary operational and analytics surfaces should live inside workspace-local navigation, not the global admin drawer. Current examples are leads `Attention`, conversation `Routing Review`, `Opportunities`, and `Themes`, plus journal `Attribution`. `[RNQ-057]`
 3. Duplicate detail routes must redirect to the owning workspace detail page rather than pretending to be separate workspaces. Current examples are `/admin/deals/[id]` and `/admin/training/[id]` redirecting to `/admin/leads/[id]`. `[RNQ-058]`
 
-#### 3.4.4 Unified right-side mobile shell panel
+#### 3.4.4 Unified shell rail and workspace menu
 
-The current shell splits narrow-screen navigation across separate surfaces in the public shell (`ShellNavDrawer`, `NotificationFeed`, and `AccountMenu`) and a fourth mobile surface on admin routes (`AdminDrawer`). That is workable, but it increases interaction cost and creates more mobile chrome than the route model actually requires.
+The current shell previously split navigation across multiple surfaces: a left-side shell drawer, a separate account surface, a notifications popover, and an admin-specific sidebar or mobile drawer. That model created route drift and made the homepage header behave differently from the rest of the application.
 
 Recommended product shape:
 
-1. Mobile shell chrome should expose exactly two persistent right-rail controls: a notifications trigger and a combined workspace trigger. `[RNQ-059]`
-2. The combined workspace trigger should open a right-edge modal sheet, not a dropdown menu. Because the surface mixes navigation links, account context, settings, and session actions, it should behave as a dialog with focus trap and inert background rather than as an ARIA `menu`. `[RNQ-061]`
-3. The combined sheet should absorb the current shell drawer responsibilities and the mobile account drawer responsibilities into one surface on non-desktop breakpoints. `[RNQ-062]`
-4. Notifications should remain a separate bell affordance in the rail instead of being buried inside the combined sheet. Notification state is time-sensitive and should stay one tap away. `[RNQ-063]`
-5. The sheet must be assembled from the same canonical metadata already used by `src/lib/shell/shell-navigation.ts` and `src/lib/admin/admin-navigation.ts`; this change must not introduce new local route arrays. `[RNQ-064]`
-6. The mobile admin experience must not render a second competing hamburger. If the combined mobile shell panel ships, it should replace the dedicated `AdminDrawer` trigger on admin routes and render the canonical admin groups inside the same sheet for `ADMIN` users. `[RNQ-065]`
-7. The homepage shell remains a dependency with its own single-line header contract. `docs/_specs/homepage-chat-shell/spec.md` now allows a compact right-side utility cluster on `/`, including notifications plus one shared workspace menu trigger, but implementations must not reintroduce split left/right navigation surfaces or a separate home-only site drawer. `[RNQ-066]`
-8. Discoverability matters. If visual space permits, prefer a hamburger plus short `Menu` label over a purely icon-only control on mobile. If the design remains icon-only, the accessible name must still describe the actual behavior, such as `Open workspace menu`. `[RNQ-067]`
+1. The shared top rail should use the same right-side workspace menu trigger on home, public content routes, signed-in self-service routes, and admin routes. `[RNQ-059]`
+2. On narrow viewports, shell chrome should collapse to the same compact rail shape used on home: brand left, notifications plus workspace trigger right, and no separate top-rail search affordance. `[RNQ-086]`
+3. The combined workspace trigger should open a right-edge modal sheet, not a dropdown menu. Because the surface mixes navigation links, account context, settings, and session actions, it should behave as a dialog with focus trap and inert background rather than as an ARIA `menu`. `[RNQ-061]`
+4. The combined sheet should absorb the current shell drawer responsibilities and the account-menu responsibilities instead of keeping separate global nav and self-service controls in the rail. `[RNQ-062]`
+5. Notifications should remain a separate bell affordance in the rail instead of being buried inside the combined sheet. Notification state is time-sensitive and should stay one tap away. `[RNQ-063]`
+6. The sheet must be assembled from the same canonical metadata already used by `src/lib/shell/shell-navigation.ts` and `src/lib/admin/admin-navigation.ts`; this change must not introduce new local route arrays. `[RNQ-064]`
+7. The active admin layout must not render a second global navigation system. Desktop sidebar wayfinding and mobile-only admin hamburgers should be retired from the active layout in favor of the shared workspace sheet, while workspace-local tabs remain inside page content where needed. `[RNQ-088]`
+8. On wider non-home routes, search may remain in the center rail region, but it must not reintroduce a second global nav or account surface. `[RNQ-087]`
+9. The homepage shell remains a dependency with its own single-line header contract. `docs/_specs/homepage-chat-shell/spec.md` now allows a compact right-side utility cluster on `/`, including notifications plus one shared workspace menu trigger, and the rest of the application should converge toward that same global-control model rather than branching away from it. `[RNQ-066]`
+10. Discoverability matters. If visual space permits, prefer a hamburger plus short `Menu` label over a purely icon-only control on mobile. If the design remains icon-only, the accessible name must still describe the actual behavior, such as `Open workspace menu`. `[RNQ-067]`
 
 Recommended information architecture inside the combined sheet:
 
