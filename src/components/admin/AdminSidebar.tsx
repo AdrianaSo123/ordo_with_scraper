@@ -3,16 +3,19 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { resolveAdminNavigationItems } from "@/lib/admin/admin-navigation";
+import {
+  isAdminNavigationItemActive,
+  resolveAdminNavigationGroups,
+} from "@/lib/admin/admin-navigation";
 
 export function AdminSidebar() {
   const pathname = usePathname();
-  const navItems = resolveAdminNavigationItems();
+  const navGroups = resolveAdminNavigationGroups();
 
   return (
     <aside
       aria-label="Admin"
-      className="jobs-panel-surface sticky top-(--space-frame-default) hidden max-h-[calc(var(--viewport-block-size)-var(--space-frame-default)*2)] flex-col gap-(--space-stack-default) overflow-y-auto p-(--space-inset-panel) sm:flex"
+      className="admin-panel-surface sticky top-(--space-frame-default) hidden max-h-[calc(var(--viewport-block-size)-var(--space-frame-default)*2)] flex-col gap-(--space-stack-default) overflow-y-auto p-(--space-inset-panel) sm:flex"
     >
       <div className="grid gap-(--space-3)">
         <div className="grid gap-(--space-2)">
@@ -23,29 +26,38 @@ export function AdminSidebar() {
           Queue health, editorial operations, and upcoming operator surfaces live here without the public marketing chrome.
         </p>
       </div>
-      <nav className="grid gap-(--space-2)">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={isActive ? "page" : undefined}
-              aria-label={item.status === "preview" ? `${item.label} preview` : item.label}
-              className={`rounded-[1.2rem] px-(--space-inset-default) py-(--space-inset-compact) text-sm font-medium transition-all ${isActive ? "bg-foreground text-background shadow-[0_18px_30px_-24px_color-mix(in_srgb,var(--shadow-base)_34%,transparent)]" : "text-foreground/72 hover:bg-foreground/4 hover:text-foreground"}`}
-              data-admin-nav-status={item.status}
-            >
-              <span className="flex items-center justify-between gap-(--space-cluster-default)">
-                <span>{item.label}</span>
-                {item.status === "preview" ? (
-                  <span className={`rounded-full border px-(--space-2) py-[0.1rem] text-[0.62rem] font-semibold uppercase tracking-[0.12em] ${isActive ? "border-background/30 text-background/78" : "border-amber-500/30 text-amber-300"}`}>
-                    Preview
-                  </span>
-                ) : null}
-              </span>
-            </Link>
-          );
-        })}
+      <nav className="grid gap-(--space-4)">
+        {navGroups.map((group) => (
+          <section key={group.id} className="grid gap-(--space-2)" aria-label={group.label}>
+            <h2 className="shell-section-heading px-(--space-2) text-foreground/38">{group.label}</h2>
+            <div className="grid gap-(--space-1)">
+              {group.items.map((item) => {
+                const isActive = isAdminNavigationItemActive(item, pathname);
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-current={isActive ? "page" : undefined}
+                    aria-label={item.status === "preview" ? `${item.label} preview` : item.label}
+                    className={`admin-nav-link ${isActive ? "admin-nav-link-active" : "admin-nav-link-idle"}`}
+                    data-admin-nav-status={item.status}
+                  >
+                    <span className="flex items-center gap-(--space-3)">
+                      <span className="admin-nav-link-icon" aria-hidden="true">{item.icon}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate">{item.label}</span>
+                        <span className="mt-1 block truncate text-xs font-normal normal-case tracking-normal text-inherit opacity-62">
+                          {item.description}
+                        </span>
+                      </span>
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        ))}
       </nav>
     </aside>
   );

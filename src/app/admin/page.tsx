@@ -5,7 +5,6 @@ import { AdminCard } from "@/components/admin/AdminCard";
 import { AdminSection } from "@/components/admin/AdminSection";
 import {
   loadConsultationRequestQueueBlock,
-  loadDealQueueBlock,
   loadLeadQueueBlock,
   loadOverdueFollowUpsBlock,
   loadRoutingReviewBlock,
@@ -14,10 +13,19 @@ import {
 } from "@/lib/operator/loaders/admin-loaders";
 import {
   loadAnonymousOpportunitiesBlock,
-  loadFunnelRecommendationsBlock,
   loadRecurringPainThemesBlock,
 } from "@/lib/operator/loaders/analytics-loaders";
-import { requireAdminPageAccess } from "@/lib/journal/admin-journal";
+import {
+  loadAdminJournalList,
+  requireAdminPageAccess,
+} from "@/lib/journal/admin-journal";
+import {
+  getAdminJournalAttributionPath,
+  getAdminJournalListPath,
+} from "@/lib/journal/admin-journal-routes";
+import { loadAdminJobList } from "@/lib/admin/jobs/admin-jobs";
+import { getAdminJobsListPath } from "@/lib/admin/jobs/admin-jobs-routes";
+import { getAdminLeadsListPath } from "@/lib/admin/leads/admin-leads-routes";
 
 export const dynamic = "force-dynamic";
 
@@ -41,46 +49,60 @@ export default async function AdminDashboardPage() {
     loadSystemHealthBlock(user),
     loadLeadQueueBlock(user),
     loadConsultationRequestQueueBlock(user),
-    loadDealQueueBlock(user),
     loadTrainingPathQueueBlock(user),
     loadOverdueFollowUpsBlock(user),
     loadRoutingReviewBlock(user),
-    loadFunnelRecommendationsBlock(user),
     loadAnonymousOpportunitiesBlock(user),
     loadRecurringPainThemesBlock(user),
+    loadAdminJournalList({}),
+    loadAdminJobList({}, user.roles, { limit: 10, offset: 0 }),
   ]);
 
   const [
     systemHealthResult,
     leadQueueResult,
     consultationResult,
-    dealResult,
     trainingResult,
     overdueResult,
     routingResult,
-    funnelResult,
     anonymousResult,
     themesResult,
+    journalResult,
+    jobsResult,
   ] = results;
 
   const systemHealth = systemHealthResult.status === "fulfilled" ? systemHealthResult.value : null;
   const leadQueue = leadQueueResult.status === "fulfilled" ? leadQueueResult.value : null;
   const consultationQueue = consultationResult.status === "fulfilled" ? consultationResult.value : null;
-  const dealQueue = dealResult.status === "fulfilled" ? dealResult.value : null;
   const trainingPaths = trainingResult.status === "fulfilled" ? trainingResult.value : null;
   const overdueFollowUps = overdueResult.status === "fulfilled" ? overdueResult.value : null;
   const routingReview = routingResult.status === "fulfilled" ? routingResult.value : null;
-  const funnelRecs = funnelResult.status === "fulfilled" ? funnelResult.value : null;
   const anonymousOpps = anonymousResult.status === "fulfilled" ? anonymousResult.value : null;
   const painThemes = themesResult.status === "fulfilled" ? themesResult.value : null;
+  const journalWorkspace = journalResult.status === "fulfilled" ? journalResult.value : null;
+  const jobQueue = jobsResult.status === "fulfilled" ? jobsResult.value : null;
+
+  const pipelineAttentionCount = (leadQueue?.data.summary.newLeadCount ?? 0)
+    + (consultationQueue?.data.summary.pendingCount ?? 0)
+    + (trainingPaths?.data.summary.followUpNowCount ?? 0)
+    + (overdueFollowUps?.data.summary.totalOverdueCount ?? 0);
+  const conversationAttentionCount = (routingReview?.data.summary.uncertainCount ?? 0)
+    + (anonymousOpps?.data.opportunities.length ?? 0)
+    + (painThemes?.data.themes.length ?? 0);
+  const contentInProgressCount = journalWorkspace
+    ? (journalWorkspace.counts.draft ?? 0) + (journalWorkspace.counts.review ?? 0)
+    : 0;
+  const activeJobCount = jobQueue
+    ? (jobQueue.statusCounts.queued ?? 0) + (jobQueue.statusCounts.running ?? 0)
+    : 0;
+  const failedJobCount = jobQueue?.statusCounts.failed ?? 0;
 
   return (
     <AdminSection
       title="Admin dashboard"
-      description="Command center for health, queues, and next actions."
+      description="Cross-workspace overview for platform health, attention queues, content operations, and deferred-job pressure."
     >
-      <div className="grid gap-(--space-section-default) lg:grid-cols-3 px-(--space-inset-panel)">
-        {/* 1. System Health */}
+      <div className="grid gap-(--space-section-default) lg:grid-cols-3 px-(--space-inset-panel)" data-admin-dashboard="true">
         {systemHealth ? (
           <AdminCard
             title="System health"
@@ -98,158 +120,100 @@ export default async function AdminDashboardPage() {
           </AdminCard>
         ) : unavailableCard("System health")}
 
-        {/* 2. Lead Queue */}
-        {leadQueue ? (
+        {leadQueue && consultationQueue && trainingPaths && overdueFollowUps ? (
           <AdminCard
-            title="Lead queue"
-            description={leadQueue.state === "empty" ? "No leads yet." : "Recent leads and follow-up priority."}
-            status={leadQueue.data.summary.newLeadCount > 0 ? "warning" : "neutral"}
+            title="Pipeline attention"
+            description={pipelineAttentionCount === 0
+              ? "No active pipeline follow-ups."
+              : `${pipelineAttentionCount} items need review across leads, consultations, training, and overdue follow-ups.`}
+            status={pipelineAttentionCount > 0 ? "warning" : "ok"}
           >
             <div className="grid gap-(--space-3)">
-              <p className="text-3xl font-semibold tracking-tight text-foreground">{leadQueue.data.summary.submittedLeadCount}</p>
+              <p className="text-3xl font-semibold tracking-tight text-foreground">{pipelineAttentionCount}</p>
               <dl className="grid gap-(--space-2) text-sm text-foreground/62">
-                <div className="flex items-center justify-between gap-(--space-cluster-default)"><dt>New</dt><dd>{leadQueue.data.summary.newLeadCount}</dd></div>
-                <div className="flex items-center justify-between gap-(--space-cluster-default)"><dt>Contacted</dt><dd>{leadQueue.data.summary.contactedLeadCount}</dd></div>
+                <div className="flex items-center justify-between gap-(--space-cluster-default)"><dt>New leads</dt><dd>{leadQueue.data.summary.newLeadCount}</dd></div>
+                <div className="flex items-center justify-between gap-(--space-cluster-default)"><dt>Pending consultations</dt><dd>{consultationQueue.data.summary.pendingCount}</dd></div>
+                <div className="flex items-center justify-between gap-(--space-cluster-default)"><dt>Training follow-up</dt><dd>{trainingPaths.data.summary.followUpNowCount}</dd></div>
+                <div className="flex items-center justify-between gap-(--space-cluster-default)"><dt>Overdue</dt><dd>{overdueFollowUps.data.summary.totalOverdueCount}</dd></div>
               </dl>
               <div className="flex gap-(--space-2)">
-                <Link href="/admin/leads" className="rounded-lg bg-foreground/8 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-foreground/14 haptic-press">View all</Link>
+                <Link href={getAdminLeadsListPath()} className="rounded-lg bg-foreground/8 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-foreground/14 haptic-press">Open pipeline</Link>
               </div>
             </div>
           </AdminCard>
-        ) : unavailableCard("Lead queue")}
+        ) : unavailableCard("Pipeline attention")}
 
-        {/* 3. Consultation Queue */}
-        {consultationQueue ? (
+        {routingReview && anonymousOpps && painThemes ? (
           <AdminCard
-            title="Consultations"
-            description={consultationQueue.state === "empty" ? "No pending consultations." : `${consultationQueue.data.summary.pendingCount} pending requests.`}
-            status={consultationQueue.data.summary.pendingCount > 0 ? "warning" : "neutral"}
+            title="Conversation attention"
+            description={conversationAttentionCount === 0
+              ? "No conversations need review."
+              : `${conversationAttentionCount} conversation signals need a closer look across routing, anonymous opportunities, and recurring pain themes.`}
+            status={conversationAttentionCount > 0 ? "warning" : "ok"}
           >
             <div className="grid gap-(--space-3)">
-              <p className="text-3xl font-semibold tracking-tight text-foreground">{consultationQueue.data.summary.pendingCount}</p>
-              <div className="flex gap-(--space-2)">
-                <Link href="/admin/leads" className="rounded-lg bg-foreground/8 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-foreground/14 haptic-press">View oldest pending</Link>
-              </div>
-            </div>
-          </AdminCard>
-        ) : unavailableCard("Consultations")}
-
-        {/* 4. Deal Queue */}
-        {dealQueue ? (
-          <AdminCard
-            title="Deals"
-            description={dealQueue.state === "empty" ? "No active deals." : `${dealQueue.data.summary.draftCount + dealQueue.data.summary.qualifiedCount} active deals.`}
-            status="neutral"
-          >
-            <div className="grid gap-(--space-3)">
-              <p className="text-3xl font-semibold tracking-tight text-foreground">{dealQueue.data.summary.draftCount + dealQueue.data.summary.qualifiedCount}</p>
-              <div className="flex gap-(--space-2)">
-                <Link href="/admin/leads" className="rounded-lg bg-foreground/8 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-foreground/14 haptic-press">View deal</Link>
-              </div>
-            </div>
-          </AdminCard>
-        ) : unavailableCard("Deals")}
-
-        {/* 5. Training Paths */}
-        {trainingPaths ? (
-          <AdminCard
-            title="Training paths"
-            description={trainingPaths.state === "empty" ? "No active paths." : `${trainingPaths.data.summary.draftCount} drafts, ${trainingPaths.data.summary.recommendedCount} recommended.`}
-            status={trainingPaths.data.summary.followUpNowCount > 0 ? "warning" : "neutral"}
-          >
-            <div className="grid gap-(--space-3)">
-              <p className="text-3xl font-semibold tracking-tight text-foreground">{trainingPaths.data.summary.draftCount + trainingPaths.data.summary.recommendedCount}</p>
-              <div className="flex gap-(--space-2)">
-                <Link href="/admin/leads" className="rounded-lg bg-foreground/8 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-foreground/14 haptic-press">View active path</Link>
-              </div>
-            </div>
-          </AdminCard>
-        ) : unavailableCard("Training paths")}
-
-        {/* 6. Overdue Follow-ups */}
-        {overdueFollowUps ? (
-          <AdminCard
-            title="Overdue follow-ups"
-            description={overdueFollowUps.state === "empty" ? "No overdue items." : `${overdueFollowUps.data.summary.totalOverdueCount} overdue across leads and deals.`}
-            status={overdueFollowUps.data.summary.totalOverdueCount > 0 ? "warning" : "ok"}
-          >
-            <div className="grid gap-(--space-3)">
-              <p className="text-3xl font-semibold tracking-tight text-foreground">{overdueFollowUps.data.summary.totalOverdueCount}</p>
+              <p className="text-3xl font-semibold tracking-tight text-foreground">{conversationAttentionCount}</p>
               <dl className="grid gap-(--space-2) text-sm text-foreground/62">
-                <div className="flex items-center justify-between gap-(--space-cluster-default)"><dt>Leads</dt><dd>{overdueFollowUps.data.summary.overdueLeadCount}</dd></div>
-                <div className="flex items-center justify-between gap-(--space-cluster-default)"><dt>Deals</dt><dd>{overdueFollowUps.data.summary.overdueDealCount}</dd></div>
+                <div className="flex items-center justify-between gap-(--space-cluster-default)"><dt>Routing review</dt><dd>{routingReview.data.summary.uncertainCount}</dd></div>
+                <div className="flex items-center justify-between gap-(--space-cluster-default)"><dt>Anonymous opportunities</dt><dd>{anonymousOpps.data.opportunities.length}</dd></div>
+                <div className="flex items-center justify-between gap-(--space-cluster-default)"><dt>Pain themes</dt><dd>{painThemes.data.themes.length}</dd></div>
               </dl>
               <div className="flex gap-(--space-2)">
-                <Link href="/admin/leads" className="rounded-lg bg-foreground/8 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-foreground/14 haptic-press">Triage oldest</Link>
-                <Link href="/admin/leads" className="rounded-lg border border-foreground/12 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-foreground/5 haptic-press">View all</Link>
+                <Link href="/admin/conversations" className="rounded-lg bg-foreground/8 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-foreground/14 haptic-press">Open workspace</Link>
               </div>
             </div>
           </AdminCard>
-        ) : unavailableCard("Overdue follow-ups")}
+        ) : unavailableCard("Conversation attention")}
 
-        {/* 7. Routing Review */}
-        {routingReview ? (
+        {journalWorkspace ? (
           <AdminCard
-            title="Routing review"
-            description={routingReview.state === "empty" ? "No conversations need review." : `${routingReview.data.summary.uncertainCount} uncertain conversations.`}
-            status={routingReview.data.summary.uncertainCount > 0 ? "warning" : "neutral"}
+            title="Content operations"
+            description={journalWorkspace.counts.all === 0
+              ? "No journal posts yet."
+              : contentInProgressCount > 0
+                ? `${contentInProgressCount} journal posts are still in draft or review.`
+                : "All journal posts are either approved or published."}
+            status={journalWorkspace.counts.review > 0 ? "warning" : journalWorkspace.counts.all > 0 ? "ok" : "neutral"}
           >
             <div className="grid gap-(--space-3)">
-              <p className="text-3xl font-semibold tracking-tight text-foreground">{routingReview.data.summary.uncertainCount}</p>
+              <p className="text-3xl font-semibold tracking-tight text-foreground">{journalWorkspace.counts.all}</p>
+              <dl className="grid gap-(--space-2) text-sm text-foreground/62">
+                <div className="flex items-center justify-between gap-(--space-cluster-default)"><dt>Draft</dt><dd>{journalWorkspace.counts.draft}</dd></div>
+                <div className="flex items-center justify-between gap-(--space-cluster-default)"><dt>In review</dt><dd>{journalWorkspace.counts.review}</dd></div>
+                <div className="flex items-center justify-between gap-(--space-cluster-default)"><dt>Published</dt><dd>{journalWorkspace.counts.published}</dd></div>
+              </dl>
               <div className="flex gap-(--space-2)">
-                <Link href="/admin/conversations" className="rounded-lg bg-foreground/8 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-foreground/14 haptic-press">Review uncertain</Link>
+                <Link href={getAdminJournalListPath()} className="rounded-lg bg-foreground/8 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-foreground/14 haptic-press">Open inventory</Link>
+                <Link href={getAdminJournalAttributionPath()} className="rounded-lg border border-foreground/12 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-foreground/5 haptic-press">View attribution</Link>
               </div>
             </div>
           </AdminCard>
-        ) : unavailableCard("Routing review")}
+        ) : unavailableCard("Content operations")}
 
-        {/* 8. Funnel Recommendations */}
-        {funnelRecs ? (
+        {jobQueue ? (
           <AdminCard
-            title="Funnel"
-            description={funnelRecs.state === "empty" ? "No funnel data yet." : `${funnelRecs.data.recommendations.length} recommendations.`}
-            status="neutral"
+            title="Jobs health"
+            description={jobQueue.total === 0
+              ? "No global deferred jobs are queued right now."
+              : failedJobCount > 0
+                ? `${failedJobCount} jobs failed and need operator review.`
+                : `${activeJobCount} jobs are currently queued or running.`}
+            status={failedJobCount > 0 ? "warning" : jobQueue.total > 0 ? "ok" : "neutral"}
           >
             <div className="grid gap-(--space-3)">
-              <p className="text-3xl font-semibold tracking-tight text-foreground">{funnelRecs.data.recommendations.length}</p>
+              <p className="text-3xl font-semibold tracking-tight text-foreground">{jobQueue.total}</p>
+              <dl className="grid gap-(--space-2) text-sm text-foreground/62">
+                <div className="flex items-center justify-between gap-(--space-cluster-default)"><dt>Queued</dt><dd>{jobQueue.statusCounts.queued ?? 0}</dd></div>
+                <div className="flex items-center justify-between gap-(--space-cluster-default)"><dt>Running</dt><dd>{jobQueue.statusCounts.running ?? 0}</dd></div>
+                <div className="flex items-center justify-between gap-(--space-cluster-default)"><dt>Failed</dt><dd>{failedJobCount}</dd></div>
+              </dl>
               <div className="flex gap-(--space-2)">
-                <Link href="/admin/leads" className="rounded-lg bg-foreground/8 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-foreground/14 haptic-press">View funnel</Link>
+                <Link href={getAdminJobsListPath()} className="rounded-lg bg-foreground/8 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-foreground/14 haptic-press">Open queue</Link>
+                <Link href={`${getAdminJobsListPath()}?status=failed`} className="rounded-lg border border-foreground/12 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-foreground/5 haptic-press">Review failed</Link>
               </div>
             </div>
           </AdminCard>
-        ) : unavailableCard("Funnel")}
-
-        {/* 9. Anonymous Opportunities */}
-        {anonymousOpps ? (
-          <AdminCard
-            title="Anonymous opportunities"
-            description={anonymousOpps.state === "empty" ? "No high-value anonymous sessions." : `${anonymousOpps.data.opportunities.length} potential converts.`}
-            status={anonymousOpps.data.opportunities.length > 0 ? "neutral" : "neutral"}
-          >
-            <div className="grid gap-(--space-3)">
-              <p className="text-3xl font-semibold tracking-tight text-foreground">{anonymousOpps.data.opportunities.length}</p>
-              <div className="flex gap-(--space-2)">
-                <Link href="/admin/conversations" className="rounded-lg bg-foreground/8 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-foreground/14 haptic-press">View conversation</Link>
-              </div>
-            </div>
-          </AdminCard>
-        ) : unavailableCard("Anonymous opportunities")}
-
-        {/* 10. Recurring Pain Themes */}
-        {painThemes ? (
-          <AdminCard
-            title="Pain themes"
-            description={painThemes.state === "empty" ? "No recurring themes detected." : `${painThemes.data.themes.length} themes identified.`}
-            status="neutral"
-          >
-            <div className="grid gap-(--space-3)">
-              <p className="text-3xl font-semibold tracking-tight text-foreground">{painThemes.data.themes.length}</p>
-              <div className="flex gap-(--space-2)">
-                <Link href="/admin/leads" className="rounded-lg bg-foreground/8 px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-foreground/14 haptic-press">View leads</Link>
-              </div>
-            </div>
-          </AdminCard>
-        ) : unavailableCard("Pain themes")}
+        ) : unavailableCard("Jobs health")}
       </div>
     </AdminSection>
   );

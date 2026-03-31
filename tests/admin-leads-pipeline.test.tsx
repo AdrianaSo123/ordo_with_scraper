@@ -46,6 +46,10 @@ const {
   // Loader mock
   loadAdminLeadsPipelineMock,
   loadAdminPipelineDetailMock,
+  loadLeadQueueBlockMock,
+  loadConsultationRequestQueueBlockMock,
+  loadTrainingPathQueueBlockMock,
+  loadOverdueFollowUpsBlockMock,
   // DB mock for follow_up_at
   getDbMock,
 } = vi.hoisted(() => ({
@@ -82,6 +86,10 @@ const {
   trainingUpdateStatusMock: vi.fn(),
   loadAdminLeadsPipelineMock: vi.fn(),
   loadAdminPipelineDetailMock: vi.fn(),
+  loadLeadQueueBlockMock: vi.fn(),
+  loadConsultationRequestQueueBlockMock: vi.fn(),
+  loadTrainingPathQueueBlockMock: vi.fn(),
+  loadOverdueFollowUpsBlockMock: vi.fn(),
   getDbMock: vi.fn(),
 }));
 
@@ -144,6 +152,13 @@ vi.mock("@/adapters/RepositoryFactory", () => ({
 vi.mock("@/lib/admin/leads/admin-leads", () => ({
   loadAdminLeadsPipeline: loadAdminLeadsPipelineMock,
   loadAdminPipelineDetail: loadAdminPipelineDetailMock,
+}));
+
+vi.mock("@/lib/operator/loaders/admin-loaders", () => ({
+  loadLeadQueueBlock: loadLeadQueueBlockMock,
+  loadConsultationRequestQueueBlock: loadConsultationRequestQueueBlockMock,
+  loadTrainingPathQueueBlock: loadTrainingPathQueueBlockMock,
+  loadOverdueFollowUpsBlock: loadOverdueFollowUpsBlockMock,
 }));
 
 // ── Imports under test ─────────────────────────────────────────────────
@@ -402,6 +417,101 @@ describe("D3.6 — leads Browse page", () => {
     expect(nav.textContent).toContain("Consultations");
     expect(nav.textContent).toContain("Deals");
     expect(nav.textContent).toContain("Training");
+  });
+
+  it("renders the attention workspace view with queue summaries", async () => {
+    loadAdminLeadsPipelineMock.mockResolvedValue({
+      activeTab: "leads",
+      pipelineCounts: { leads: 5, consultations: 2, deals: 1, training: 3 },
+      tabData: {
+        tab: "leads",
+        total: 0,
+        statusFilter: "",
+        statusCounts: { new: 0, contacted: 0, qualified: 0, deferred: 0 },
+        entries: [],
+      },
+    });
+    loadLeadQueueBlockMock.mockResolvedValue({
+      data: {
+        summary: {
+          submittedLeadCount: 5,
+          newLeadCount: 3,
+          contactedLeadCount: 1,
+          qualifiedLeadCount: 1,
+          deferredLeadCount: 0,
+        },
+        leads: [
+          {
+            id: "lead_1",
+            name: "Alex Founder",
+            email: "alex@example.com",
+            organization: "North Star",
+            recommendedNextAction: "Book founder call",
+            triageState: "new",
+            submittedAt: "2026-03-31T12:00:00Z",
+          },
+        ],
+        emptyReason: null,
+      },
+    });
+    loadConsultationRequestQueueBlockMock.mockResolvedValue({
+      data: {
+        summary: { pendingCount: 2, reviewedCount: 1 },
+        requests: [
+          {
+            id: "cr_1",
+            conversationTitle: "Consultation Request",
+            requestSummary: "Needs a founder session",
+            founderNote: null,
+            status: "pending",
+          },
+        ],
+        emptyReason: null,
+      },
+    });
+    loadTrainingPathQueueBlockMock.mockResolvedValue({
+      data: {
+        summary: {
+          draftCount: 1,
+          recommendedCount: 1,
+          apprenticeshipCandidateCount: 0,
+          followUpNowCount: 1,
+        },
+        trainingPaths: [
+          {
+            id: "training_1",
+            primaryGoal: "Career transition",
+            currentRoleOrBackground: null,
+            recommendedPath: "operator_lab",
+            nextAction: "Founder review",
+            status: "draft",
+          },
+        ],
+        emptyReason: null,
+      },
+    });
+    loadOverdueFollowUpsBlockMock.mockResolvedValue({
+      data: {
+        summary: { overdueLeadCount: 1, overdueDealCount: 0, totalOverdueCount: 1 },
+        oldestOverdueLead: {
+          id: "lead_2",
+          name: "Morgan Lead",
+          followUpAt: "2026-03-29T09:00:00Z",
+        },
+        oldestOverdueDeal: null,
+      },
+    });
+
+    const jsx = await AdminLeadsPage({ searchParams: Promise.resolve({ view: "attention" }) });
+    render(jsx);
+
+    expect(screen.getByRole("navigation", { name: "Leads workspace views" })).toBeInTheDocument();
+    expect(screen.getByText("Submitted leads")).toBeInTheDocument();
+    expect(screen.getByText("Consultation requests")).toBeInTheDocument();
+    expect(screen.getByText("Training paths")).toBeInTheDocument();
+    expect(screen.getByText("Overdue follow-ups")).toBeInTheDocument();
+    expect(screen.getByText("Alex Founder")).toBeInTheDocument();
+    expect(loadLeadQueueBlockMock).toHaveBeenCalledWith({ id: "admin_1", roles: ["ADMIN"] });
   });
 
   it("renders data table rows for leads tab entries", async () => {

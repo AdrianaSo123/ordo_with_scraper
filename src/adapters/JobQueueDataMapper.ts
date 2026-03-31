@@ -97,6 +97,54 @@ function mapUserScopedJobEvent(row: UserScopedJobEventRow): JobEvent {
   };
 }
 
+type AdminJobQueryFilters = {
+  status?: JobStatus;
+  toolName?: string;
+  toolNames?: string[];
+  afterDate?: string;
+  beforeDate?: string;
+};
+
+function buildAdminJobWhereClause(
+  filters: AdminJobQueryFilters,
+  tableAlias?: string,
+): { where: string; params: unknown[] } {
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+  const columnPrefix = tableAlias ? `${tableAlias}.` : "";
+
+  if (filters.status) {
+    conditions.push(`${columnPrefix}status = ?`);
+    params.push(filters.status);
+  }
+  if (filters.toolName) {
+    conditions.push(`${columnPrefix}tool_name = ?`);
+    params.push(filters.toolName);
+  }
+  if (filters.toolNames) {
+    if (filters.toolNames.length === 0) {
+      conditions.push("1 = 0");
+    } else {
+      const placeholders = filters.toolNames.map(() => "?").join(", ");
+      conditions.push(`${columnPrefix}tool_name IN (${placeholders})`);
+      params.push(...filters.toolNames);
+    }
+  }
+  if (filters.afterDate) {
+    conditions.push(`${columnPrefix}created_at >= ?`);
+    params.push(filters.afterDate);
+  }
+  if (filters.beforeDate) {
+    conditions.push(`${columnPrefix}created_at <= ?`);
+    params.push(filters.beforeDate);
+  }
+
+  return {
+    where: conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "",
+    params,
+  };
+}
+
 export class JobQueueDataMapper implements JobQueueRepository {
   constructor(private readonly db: Database.Database) {}
 
@@ -443,32 +491,13 @@ export class JobQueueDataMapper implements JobQueueRepository {
   async listForAdmin(filters: {
     status?: JobStatus;
     toolName?: string;
+    toolNames?: string[];
     afterDate?: string;
     beforeDate?: string;
     limit?: number;
     offset?: number;
   }): Promise<JobRequest[]> {
-    const conditions: string[] = [];
-    const params: unknown[] = [];
-
-    if (filters.status) {
-      conditions.push("jr.status = ?");
-      params.push(filters.status);
-    }
-    if (filters.toolName) {
-      conditions.push("jr.tool_name = ?");
-      params.push(filters.toolName);
-    }
-    if (filters.afterDate) {
-      conditions.push("jr.created_at >= ?");
-      params.push(filters.afterDate);
-    }
-    if (filters.beforeDate) {
-      conditions.push("jr.created_at <= ?");
-      params.push(filters.beforeDate);
-    }
-
-    const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const { where, params } = buildAdminJobWhereClause(filters, "jr");
     const limit = filters.limit ?? 50;
     const offset = filters.offset ?? 0;
 
@@ -482,30 +511,11 @@ export class JobQueueDataMapper implements JobQueueRepository {
   async countForAdmin(filters: {
     status?: JobStatus;
     toolName?: string;
+    toolNames?: string[];
     afterDate?: string;
     beforeDate?: string;
   }): Promise<number> {
-    const conditions: string[] = [];
-    const params: unknown[] = [];
-
-    if (filters.status) {
-      conditions.push("status = ?");
-      params.push(filters.status);
-    }
-    if (filters.toolName) {
-      conditions.push("tool_name = ?");
-      params.push(filters.toolName);
-    }
-    if (filters.afterDate) {
-      conditions.push("created_at >= ?");
-      params.push(filters.afterDate);
-    }
-    if (filters.beforeDate) {
-      conditions.push("created_at <= ?");
-      params.push(filters.beforeDate);
-    }
-
-    const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+    const { where, params } = buildAdminJobWhereClause(filters);
     const row = this.db.prepare(
       `SELECT COUNT(*) AS cnt FROM job_requests ${where}`,
     ).get(...params) as { cnt: number };
@@ -513,10 +523,16 @@ export class JobQueueDataMapper implements JobQueueRepository {
     return row.cnt;
   }
 
-  async countByStatus(): Promise<Record<string, number>> {
+  async countByStatus(filters: {
+    toolName?: string;
+    toolNames?: string[];
+    afterDate?: string;
+    beforeDate?: string;
+  } = {}): Promise<Record<string, number>> {
+    const { where, params } = buildAdminJobWhereClause(filters);
     const rows = this.db.prepare(
-      `SELECT status, COUNT(*) AS cnt FROM job_requests GROUP BY status`,
-    ).all() as Array<{ status: string; cnt: number }>;
+      `SELECT status, COUNT(*) AS cnt FROM job_requests ${where} GROUP BY status`,
+    ).all(...params) as Array<{ status: string; cnt: number }>;
 
     const counts: Record<string, number> = {};
     for (const row of rows) {
@@ -525,10 +541,16 @@ export class JobQueueDataMapper implements JobQueueRepository {
     return counts;
   }
 
-  async countByToolName(): Promise<Record<string, number>> {
+  async countByToolName(filters: {
+    status?: JobStatus;
+    toolNames?: string[];
+    afterDate?: string;
+    beforeDate?: string;
+  } = {}): Promise<Record<string, number>> {
+    const { where, params } = buildAdminJobWhereClause(filters);
     const rows = this.db.prepare(
-      `SELECT tool_name, COUNT(*) AS cnt FROM job_requests GROUP BY tool_name`,
-    ).all() as Array<{ tool_name: string; cnt: number }>;
+      `SELECT tool_name, COUNT(*) AS cnt FROM job_requests ${where} GROUP BY tool_name`,
+    ).all(...params) as Array<{ tool_name: string; cnt: number }>;
 
     const counts: Record<string, number> = {};
     for (const row of rows) {

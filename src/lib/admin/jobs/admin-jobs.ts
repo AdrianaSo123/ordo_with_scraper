@@ -1,20 +1,57 @@
 import { notFound } from "next/navigation";
 
+import type { RoleName } from "@/core/entities/user";
 import type { JobStatus } from "@/core/entities/job";
 import { getJobQueueDataMapper } from "@/adapters/RepositoryFactory";
+import type { AdminPaginationParams } from "@/lib/admin/admin-pagination";
 import { getAdminJobsDetailPath } from "@/lib/admin/jobs/admin-jobs-routes";
+import {
+  CURRENT_GLOBAL_JOB_OPERATOR_ROLES,
+  canRolesManageGlobalJob,
+  canRolesViewGlobalJob,
+  getJobCapabilityPresentation,
+  listGlobalJobCapabilitiesForRoles,
+  type JobFamily,
+  type JobSurface,
+} from "@/lib/jobs/job-capability-registry";
 
 // ── Filters ────────────────────────────────────────────────────────────
 
 const VALID_STATUSES: readonly string[] = ["queued", "running", "succeeded", "failed", "canceled"];
+const VALID_FAMILIES = ["editorial", "content", "workflow", "training", "system", "other"] as const satisfies readonly JobFamily[];
+const CANCELABLE_STATUSES = new Set<JobStatus>(["queued", "running"]);
+const RETRIABLE_STATUSES = new Set<JobStatus>(["failed", "canceled"]);
+
+const JOB_FAMILY_LABELS: Record<JobFamily, string> = {
+  editorial: "Editorial",
+  content: "Content",
+  workflow: "Workflow",
+  training: "Training",
+  system: "System",
+  other: "Other",
+};
 
 function readSingleValue(value: string | string[] | undefined): string {
   if (Array.isArray(value)) return typeof value[0] === "string" ? value[0] : "";
   return typeof value === "string" ? value : "";
 }
 
+function isValidFamily(value: string): value is JobFamily {
+  return VALID_FAMILIES.includes(value as JobFamily);
+}
+
+function getJobFamilyLabel(family: JobFamily): string {
+  return JOB_FAMILY_LABELS[family];
+}
+
+function getVisibleGlobalCapabilities(roles: readonly RoleName[]) {
+  return listGlobalJobCapabilitiesForRoles(roles)
+    .sort((left, right) => left.label.localeCompare(right.label));
+}
+
 export interface AdminJobListFilters {
   status: JobStatus | "all";
+  family: JobFamily | "all";
   toolName: string;
 }
 
@@ -22,6 +59,7 @@ export function parseAdminJobFilters(
   rawSearchParams: Record<string, string | string[] | undefined>,
 ): AdminJobListFilters {
   const rawStatus = readSingleValue(rawSearchParams.status).trim().toLowerCase();
+  const rawFamily = readSingleValue(rawSearchParams.family).trim().toLowerCase();
   const toolName = readSingleValue(rawSearchParams.toolName).trim();
 
   let status: JobStatus | "all" = "all";
@@ -31,14 +69,39 @@ export function parseAdminJobFilters(
     }
   }
 
-  return { status, toolName };
+  let family: JobFamily | "all" = "all";
+  if (rawFamily.length > 0 && rawFamily !== "all") {
+    if (isValidFamily(rawFamily)) {
+      family = rawFamily;
+    }
+  }
+
+  return { status, family, toolName };
 }
 
 // ── List view model ────────────────────────────────────────────────────
 
+export interface AdminJobFamilyFilterOption {
+  value: JobFamily;
+  label: string;
+  count: number;
+}
+
+export interface AdminJobToolFilterOption {
+  value: string;
+  label: string;
+  family: JobFamily;
+  familyLabel: string;
+  count: number;
+}
+
 export interface AdminJobListEntry {
   id: string;
   toolName: string;
+  toolLabel: string;
+  toolFamily: JobFamily;
+  toolFamilyLabel: string;
+  defaultSurface: JobSurface;
   status: string;
   priority: number;
   userName: string | null;
@@ -51,12 +114,18 @@ export interface AdminJobListEntry {
   completedAt: string | null;
   detailHref: string;
   duration: string | null;
+  canManage: boolean;
+  canCancel: boolean;
+  canRetry: boolean;
 }
 
 export interface AdminJobListViewModel {
   filters: AdminJobListFilters;
   statusCounts: Record<string, number>;
+  familyCounts: Record<string, number>;
   toolNameCounts: Record<string, number>;
+  familyOptions: AdminJobFamilyFilterOption[];
+  toolOptions: AdminJobToolFilterOption[];
   total: number;
   jobs: AdminJobListEntry[];
 }
@@ -69,6 +138,72 @@ function formatDuration(startedAt: string | null, completedAt: string | null, st
   if (ms < 1000) return `${ms}ms`;
   if (ms < 60_000) return `${(ms / 1000).toFixed(1)}s`;
   return `${(ms / 60_000).toFixed(1)}m`;
+}
+
+function buildCapabilityMetadata(toolName: string, roles: readonly RoleName[]) {
+  const capability = getJobCapabilityPresentation(toolName);
+  if (!capability || !canRolesViewGlobalJob(toolName, roles)) {
+    return null;
+  }
+
+  return {
+    toolLabel: capability.label,
+    toolFamily: capability.family,
+    toolFamilyLabel: getJobFamilyLabel(capability.family),
+    defaultSurface: capability.defaultSurface,
+    canManage: canRolesManageGlobalJob(toolName, roles),
+  };
+}
+
+function buildFamilyCounts(
+  toolNameCounts: Record<string, number>,
+  roles: readonly RoleName[],
+): Record<string, number> {
+  const counts: Record<string, number> = {};
+
+  for (const capability of getVisibleGlobalCapabilities(roles)) {
+    counts[capability.family] = (counts[capability.family] ?? 0) + (toolNameCounts[capability.toolName] ?? 0);
+  }
+
+  return counts;
+}
+
+function buildFamilyOptions(
+  familyCounts: Record<string, number>,
+  roles: readonly RoleName[],
+): AdminJobFamilyFilterOption[] {
+  const seen = new Set<JobFamily>();
+
+  return getVisibleGlobalCapabilities(roles)
+    .filter((capability) => {
+      if (seen.has(capability.family)) {
+        return false;
+      }
+
+      seen.add(capability.family);
+      return true;
+    })
+    .map((capability) => ({
+      value: capability.family,
+      label: getJobFamilyLabel(capability.family),
+      count: familyCounts[capability.family] ?? 0,
+    }));
+}
+
+function buildToolOptions(
+  toolNameCounts: Record<string, number>,
+  filters: AdminJobListFilters,
+  roles: readonly RoleName[],
+): AdminJobToolFilterOption[] {
+  return getVisibleGlobalCapabilities(roles)
+    .filter((capability) => filters.family === "all" || capability.family === filters.family)
+    .map((capability) => ({
+      value: capability.toolName,
+      label: capability.label,
+      family: capability.family,
+      familyLabel: getJobFamilyLabel(capability.family),
+      count: toolNameCounts[capability.toolName] ?? 0,
+    }));
 }
 
 function toListEntry(job: {
@@ -84,10 +219,19 @@ function toListEntry(job: {
   startedAt: string | null;
   completedAt: string | null;
   conversationId: string;
-}): AdminJobListEntry {
+}, roles: readonly RoleName[]): AdminJobListEntry | null {
+  const capability = buildCapabilityMetadata(job.toolName, roles);
+  if (!capability) {
+    return null;
+  }
+
   return {
     id: job.id,
     toolName: job.toolName,
+    toolLabel: capability.toolLabel,
+    toolFamily: capability.toolFamily,
+    toolFamilyLabel: capability.toolFamilyLabel,
+    defaultSurface: capability.defaultSurface,
     status: job.status,
     priority: job.priority,
     userName: job.userId,
@@ -100,33 +244,86 @@ function toListEntry(job: {
     completedAt: job.completedAt,
     detailHref: getAdminJobsDetailPath(job.id),
     duration: formatDuration(job.startedAt, job.completedAt, job.status),
+    canManage: capability.canManage,
+    canCancel: capability.canManage && CANCELABLE_STATUSES.has(job.status as JobStatus),
+    canRetry: capability.canManage && RETRIABLE_STATUSES.has(job.status as JobStatus),
   };
 }
 
 export async function loadAdminJobList(
   rawSearchParams: Record<string, string | string[] | undefined>,
+  roles: readonly RoleName[] = CURRENT_GLOBAL_JOB_OPERATOR_ROLES,
+  pagination?: Pick<AdminPaginationParams, "limit" | "offset">,
 ): Promise<AdminJobListViewModel> {
   const filters = parseAdminJobFilters(rawSearchParams);
   const mapper = getJobQueueDataMapper();
+  const visibleCapabilities = getVisibleGlobalCapabilities(roles);
+  const visibleToolNames = visibleCapabilities.map((capability) => capability.toolName);
+  const familyScopedToolNames = visibleCapabilities
+    .filter((capability) => filters.family === "all" || capability.family === filters.family)
+    .map((capability) => capability.toolName);
 
-  const queryFilters = {
+  if (visibleToolNames.length === 0 || familyScopedToolNames.length === 0) {
+    return {
+      filters,
+      statusCounts: {},
+      familyCounts: {},
+      toolNameCounts: {},
+      familyOptions: buildFamilyOptions({}, roles),
+      toolOptions: buildToolOptions({}, filters, roles),
+      total: 0,
+      jobs: [],
+    };
+  }
+
+  const listFilters = {
     ...(filters.status !== "all" ? { status: filters.status } : {}),
     ...(filters.toolName ? { toolName: filters.toolName } : {}),
+    toolNames: familyScopedToolNames,
+    ...(pagination ? { limit: pagination.limit, offset: pagination.offset } : {}),
+  };
+
+  const countFilters = {
+    ...(filters.status !== "all" ? { status: filters.status } : {}),
+    ...(filters.toolName ? { toolName: filters.toolName } : {}),
+    toolNames: familyScopedToolNames,
+  };
+
+  const statusCountFilters = {
+    ...(filters.toolName ? { toolName: filters.toolName } : {}),
+    toolNames: familyScopedToolNames,
+  };
+
+  const toolCountFilters = {
+    ...(filters.status !== "all" ? { status: filters.status } : {}),
+    toolNames: visibleToolNames,
   };
 
   const [total, statusCounts, toolNameCounts, jobs] = await Promise.all([
-    mapper.countForAdmin(queryFilters),
-    mapper.countByStatus(),
-    mapper.countByToolName(),
-    mapper.listForAdmin(queryFilters),
+    mapper.countForAdmin(countFilters),
+    mapper.countByStatus(statusCountFilters),
+    mapper.countByToolName(toolCountFilters),
+    mapper.listForAdmin(listFilters),
   ]);
+
+  const familyCounts = buildFamilyCounts(toolNameCounts, roles);
 
   return {
     filters,
     statusCounts,
-    toolNameCounts,
+    familyCounts,
+    toolNameCounts: Object.fromEntries(
+      Object.entries(toolNameCounts).filter(([toolName]) =>
+        filters.family === "all"
+        || visibleCapabilities.some((capability) => capability.toolName === toolName && capability.family === filters.family),
+      ),
+    ),
+    familyOptions: buildFamilyOptions(familyCounts, roles),
+    toolOptions: buildToolOptions(toolNameCounts, filters, roles),
     total,
-    jobs: jobs.map(toListEntry),
+    jobs: jobs
+      .map((job) => toListEntry(job, roles))
+      .filter((job): job is AdminJobListEntry => job !== null),
   };
 }
 
@@ -142,6 +339,11 @@ export interface AdminJobDetailViewModel {
     claimedBy: string | null;
     leaseExpiresAt: string | null;
   };
+  policy: {
+    canManage: boolean;
+    canCancel: boolean;
+    canRetry: boolean;
+  };
   events: Array<{
     id: string;
     eventType: string;
@@ -152,6 +354,7 @@ export interface AdminJobDetailViewModel {
 
 export async function loadAdminJobDetail(
   jobId: string,
+  roles: readonly RoleName[] = CURRENT_GLOBAL_JOB_OPERATOR_ROLES,
 ): Promise<AdminJobDetailViewModel> {
   const mapper = getJobQueueDataMapper();
   const job = await mapper.findJobById(jobId);
@@ -160,11 +363,16 @@ export async function loadAdminJobDetail(
     notFound();
   }
 
+  const listEntry = toListEntry(job, roles);
+  if (!listEntry) {
+    notFound();
+  }
+
   const events = await mapper.listEventsForJob(jobId);
 
   return {
     job: {
-      ...toListEntry(job),
+      ...listEntry,
       requestPayload: job.requestPayload,
       resultPayload: job.resultPayload,
       errorMessage: job.errorMessage,
@@ -172,6 +380,11 @@ export async function loadAdminJobDetail(
       initiatorType: job.initiatorType,
       claimedBy: job.claimedBy,
       leaseExpiresAt: job.leaseExpiresAt,
+    },
+    policy: {
+      canManage: listEntry.canManage,
+      canCancel: listEntry.canCancel,
+      canRetry: listEntry.canRetry,
     },
     events: events.map((e) => ({
       id: e.id,

@@ -78,6 +78,7 @@ describe("AccountMenu RBAC", () => {
     fireEvent.click(screen.getByRole("button", { name: /standard user/i }));
 
     expect(screen.getByRole("link", { name: "Jobs" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Profile" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Simulation Mode" })).not.toBeInTheDocument();
   });
 
@@ -115,5 +116,24 @@ describe("AccountMenu RBAC", () => {
     fireEvent.click(screen.getByRole("button", { name: /admin user/i }));
 
     expect(screen.getByRole("button", { name: "Simulation Mode" })).toBeInTheDocument();
+  });
+
+  it("uses a compact account trigger for anonymous users", () => {
+    render(
+      <AccountMenu
+        user={{
+          id: "usr_anon",
+          email: "",
+          name: "Guest",
+          roles: ["ANONYMOUS"],
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /open account menu/i }));
+
+    expect(screen.getByRole("link", { name: "Sign In" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Register" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Library" })).toBeNull();
   });
 });

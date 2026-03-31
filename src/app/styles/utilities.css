@@ -76,8 +76,10 @@
   }
 
   .site-container {
+    width: 100%;
     max-width: var(--container-width);
-    padding-inline: var(--space-frame-default);
+    margin-inline: auto;
+    padding-inline: var(--container-padding);
   }
 
   .input-field {

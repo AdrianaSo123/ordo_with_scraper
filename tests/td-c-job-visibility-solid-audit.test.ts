@@ -7,10 +7,13 @@ function readSource(relativePath: string): string {
 }
 
 describe("TD-C — job visibility SRP", () => {
-  it("P1: jobs page redirects to admin jobs surface", () => {
+  it("P1: jobs page serves the signed-in self-service workspace", () => {
     const page = readSource("src/app/jobs/page.tsx");
 
-    expect(page).toContain('redirect("/admin/jobs")');
+    expect(page).toContain("loadUserJobsWorkspace");
+    expect(page).toContain("<JobsWorkspace");
+    expect(page).toContain('redirect("/login")');
+    expect(page).not.toContain('redirect("/admin/jobs")');
     expect(page).not.toContain("getJobQueueRepository");
     expect(page).not.toContain("buildJobStatusSnapshot");
     expect(page).not.toContain("findLatestEventForJob");
@@ -57,7 +60,7 @@ describe("TD-C — job visibility OCP", () => {
     const shellNavigation = readSource("src/lib/shell/shell-navigation.ts");
 
     expect(shellNavigation).toContain('id: "jobs"');
-    expect(shellNavigation).toContain('ACCOUNT_MENU_ROUTE_IDS = ["admin-dashboard", "jobs", "journal-admin", "profile"]');
+    expect(shellNavigation).toContain('ACCOUNT_MENU_ROUTE_IDS = ["jobs", "profile"]');
     expect(shellNavigation).not.toContain('if (route.id === "jobs")');
   });
 

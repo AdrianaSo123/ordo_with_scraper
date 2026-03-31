@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getBlogPostRepository } from "@/adapters/RepositoryFactory";
+import { AdminWorkspaceNav } from "@/components/admin/AdminWorkspaceNav";
 import {
   createJournalEditorialInteractor,
   parseDraftBodyForm,
@@ -15,6 +16,7 @@ import {
 import { loadSinglePostAttribution } from "@/lib/admin/attribution/admin-attribution";
 import { loadAdminJournalDetail, requireAdminPageAccess } from "@/lib/journal/admin-journal";
 import {
+  getAdminJournalAttributionPath,
   getAdminJournalDetailPath,
   getAdminJournalListPath,
   getAdminJournalPreviewPath,
@@ -29,6 +31,11 @@ export const metadata: Metadata = {
     follow: false,
   },
 };
+
+const JOURNAL_WORKSPACE_NAV_ITEMS = [
+  { id: "inventory", label: "Inventory", href: getAdminJournalListPath() },
+  { id: "attribution", label: "Attribution", href: getAdminJournalAttributionPath() },
+] as const;
 
 function compactPreview(value: string | null | undefined, fallback: string, maxLength = 140): string {
   const normalized = typeof value === "string" ? value.replace(/\s+/g, " ").trim() : "";
@@ -201,6 +208,12 @@ export default async function AdminJournalDetailPage({
             <a href={detail.post.previewHref} className="underline underline-offset-4">Journal preview</a>
           </div>
         </header>
+
+        <AdminWorkspaceNav
+          ariaLabel="Journal workspace navigation"
+          items={JOURNAL_WORKSPACE_NAV_ITEMS}
+          currentItemId="inventory"
+        />
 
         <div className="grid gap-(--space-stack-default) lg:grid-cols-[minmax(0,1.25fr)_minmax(22rem,0.75fr)]">
           <section className="grid gap-(--space-stack-default)">

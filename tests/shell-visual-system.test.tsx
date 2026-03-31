@@ -120,11 +120,13 @@ describe("shell visual system", () => {
     }
 
     const nav = screen.getByRole("navigation", { name: "Primary" });
+    const primaryLinksRegion = nav.querySelector('[data-shell-nav-region="primary-links"]');
+    const workspaceMenuTrigger = within(nav).getByRole("button", { name: "Open workspace menu" });
+
     expect(within(nav).getByRole("link", { name: /studio ordo home/i }).className).toContain("whitespace-nowrap");
-    // Sprint 8 (UX-32): primary-links region absent when no nav items
-    expect(nav.querySelector('[data-shell-nav-region="primary-links"]')).toBeNull();
+    expect(primaryLinksRegion).toBeNull();
+    expect(workspaceMenuTrigger.className).toContain("shell-nav-icon-button");
     expect(nav.firstElementChild?.className).toContain("shell-nav-frame");
-    // Sprint 8 (UX-32): no primary links → flex layout (not grid)
 
     const footer = screen.getByRole("contentinfo");
     expect(within(footer).getByText("Information").className).toContain("shell-section-heading");
@@ -144,6 +146,7 @@ describe("shell visual system", () => {
     expect(screen.getByRole("link", { name: "Jobs" }).className).toContain("shell-account-label");
     expect(screen.getByRole("link", { name: "Profile" })).toHaveAttribute("href", "/profile");
     expect(screen.getByRole("link", { name: "Profile" }).className).toContain("shell-account-label");
+    expect(screen.queryByRole("link", { name: "Library" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Dashboard" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Profile Settings" })).toBeNull();
 
@@ -173,20 +176,22 @@ describe("shell visual system", () => {
   it("keeps unauthenticated account links on shared shell nav label styling", async () => {
     await renderWithTheme(<AccountMenu user={anonymousUser} />);
 
-    expect(screen.getByRole("link", { name: "Sign In" }).className).toContain("shell-account-trigger");
+    fireEvent.click(screen.getByRole("button", { name: "Open account menu" }));
+
     expect(screen.getByRole("link", { name: "Sign In" }).className).toContain("shell-account-label");
-    expect(screen.getByRole("link", { name: "Register" }).className).toContain("shell-account-trigger");
     expect(screen.getByRole("link", { name: "Register" }).className).toContain("shell-account-label");
   });
 
   it("lets anonymous users toggle dark mode from the account rail", async () => {
     await renderWithTheme(<AccountMenu user={anonymousUser} />);
 
-    const toggle = screen.getByRole("button", { name: "Switch to dark mode" });
+    fireEvent.click(screen.getByRole("button", { name: "Open account menu" }));
+
+    const toggle = screen.getByRole("button", { name: "Toggle dark mode" });
     fireEvent.click(toggle);
 
     expect(document.documentElement.classList.contains("dark")).toBe(true);
-    expect(screen.getByRole("button", { name: "Switch to light mode" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Toggle dark mode" })).toBeInTheDocument();
   });
 
   it("applies shared shell meta roles in the floating chat header variant", () => {

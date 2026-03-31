@@ -79,7 +79,7 @@ describe("DeferredJobWorker", () => {
       expect.objectContaining({
         type: "job_status",
         jobId: job.id,
-        status: "succeeded",
+        status: "running",
       }),
     ]);
   });
@@ -167,6 +167,16 @@ describe("DeferredJobWorker", () => {
 
     const events = await repo.listConversationEvents("conv_jobs");
     expect(events.map((event) => event.eventType)).toEqual(["started", "result"]);
+
+    const messages = await messageRepo.listByConversation("conv_jobs");
+    expect(messages).toHaveLength(1);
+    expect(messages[0]?.parts).toEqual([
+      expect.objectContaining({
+        type: "job_status",
+        jobId: expired.id,
+        status: "running",
+      }),
+    ]);
   });
 
   it("marks the job failed when no handler is registered", async () => {

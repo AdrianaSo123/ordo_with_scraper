@@ -26,17 +26,24 @@ vi.mock("@/components/AccountMenu", () => ({
   AccountMenu: () => <div data-testid="account-menu" />,
 }));
 
+vi.mock("@/components/NotificationFeed", () => ({
+  NotificationFeed: () => <div data-testid="notification-feed" />,
+}));
+
+vi.mock("@/components/ShellNavDrawer", () => ({
+  ShellNavDrawer: () => <div data-testid="shell-nav-drawer" data-shell-nav-region="primary-links" />,
+}));
+
+vi.mock("@/components/ShellWorkspaceMenu", () => ({
+  ShellWorkspaceMenu: () => <div data-testid="workspace-menu" />,
+}));
+
 vi.mock("@/components/GlobalSearchBar", () => ({
   GlobalSearchBar: () => <div data-testid="global-search" />,
 }));
 
 vi.mock("@/lib/shell/shell-navigation", () => ({
-  resolvePrimaryNavRoutes: () => [
-    { id: "home", href: "/", label: "Home" },
-    { id: "journal", href: "/journal", label: "Journal" },
-  ],
   resolveShellHomeHref: () => "/",
-  isShellRouteActive: (item: { href: string }, pathname: string) => pathname === item.href,
 }));
 
 import { SiteNav } from "@/components/SiteNav";
@@ -61,9 +68,7 @@ describe("SiteNav", () => {
     const nav = screen.getByRole("navigation", { name: "Primary" });
     expect(nav).toHaveAttribute("data-shell-nav-tone", "quiet");
     expect(nav.className).toContain("ui-shell-rail");
-    expect(screen.getByRole("list", { name: "Primary links" })).toHaveAttribute("data-shell-nav-links-tone", "quiet");
-    expect(screen.getByRole("list", { name: "Primary links" }).className).toContain("ui-shell-nav-links");
-    expect(screen.getByRole("link", { name: "Journal" })).toHaveAttribute("data-shell-nav-item-tone", "quiet");
+    expect(screen.getByTestId("shell-nav-drawer")).toBeInTheDocument();
   });
 
   it("uses the quiet nav tone on journal article routes", () => {
@@ -81,15 +86,31 @@ describe("SiteNav", () => {
 
     const nav = screen.getByRole("navigation", { name: "Primary" });
     expect(nav).toHaveAttribute("data-shell-nav-tone", "default");
-    expect(screen.getByRole("list", { name: "Primary links" })).toHaveAttribute("data-shell-nav-links-tone", "default");
+    expect(nav.querySelector('[data-shell-nav-band="true"]')).not.toBeNull();
   });
 
-  it("renders the shell-owned global search region", () => {
-    usePathnameMock.mockReturnValue("/");
+  it("renders the shell-owned global search region off the home route", () => {
+    usePathnameMock.mockReturnValue("/library");
 
     render(<SiteNav user={user} />);
 
     expect(screen.getByTestId("global-search")).toBeInTheDocument();
+  });
+
+  it("uses the unified home utility cluster on the homepage", () => {
+    usePathnameMock.mockReturnValue("/");
+
+    render(<SiteNav user={user} />);
+
+    const nav = screen.getByRole("navigation", { name: "Primary" });
+
+    expect(screen.getByTestId("notification-feed")).toBeInTheDocument();
+    expect(screen.getByTestId("workspace-menu")).toBeInTheDocument();
+    expect(screen.queryByTestId("shell-nav-drawer")).toBeNull();
+    expect(screen.queryByTestId("account-menu")).toBeNull();
+    expect(screen.queryByTestId("global-search")).toBeNull();
+    expect(nav.querySelector('[data-shell-nav-region="primary-links"]')).toBeNull();
+    expect(nav.querySelector('[data-shell-nav-region="search"]')).toBeNull();
   });
 
   it("keeps spacing ladder and rail tokens in the global foundation authority", () => {
@@ -101,5 +122,25 @@ describe("SiteNav", () => {
     expect(foundationCss).toContain("@property --space-1");
     expect(foundationCss).toContain("@property --space-rail-gap");
     expect(foundationCss).toContain("--container-padding: var(--space-frame-default);");
+  });
+
+  it("anchors the account-access rail with tokenized shell layout rules", () => {
+    const utilitiesCss = fs.readFileSync(
+      path.join(process.cwd(), "src/app/styles/utilities.css"),
+      "utf8",
+    );
+    const shellCss = fs.readFileSync(
+      path.join(process.cwd(), "src/app/styles/shell.css"),
+      "utf8",
+    );
+
+    expect(utilitiesCss).toContain("margin-inline: auto;");
+    expect(utilitiesCss).toContain("padding-inline: var(--container-padding);");
+    expect(shellCss).toContain("--shell-nav-search-max-inline");
+    expect(shellCss).toContain("grid-template-areas:");
+    expect(shellCss).toContain('"brand search actions"');
+    expect(shellCss).toContain("minmax(max-content, 1fr)");
+    expect(shellCss).toContain("@media (min-width: 56rem)");
+    expect(shellCss).toContain("justify-self: end;");
   });
 });

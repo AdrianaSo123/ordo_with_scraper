@@ -56,6 +56,17 @@ describe("getEnvConfig", () => {
     expect(config.DEFERRED_JOB_POLL_INTERVAL_MS).toBeUndefined();
   });
 
+  it("treats blank optional env vars as unset", () => {
+    vi.stubEnv("API__OPENAI_API_KEY", "");
+    vi.stubEnv("DEFERRED_JOB_POLL_INTERVAL_MS", "");
+    _resetEnvConfig();
+
+    const config = getEnvConfig();
+
+    expect(config.API__OPENAI_API_KEY).toBeUndefined();
+    expect(config.DEFERRED_JOB_POLL_INTERVAL_MS).toBeUndefined();
+  });
+
   it("rejects invalid NODE_ENV", () => {
     vi.stubEnv("NODE_ENV", "staging");
     _resetEnvConfig();

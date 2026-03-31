@@ -6,12 +6,10 @@
 import type { User as SessionUser } from "@/core/entities/user";
 import { requireAdminPageAccess } from "@/lib/journal/admin-journal";
 
-export function withAdminAction<T>(
+export async function runAdminAction<T>(
+  formData: FormData,
   handler: (user: SessionUser, formData: FormData) => Promise<T>,
-): (formData: FormData) => Promise<T> {
-  return async (formData: FormData) => {
-    "use server";
-    const user = await requireAdminPageAccess();
-    return handler(user, formData);
-  };
+): Promise<T> {
+  const user = await requireAdminPageAccess();
+  return handler(user, formData);
 }

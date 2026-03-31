@@ -106,13 +106,12 @@ describe("deferred blog publish flow", () => {
 
     const messages = await messageRepo.listByConversation("conv_publish");
     expect(messages).toHaveLength(1);
-    // Summary now uses /journal/ path after blog→journal route migration
+    // Terminal delivery now routes through notifications, so the chat projection stays on the live running state.
     expect(messages[0]?.parts).toEqual(expect.arrayContaining([
       expect.objectContaining({
         type: "job_status",
         jobId: job.id,
-        status: "succeeded",
-        summary: 'Published journal article "Queued Publish Post" at /journal/queued-publish-post.',
+        status: "running",
       }),
     ]));
   });

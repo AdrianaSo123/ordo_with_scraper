@@ -79,14 +79,32 @@ describe("Sprint 4 theme governance audit", () => {
       {
         componentPath: "src/components/SiteNav.tsx",
         cssPath: "src/app/styles/shell.css",
-        hooks: ["ui-shell-rail", "shell-nav-frame", "ui-shell-nav-links", "ui-shell-nav-item-active", "ui-shell-nav-item-idle"],
-        selectors: [".ui-shell-rail", ".shell-nav-frame", ".ui-shell-nav-links", ".ui-shell-nav-item-active", ".ui-shell-nav-item-idle"],
+        hooks: ["ui-shell-rail", "shell-nav-frame", "shell-nav-band", "shell-nav-search-frame", "shell-nav-actions"],
+        selectors: [".ui-shell-rail", ".shell-nav-frame", ".shell-nav-band", ".shell-nav-search-frame", ".shell-nav-actions"],
       },
       {
         componentPath: "src/components/shell/ShellBrand.tsx",
         cssPath: "src/app/styles/shell.css",
         hooks: ["shell-brand-row"],
         selectors: [".shell-brand-row"],
+      },
+      {
+        componentPath: "src/components/admin/AdminSection.tsx",
+        cssPath: "src/app/styles/admin.css",
+        hooks: ["admin-hero-surface"],
+        selectors: [".admin-hero-surface"],
+      },
+      {
+        componentPath: "src/components/admin/AdminCard.tsx",
+        cssPath: "src/app/styles/admin.css",
+        hooks: ["admin-panel-surface", "admin-status-neutral", "admin-status-ok", "admin-status-warning"],
+        selectors: [".admin-panel-surface", ".admin-status-neutral", ".admin-status-ok", ".admin-status-warning"],
+      },
+      {
+        componentPath: "src/components/admin/AdminSidebar.tsx",
+        cssPath: "src/app/styles/admin.css",
+        hooks: ["admin-panel-surface", "admin-nav-link", "admin-nav-link-active", "admin-nav-link-idle", "admin-nav-link-icon"],
+        selectors: [".admin-panel-surface", ".admin-nav-link", ".admin-nav-link-active", ".admin-nav-link-idle", ".admin-nav-link-icon"],
       },
     ] as const;
 

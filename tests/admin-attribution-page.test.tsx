@@ -18,7 +18,9 @@ vi.mock("@/lib/admin/attribution/admin-attribution", () => ({
 }));
 
 vi.mock("@/lib/journal/admin-journal-routes", () => ({
+  getAdminJournalAttributionPath: () => "/admin/journal/attribution",
   getAdminJournalDetailPath: (id: string) => `/admin/journal/${id}`,
+  getAdminJournalListPath: () => "/admin/journal",
 }));
 
 import AttributionPage from "@/app/admin/journal/attribution/page";
@@ -36,6 +38,9 @@ describe("AttributionPage", () => {
     render(jsx);
 
     expect(screen.getByText("Content Attribution")).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Journal workspace navigation" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Inventory" })).toHaveAttribute("href", "/admin/journal");
+    expect(screen.getByRole("link", { name: "Attribution" })).toHaveAttribute("href", "/admin/journal/attribution");
   });
 
   it("renders empty state when no entries exist", async () => {

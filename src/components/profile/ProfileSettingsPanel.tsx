@@ -30,9 +30,9 @@ export function ProfileSettingsPanel({ initialProfile }: ProfileSettingsPanelPro
   const [credential, setCredential] = useState(initialProfile.credential);
   const [saveState, setSaveState] = useState<SaveState>({ kind: "idle" });
   const [pushState, setPushState] = useState<SaveState>({ kind: "idle" });
+  const [pushUnavailableReason] = useState<string | null>(() => getPushNotificationsUnavailableReason());
   const [isPending, startTransition] = useTransition();
   const [isPushPending, startPushTransition] = useTransition();
-  const pushUnavailableReason = getPushNotificationsUnavailableReason();
   const referralCode = profile.referralCode;
   const referralUrl = profile.referralUrl;
 

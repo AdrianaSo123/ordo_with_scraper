@@ -6,6 +6,10 @@ export function getAdminJournalListPath(): string {
   return journalRoutes.list();
 }
 
+export function getAdminJournalAttributionPath(): string {
+  return "/admin/journal/attribution";
+}
+
 export function getAdminJournalDetailPath(postId: string): string {
   return journalRoutes.detail(postId);
 }

@@ -4,33 +4,37 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const {
   usePathnameMock,
   requireAdminPageAccessMock,
+  loadAdminJournalListMock,
+  loadAdminJobListMock,
   loadSystemHealthBlockMock,
   loadLeadQueueBlockMock,
   loadConsultationRequestQueueBlockMock,
-  loadDealQueueBlockMock,
   loadTrainingPathQueueBlockMock,
   loadOverdueFollowUpsBlockMock,
   loadRoutingReviewBlockMock,
-  loadFunnelRecommendationsBlockMock,
   loadAnonymousOpportunitiesBlockMock,
   loadRecurringPainThemesBlockMock,
   redirectMock,
+  permanentRedirectMock,
   notFoundMock,
 } = vi.hoisted(() => ({
   usePathnameMock: vi.fn(),
   requireAdminPageAccessMock: vi.fn(),
+  loadAdminJournalListMock: vi.fn(),
+  loadAdminJobListMock: vi.fn(),
   loadSystemHealthBlockMock: vi.fn(),
   loadLeadQueueBlockMock: vi.fn(),
   loadConsultationRequestQueueBlockMock: vi.fn(),
-  loadDealQueueBlockMock: vi.fn(),
   loadTrainingPathQueueBlockMock: vi.fn(),
   loadOverdueFollowUpsBlockMock: vi.fn(),
   loadRoutingReviewBlockMock: vi.fn(),
-  loadFunnelRecommendationsBlockMock: vi.fn(),
   loadAnonymousOpportunitiesBlockMock: vi.fn(),
   loadRecurringPainThemesBlockMock: vi.fn(),
   redirectMock: vi.fn((path: string) => {
     throw new Error(`redirect:${path}`);
+  }),
+  permanentRedirectMock: vi.fn((path: string) => {
+    throw new Error(`permanentRedirect:${path}`);
   }),
   notFoundMock: vi.fn(() => {
     throw new Error("notFound");
@@ -40,25 +44,29 @@ const {
 vi.mock("next/navigation", () => ({
   usePathname: usePathnameMock,
   redirect: redirectMock,
+  permanentRedirect: permanentRedirectMock,
   notFound: notFoundMock,
 }));
 
 vi.mock("@/lib/journal/admin-journal", () => ({
   requireAdminPageAccess: requireAdminPageAccessMock,
+  loadAdminJournalList: loadAdminJournalListMock,
+}));
+
+vi.mock("@/lib/admin/jobs/admin-jobs", () => ({
+  loadAdminJobList: loadAdminJobListMock,
 }));
 
 vi.mock("@/lib/operator/loaders/admin-loaders", () => ({
   loadSystemHealthBlock: loadSystemHealthBlockMock,
   loadLeadQueueBlock: loadLeadQueueBlockMock,
   loadConsultationRequestQueueBlock: loadConsultationRequestQueueBlockMock,
-  loadDealQueueBlock: loadDealQueueBlockMock,
   loadTrainingPathQueueBlock: loadTrainingPathQueueBlockMock,
   loadOverdueFollowUpsBlock: loadOverdueFollowUpsBlockMock,
   loadRoutingReviewBlock: loadRoutingReviewBlockMock,
 }));
 
 vi.mock("@/lib/operator/loaders/analytics-loaders", () => ({
-  loadFunnelRecommendationsBlock: loadFunnelRecommendationsBlockMock,
   loadAnonymousOpportunitiesBlock: loadAnonymousOpportunitiesBlockMock,
   loadRecurringPainThemesBlock: loadRecurringPainThemesBlockMock,
 }));
@@ -111,13 +119,26 @@ describe("admin shell and concierge", () => {
       },
     });
     loadConsultationRequestQueueBlockMock.mockResolvedValue({ blockId: "consultation_requests", state: "empty", data: { summary: { pendingCount: 0 } } });
-    loadDealQueueBlockMock.mockResolvedValue({ blockId: "deal_queue", state: "empty", data: { summary: { draftCount: 0, qualifiedCount: 0, agreedCount: 0, declinedCount: 0 }, deals: [], emptyReason: null } });
     loadTrainingPathQueueBlockMock.mockResolvedValue({ blockId: "training_path_queue", state: "empty", data: { summary: { draftCount: 0, recommendedCount: 0, followUpNowCount: 0 } } });
     loadOverdueFollowUpsBlockMock.mockResolvedValue({ blockId: "overdue_follow_ups", state: "empty", data: { summary: { overdueLeadCount: 0, overdueDealCount: 0, totalOverdueCount: 0 } } });
     loadRoutingReviewBlockMock.mockResolvedValue({ blockId: "routing_review", state: "empty", data: { summary: { uncertainCount: 0 } } });
-    loadFunnelRecommendationsBlockMock.mockResolvedValue({ blockId: "funnel_recommendations", state: "empty", data: { recommendations: [] } });
     loadAnonymousOpportunitiesBlockMock.mockResolvedValue({ blockId: "anonymous_opportunities", state: "empty", data: { opportunities: [] } });
     loadRecurringPainThemesBlockMock.mockResolvedValue({ blockId: "recurring_pain_themes", state: "empty", data: { themes: [] } });
+    loadAdminJournalListMock.mockResolvedValue({
+      filters: { search: "", status: "all", section: "all", invalid: [] },
+      counts: { all: 0, draft: 0, review: 0, approved: 0, published: 0 },
+      posts: [],
+    });
+    loadAdminJobListMock.mockResolvedValue({
+      filters: { status: "all", family: "all", toolName: "" },
+      statusCounts: {},
+      familyCounts: {},
+      toolNameCounts: {},
+      familyOptions: [],
+      toolOptions: [],
+      total: 0,
+      jobs: [],
+    });
   });
 
   it("renders all expected sidebar links", () => {
@@ -192,18 +213,19 @@ describe("admin shell and concierge", () => {
 
     expect(loadSystemHealthBlockMock).toHaveBeenCalled();
     expect(loadLeadQueueBlockMock).toHaveBeenCalled();
+    expect(loadAdminJournalListMock).toHaveBeenCalledWith({});
+    expect(loadAdminJobListMock).toHaveBeenCalledWith({}, ["ADMIN"], { limit: 10, offset: 0 });
     expect(screen.getByRole("heading", { name: "Admin dashboard" })).toBeInTheDocument();
     expect(screen.getByText("All clear.")).toBeInTheDocument();
-    expect(screen.getByText("No leads yet.")).toBeInTheDocument();
+    expect(screen.getByText("No active pipeline follow-ups.")).toBeInTheDocument();
+    expect(screen.getByText("No journal posts yet.")).toBeInTheDocument();
   });
 
-  it("exposes admin-dashboard in the admin account menu route set", () => {
+  it("keeps self-service routes in the admin account menu route set", () => {
     const adminUser = { id: "admin_1", email: "admin@example.com", name: "Admin", roles: ["ADMIN"] as RoleName[] };
 
     expect(resolveAccountMenuRoutes(adminUser).map((route) => route.id)).toEqual([
-      "admin-dashboard",
       "jobs",
-      "journal-admin",
       "profile",
     ]);
   });

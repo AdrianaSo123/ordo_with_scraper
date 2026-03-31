@@ -6,7 +6,7 @@ import { Section } from "../entities/corpus";
 
 describe("LibrarySearchInteractor", () => {
   const mockDocuments: Document[] = [
-    { slug: "book-1", title: "Book One", number: "1" },
+    { slug: "book-1", title: "Book One", number: "1", audience: "public" },
   ];
   const mockSections: Section[] = [
     new Section(

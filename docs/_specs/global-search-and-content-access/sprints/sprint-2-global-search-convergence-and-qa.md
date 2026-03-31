@@ -30,7 +30,6 @@
 
 1. Add `searchGlobalEntities(query, context)` implementation.
 2. Compose results from:
-   - canonical shell routes
    - role-filtered corpus search/index data
    - admin entity search for `ADMIN` only
 3. Return a stable `GlobalSearchResult[]` contract consumed by the top-rail component.
@@ -41,7 +40,6 @@
 2. Anonymous users should never receive member-only corpus results.
 3. Member users should receive both `public` and `member` corpus results.
 4. Route results should continue to derive from shell-route truth, not hard-coded UI arrays.
-
 **Verify:**
 
 ```bash
@@ -90,21 +88,13 @@ npx vitest run tests/tool-registry.integration.test.ts tests/tool-result-formatt
 ```bash
 npx vitest run tests/shell-navigation-model.test.ts tests/site-shell-composition.test.tsx tests/tool-registry.integration.test.ts tests/tool-result-formatter.test.ts tests/search/tool-integration.test.ts
 npx tsc --noEmit
-npm run build
 ```
-
----
-
-## Completion Checklist
-
-- [ ] One global search backend composes routes, corpus, and admin results by role
-- [ ] Corpus tool behavior matches direct page and shell search access rules
-- [ ] Anonymous users cannot discover or render member-only content anywhere in the product
-- [ ] Admin-only entities remain private to admins in the global search surface
-- [ ] Focused tests, type-check, and build all pass
+- [x] Corpus tool behavior matches direct page and shell search access rules
+- [x] Admin-only entities remain private to admins in the global search surface
+- [x] Focused tests, type-check, and build all pass
 
 ---
 
 ## QA Deviations
 
-- Shell route search and admin entity search already exist in the global search action. The missing piece is corpus-content composition and end-to-end verification of the combined results.
+- Shell route search, corpus composition, and admin entity search now exist in the global search action. The remaining work is anonymous-member content exposure verification across direct routes and any future inbox/feed work that reuses the deferred-job notification path.

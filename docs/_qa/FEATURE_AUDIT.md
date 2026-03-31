@@ -1,6 +1,6 @@
 # Feature Audit — Vol 2
 
-This updated review adds the missing pipeline stages (`ConsultationRequests`, `Referrals`) and accurately maps the existing notification framework to identify gaps in usage.
+This updated review adds the missing pipeline stages (`ConsultationRequests`, `Referrals`) and maps the existing notification framework against the current codebase state. Sprint 1 now already routes deferred-job terminal notifications out of chat, so the remaining gaps are inbox-style delivery and role-specific user alerts, not chat-spam suppression.
 
 ---
 
@@ -46,10 +46,10 @@ This updated review adds the missing pipeline stages (`ConsultationRequests`, `R
 The system *has* a robust, multi-channel architecture (`NotificationDispatcher`, `PushNotificationChannel`, `ChatNotificationChannel`). It also features the `AdminSignalEvaluator` rule engine containing 6 pre-built rules for "System degraded", "Overdue follow-ups", etc.
 
 **What is flawed/missing:**
-1.  **Chat Spam**: `DeferredJobConversationProjector` bypasses the `NotificationDispatcher` and writes directly to chat using `messageRepo.create`.
-2.  **Admin Monopoly**: `AdminSignalEvaluator` and `AdminNotification` are strictly for *Admins*. Authenticators/Users have no equivalent system for receiving personalized "Dispatch" alerts (e.g. "Your consultation was approved" or "Your profile generation finished").
-3.  **No Inbox Model**: Notifications trigger via PUSH or CHAT, but there is no persistent "Bell icon" dropdown (in-app feed) to review missed alerts.
+1.  **Admin Monopoly**: `AdminSignalEvaluator` and `AdminNotification` are still strictly for *Admins*. Authenticators/Users have no equivalent system for receiving personalized "Dispatch" alerts (e.g. "Your consultation was approved" or "Your profile generation finished").
+2.  **No Inbox Model**: Notifications trigger via PUSH or CHAT, but there is no persistent "Bell icon" dropdown (in-app feed) to review missed alerts.
+3.  **Terminal chat noise is now reduced**: `DeferredJobConversationProjector` no longer rewrites the in-chat job message on terminal events. The live running status remains in conversation, while terminal delivery now stays on the separate worker notification path.
 
 **Actionable Path:**
 *   Extend `NotificationDispatcher` to support `UserNotification` events via an In-App feed.
-*   Redirect `DeferredJobConversationProjector` to the `NotificationDispatcher` (or an inbox layer) instead of appending to conversations.
+*   Build the inbox layer and route user-facing alerts there instead of relying on chat history.

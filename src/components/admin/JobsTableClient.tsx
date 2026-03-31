@@ -5,6 +5,10 @@ import type { ColumnDef } from "@/components/admin/AdminDataTable";
 
 interface JobRow {
   toolName: string;
+  toolLabel: string;
+  toolFamily: string;
+  toolFamilyLabel: string;
+  defaultSurface: string;
   status: string;
   progressPercent: number | null;
   progressLabel: string | null;
@@ -13,6 +17,7 @@ interface JobRow {
   createdAt: string;
   duration: string | null;
   detailHref: string;
+  canManage: boolean;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -25,14 +30,19 @@ const STATUS_LABELS: Record<string, string> = {
 
 const columns: ColumnDef[] = [
   {
-    key: "toolName",
-    header: "Tool",
+    key: "toolLabel",
+    header: "Capability",
     render: (_value: unknown, row: Record<string, unknown>) => {
       const entry = row as unknown as JobRow;
       return (
-        <a href={entry.detailHref} className="text-foreground underline underline-offset-4">
-          {entry.toolName}
-        </a>
+        <div className="min-w-0">
+          <a href={entry.detailHref} className="text-foreground underline underline-offset-4">
+            {entry.toolLabel}
+          </a>
+          <div className="mt-1 text-xs text-foreground/50">
+            {entry.toolFamilyLabel} • {entry.toolName}
+          </div>
+        </div>
       );
     },
   },
@@ -95,19 +105,23 @@ export function JobsTableClient({
   action,
   rows,
 }: {
-  action: (formData: FormData) => void;
+  action: (formData: FormData) => void | Promise<void>;
   rows: Record<string, unknown>[];
 }) {
+  const hasManageableRows = rows.some((row) => Boolean(row["canManage"]));
+
   return (
     <AdminBulkTableWrapper
       action={action}
       columns={columns}
       rows={rows}
       emptyMessage="No jobs in the queue."
-      bulkActions={[
-        { label: "Cancel selected", action: "cancel", variant: "destructive" },
-        { label: "Retry selected", action: "retry" },
-      ]}
+      bulkActions={hasManageableRows
+        ? [
+            { label: "Cancel selected", action: "cancel", variant: "destructive" },
+            { label: "Retry selected", action: "retry" },
+          ]
+        : []}
     />
   );
 }

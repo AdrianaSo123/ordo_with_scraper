@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createJobStatusQuery } from "@/lib/jobs/job-status-query";
 import type { JobQueueRepository } from "@/core/use-cases/JobQueueRepository";
+import { getGlobalJobOperatorRoles } from "@/lib/jobs/job-capability-registry";
 import {
   createGetDeferredJobStatusTool,
   createListDeferredJobsTool,
@@ -58,6 +59,7 @@ describe("deferred job status tools", () => {
     findLatestEventForJobMock.mockResolvedValue(null);
 
     const tool = createGetDeferredJobStatusTool(createJobStatusQuery(repository));
+  expect(tool.roles).toEqual(getGlobalJobOperatorRoles());
     const result = await tool.command.execute({ job_id: "job_1" });
 
     expect(result.job.part).toMatchObject({
@@ -95,6 +97,7 @@ describe("deferred job status tools", () => {
     findLatestEventForJobMock.mockResolvedValue(null);
 
     const tool = createListDeferredJobsTool(createJobStatusQuery(repository));
+  expect(tool.roles).toEqual(getGlobalJobOperatorRoles());
     const result = await tool.command.execute({}, { userId: "usr_test", role: "ADMIN", conversationId: "conv_jobs" });
 
     expect(listJobsByConversationMock).toHaveBeenCalledWith("conv_jobs", {

@@ -7,6 +7,7 @@ import {
   resolveFooterGroups,
   resolveFooterGroupRoutes,
   resolvePrimaryNavRoutes,
+  resolveRailMenuRoutes,
   resolveShellHomeHref,
 } from "@/lib/shell/shell-navigation";
 import type { User } from "@/core/entities/user";
@@ -38,6 +39,13 @@ const authenticatedUser: User = {
   roles: ["AUTHENTICATED"],
 };
 
+const apprenticeUser: User = {
+  id: "usr_apprentice",
+  email: "apprentice@example.com",
+  name: "Apprentice User",
+  roles: ["APPRENTICE"],
+};
+
 describe("shell navigation model", () => {
   it("keeps anonymous primary nav routes inside the verified route surface", () => {
     const invalidRoutes = resolvePrimaryNavRoutes(anonymousUser).filter(
@@ -45,8 +53,8 @@ describe("shell navigation model", () => {
     );
 
     expect(invalidRoutes).toEqual([]);
-    expect(resolvePrimaryNavRoutes(anonymousUser).map((route) => route.id)).toEqual([]);
-    expect(resolvePrimaryNavRoutes(authenticatedUser).map((route) => route.id)).toEqual([]);
+    expect(resolvePrimaryNavRoutes(anonymousUser).map((route) => route.id)).toEqual(["corpus", "blog"]);
+    expect(resolvePrimaryNavRoutes(authenticatedUser).map((route) => route.id)).toEqual(["corpus", "blog"]);
   });
 
   it("keeps footer group routes inside the verified route surface for each audience", () => {
@@ -67,9 +75,21 @@ describe("shell navigation model", () => {
       "information",
       "workspace",
     ]);
+    expect(resolveFooterGroups(apprenticeUser).map((group) => group.id)).toEqual([
+      "information",
+      "workspace",
+    ]);
     expect(resolveAccountMenuRoutes(authenticatedUser).map((route) => route.id)).toEqual([
       "jobs",
       "profile",
+    ]);
+    expect(resolveAccountMenuRoutes(apprenticeUser).map((route) => route.id)).toEqual([
+      "jobs",
+      "profile",
+    ]);
+    expect(resolveRailMenuRoutes(anonymousUser).map((route) => route.id)).toEqual([
+      "corpus",
+      "blog",
     ]);
     expect(resolveShellHomeHref()).toBe("/");
   });

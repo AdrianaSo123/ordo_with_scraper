@@ -12,13 +12,13 @@ export function AdminCard({
   children: ReactNode;
 }) {
   const statusTone = status === "ok"
-    ? "jobs-status-succeeded"
+    ? "admin-status-ok"
     : status === "warning"
-      ? "jobs-status-failed"
-      : "jobs-count-pill";
+      ? "admin-status-warning"
+      : "admin-status-neutral";
 
   return (
-    <article className="jobs-panel-surface p-(--space-inset-panel)">
+    <article className="admin-panel-surface p-(--space-inset-panel)">
       <div className="flex items-start justify-between gap-(--space-cluster-default)">
         <div className="grid gap-(--space-2)">
           <div className="flex items-center gap-(--space-cluster-tight)">

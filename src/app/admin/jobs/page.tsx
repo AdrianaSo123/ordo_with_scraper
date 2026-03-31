@@ -44,14 +44,20 @@ export default async function AdminJobsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  await requireAdminPageAccess();
+  const admin = await requireAdminPageAccess();
   const raw = await searchParams;
   const pagination = buildAdminPaginationParams(raw, 50);
-  const listView = await loadAdminJobList(raw);
+  const listView = await loadAdminJobList(raw, admin.roles, pagination);
 
-  const toolFilterOptions = Object.keys(listView.toolNameCounts)
-    .sort()
-    .map((t) => ({ value: t, label: t }));
+  const familyFilterOptions = listView.familyOptions.map((option) => ({
+    value: option.value,
+    label: `${option.label} (${option.count})`,
+  }));
+
+  const toolFilterOptions = listView.toolOptions.map((option) => ({
+    value: option.value,
+    label: `${option.label} (${option.count})`,
+  }));
 
   const statusCounts = STATUS_ORDER.map((s) => ({
     label: STATUS_LABELS[s] ?? s,
@@ -74,14 +80,21 @@ export default async function AdminJobsPage({
               options: STATUS_ORDER.map((s) => ({ value: s, label: STATUS_LABELS[s] ?? s })),
             },
             {
+              name: "family",
+              label: "Family",
+              type: "select",
+              options: familyFilterOptions,
+            },
+            {
               name: "toolName",
-              label: "Tool",
+              label: "Capability",
               type: "select",
               options: toolFilterOptions,
             },
           ]}
           values={{
             status: listView.filters.status === "all" ? "" : listView.filters.status,
+            family: listView.filters.family === "all" ? "" : listView.filters.family,
             toolName: listView.filters.toolName,
           }}
         />

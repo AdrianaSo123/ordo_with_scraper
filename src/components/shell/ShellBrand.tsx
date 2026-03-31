@@ -44,17 +44,19 @@ export function EyeOfOrdoMark({
 interface ShellBrandProps {
   href?: string;
   showWordmark?: boolean;
+  compactOnMobile?: boolean;
   className?: string;
 }
 
 export function ShellBrand({
   href = SHELL_BRAND.homeHref,
   showWordmark = true,
+  compactOnMobile = false,
   className,
 }: ShellBrandProps) {
   const identity = useInstanceIdentity();
   const classes = [
-    "shell-brand-row shrink-0 whitespace-nowrap",
+    "shell-brand-row flex shrink-0 items-center whitespace-nowrap",
     className,
   ]
     .filter(Boolean)
@@ -75,7 +77,7 @@ export function ShellBrand({
         <Image src={identity.logoPath} alt="" width={40} height={40} className="h-full w-full object-cover" />
       </div>
       {showWordmark ? (
-        <span className="theme-display font-semibold tracking-[-0.06em] text-foreground" data-shell-brand-wordmark="true">{identity.name}</span>
+        <span className={`theme-display font-semibold tracking-[-0.06em] text-foreground ${compactOnMobile ? "hidden sm:inline" : ""}`.trim()} data-shell-brand-wordmark="true">{identity.name}</span>
       ) : (
         <span className="sr-only">{identity.name}</span>
       )}

@@ -13,6 +13,7 @@ export interface BulkAction {
   label: string;
   action: string;
   variant?: "default" | "destructive";
+  hiddenFields?: Record<string, string>;
 }
 
 interface AdminBulkActionBarProps {
@@ -38,11 +39,15 @@ export function AdminBulkActionBar({ count, actions, onClear }: AdminBulkActionB
       <div className="ml-auto flex items-center gap-(--space-2)">
         {actions.map((act) => {
           const isDestructive = act.variant === "destructive";
+          const requiresConfirmation = isDestructive || Object.keys(act.hiddenFields ?? {}).length > 0;
           const isConfirming = confirmAction === act.action;
 
           if (isConfirming) {
             return (
               <span key={act.action} className="flex items-center gap-(--space-1)">
+                {Object.entries(act.hiddenFields ?? {}).map(([name, value]) => (
+                  <input key={name} type="hidden" name={name} value={value} />
+                ))}
                 <span className="text-xs text-foreground/60">
                   {act.label} {count} item{count !== 1 ? "s" : ""}?
                 </span>
@@ -67,20 +72,21 @@ export function AdminBulkActionBar({ count, actions, onClear }: AdminBulkActionB
           }
 
           return (
-            <button
-              key={act.action}
-              type={isDestructive ? "button" : "submit"}
-              name={isDestructive ? undefined : "bulkAction"}
-              value={isDestructive ? undefined : act.action}
-              className={`btn-secondary haptic-press rounded-lg border px-3 py-1.5 text-xs font-medium transition active:scale-95 ${
-                isDestructive
-                  ? "border-red-300/20 text-red-400 hover:bg-red-500/10"
-                  : "border-foreground/12 text-foreground hover:bg-foreground/5"
-              }`}
-              onClick={isDestructive ? () => setConfirmAction(act.action) : undefined}
-            >
-              {act.label}
-            </button>
+            <span key={act.action} className="flex items-center gap-2">
+              <button
+                type={requiresConfirmation ? "button" : "submit"}
+                name={requiresConfirmation ? undefined : "bulkAction"}
+                value={requiresConfirmation ? undefined : act.action}
+                className={`btn-secondary haptic-press rounded-lg border px-3 py-1.5 text-xs font-medium transition active:scale-95 ${
+                  isDestructive
+                    ? "border-red-300/20 text-red-400 hover:bg-red-500/10"
+                    : "border-foreground/12 text-foreground hover:bg-foreground/5"
+                }`}
+                onClick={requiresConfirmation ? () => setConfirmAction(act.action) : undefined}
+              >
+                {act.label}
+              </button>
+            </span>
           );
         })}
 

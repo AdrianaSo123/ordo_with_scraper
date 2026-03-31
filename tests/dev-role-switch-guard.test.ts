@@ -57,7 +57,6 @@ describe("Spec 12 — Dev Role-Switch Guard Hardening", () => {
     vi.clearAllMocks();
     // Reset env defaults
     envConfigValues.NODE_ENV = "production";
-    delete envConfigValues.ENABLE_DEV_ROLE_SWITCH;
 
     setMockSessionMock.mockResolvedValue(undefined);
 
@@ -87,20 +86,9 @@ describe("Spec 12 — Dev Role-Switch Guard Hardening", () => {
   });
 
   // --- Test 3 ---
-  it("non-ADMIN user cannot switch in dev without feature flag", async () => {
+  it("non-ADMIN user can switch in development", async () => {
     getSessionUserMock.mockResolvedValue(fakeUser(["STAFF"]));
     envConfigValues.NODE_ENV = "development";
-    // ENABLE_DEV_ROLE_SWITCH not set
-
-    const res = await POST(makeRequest({ role: "ADMIN" }));
-    expect(res.status).toBe(403);
-  });
-
-  // --- Test 4 ---
-  it("non-ADMIN user can switch in dev with feature flag", async () => {
-    getSessionUserMock.mockResolvedValue(fakeUser(["STAFF"]));
-    envConfigValues.NODE_ENV = "development";
-    envConfigValues.ENABLE_DEV_ROLE_SWITCH = "true";
 
     const res = await POST(makeRequest({ role: "ADMIN" }));
     expect(res.status).toBe(200);
@@ -108,7 +96,7 @@ describe("Spec 12 — Dev Role-Switch Guard Hardening", () => {
     expect(body.activeRole).toBe("ADMIN");
   });
 
-  // --- Test 5 ---
+  // --- Test 4 ---
   it("target role must be a valid role string", async () => {
     getSessionUserMock.mockResolvedValue(fakeUser(["ADMIN"]));
 
@@ -116,7 +104,7 @@ describe("Spec 12 — Dev Role-Switch Guard Hardening", () => {
     expect(res.status).toBe(400);
   });
 
-  // --- Test 6 ---
+  // --- Test 5 ---
   it("target role is required", async () => {
     getSessionUserMock.mockResolvedValue(fakeUser(["ADMIN"]));
 
@@ -124,7 +112,7 @@ describe("Spec 12 — Dev Role-Switch Guard Hardening", () => {
     expect(res.status).toBe(400);
   });
 
-  // --- Test 7 ---
+  // --- Test 6 ---
   it("audit log is emitted on successful switch", async () => {
     getSessionUserMock.mockResolvedValue(fakeUser(["ADMIN"], "admin-42"));
 
@@ -141,7 +129,7 @@ describe("Spec 12 — Dev Role-Switch Guard Hardening", () => {
     );
   });
 
-  // --- Test 8 ---
+  // --- Test 7 ---
   it("audit log is NOT emitted on rejected switch", async () => {
     getSessionUserMock.mockResolvedValue(fakeUser(["STAFF"]));
     envConfigValues.NODE_ENV = "production";
@@ -156,13 +144,14 @@ describe("Spec 12 — Dev Role-Switch Guard Hardening", () => {
     expect(roleSwitchCalls).toHaveLength(0);
   });
 
-  // --- Test 9 ---
-  it('feature flag value must be exactly "true"', async () => {
-    getSessionUserMock.mockResolvedValue(fakeUser(["STAFF"]));
-    envConfigValues.NODE_ENV = "development";
-    envConfigValues.ENABLE_DEV_ROLE_SWITCH = "yes";
+  // --- Test 8 ---
+  it("accepts APPRENTICE as a valid target role", async () => {
+    getSessionUserMock.mockResolvedValue(fakeUser(["ADMIN"]));
 
-    const res = await POST(makeRequest({ role: "ADMIN" }));
-    expect(res.status).toBe(403);
+    const res = await POST(makeRequest({ role: "APPRENTICE" }));
+    expect(res.status).toBe(200);
+
+    const body = await res.json();
+    expect(body.activeRole).toBe("APPRENTICE");
   });
 });

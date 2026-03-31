@@ -1,5 +1,20 @@
 import { z } from "zod";
 
+function normalizeOptionalEnv(value: unknown) {
+  if (typeof value === "string" && value.trim() === "") {
+    return undefined;
+  }
+
+  return value;
+}
+
+const optionalString = z.preprocess(normalizeOptionalEnv, z.string().optional());
+const optionalNonEmptyString = z.preprocess(normalizeOptionalEnv, z.string().min(1).optional());
+const optionalPositiveInt = z.preprocess(
+  normalizeOptionalEnv,
+  z.coerce.number().int().positive().optional(),
+);
+
 const EnvSchema = z.object({
   // Runtime
   NODE_ENV: z
@@ -10,62 +25,50 @@ const EnvSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
 
   // API Keys
-  ANTHROPIC_API_KEY: z.string().min(1).optional(),
-  API__ANTHROPIC_API_KEY: z.string().min(1).optional(),
-  OPENAI_API_KEY: z.string().min(1).optional(),
-  API__OPENAI_API_KEY: z.string().min(1).optional(),
+  ANTHROPIC_API_KEY: optionalNonEmptyString,
+  API__ANTHROPIC_API_KEY: optionalNonEmptyString,
+  OPENAI_API_KEY: optionalNonEmptyString,
+  API__OPENAI_API_KEY: optionalNonEmptyString,
 
   // Anthropic model / retry config
-  ANTHROPIC_MODEL: z.string().optional(),
-  API__ANTHROPIC_MODEL: z.string().optional(),
-  ANTHROPIC_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().optional(),
-  API__ANTHROPIC_REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().optional(),
-  ANTHROPIC_RETRY_ATTEMPTS: z.coerce.number().int().positive().optional(),
-  API__ANTHROPIC_RETRY_ATTEMPTS: z.coerce.number().int().positive().optional(),
-  ANTHROPIC_RETRY_DELAY_MS: z.coerce.number().int().positive().optional(),
-  API__ANTHROPIC_RETRY_DELAY_MS: z.coerce.number().int().positive().optional(),
+  ANTHROPIC_MODEL: optionalString,
+  API__ANTHROPIC_MODEL: optionalString,
+  ANTHROPIC_REQUEST_TIMEOUT_MS: optionalPositiveInt,
+  API__ANTHROPIC_REQUEST_TIMEOUT_MS: optionalPositiveInt,
+  ANTHROPIC_RETRY_ATTEMPTS: optionalPositiveInt,
+  API__ANTHROPIC_RETRY_ATTEMPTS: optionalPositiveInt,
+  ANTHROPIC_RETRY_DELAY_MS: optionalPositiveInt,
+  API__ANTHROPIC_RETRY_DELAY_MS: optionalPositiveInt,
 
   // Database
-  STUDIO_ORDO_DB_PATH: z.string().optional(),
+  STUDIO_ORDO_DB_PATH: optionalString,
   DATA_DIR: z.string().default(".data"),
 
   // Deferred jobs
-  DEFERRED_JOB_POLL_INTERVAL_MS: z.coerce
-    .number()
-    .int()
-    .positive()
-    .optional(),
-  DEFERRED_JOB_WORKER_ID: z.string().optional(),
+  DEFERRED_JOB_POLL_INTERVAL_MS: optionalPositiveInt,
+  DEFERRED_JOB_WORKER_ID: optionalString,
 
   // Job event streaming
-  JOB_EVENT_STREAM_POLL_INTERVAL_MS: z.coerce
-    .number()
-    .int()
-    .positive()
-    .optional(),
-  JOB_EVENT_STREAM_MAX_DURATION_MS: z.coerce
-    .number()
-    .int()
-    .positive()
-    .optional(),
+  JOB_EVENT_STREAM_POLL_INTERVAL_MS: optionalPositiveInt,
+  JOB_EVENT_STREAM_MAX_DURATION_MS: optionalPositiveInt,
 
   // Push notifications
-  NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY: z.string().optional(),
-  WEB_PUSH_VAPID_PUBLIC_KEY: z.string().optional(),
-  WEB_PUSH_VAPID_PRIVATE_KEY: z.string().optional(),
-  WEB_PUSH_SUBJECT: z.string().optional(),
+  NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY: optionalString,
+  WEB_PUSH_VAPID_PUBLIC_KEY: optionalString,
+  WEB_PUSH_VAPID_PRIVATE_KEY: optionalString,
+  WEB_PUSH_SUBJECT: optionalString,
 
   // Auth
-  BCRYPT_ROUNDS: z.coerce.number().int().positive().optional(),
+  BCRYPT_ROUNDS: optionalPositiveInt,
 
   // Config
-  CONFIG_DIR: z.string().optional(),
-  HOSTNAME: z.string().optional(),
-  SHUTDOWN_TIMEOUT_MS: z.coerce.number().int().positive().optional(),
-  ALLOWED_ORIGINS: z.string().optional(),
+  CONFIG_DIR: optionalString,
+  HOSTNAME: optionalString,
+  SHUTDOWN_TIMEOUT_MS: optionalPositiveInt,
+  ALLOWED_ORIGINS: optionalString,
 
   // Dev-only feature flags
-  ENABLE_DEV_ROLE_SWITCH: z.string().optional(),
+  ENABLE_DEV_ROLE_SWITCH: optionalString,
 });
 
 export type EnvConfig = z.infer<typeof EnvSchema>;

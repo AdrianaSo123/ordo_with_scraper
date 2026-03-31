@@ -34,13 +34,13 @@ This sequenced plan prioritizes a strong DRY/SOLID foundation (Sprint 0) followe
 ---
 
 ## ⚙️ Sprint 2: The Interactive Office (Action & Notification)
-**Goal:** Make the "Empty" UI components functional.
+**Goal:** Make the remaining "empty" UI components functional, building on the search and deferred-job fixes already completed in the prior sprints.
 
 1.  **"Ghost Actions" Reality**:
     *   **Task**: Implement server actions for the existing checkboxes in `UsersTableClient` (bulkBlock, bulkRoleToggle) and `ConversationsTableClient` (bulkArchive).
 2.  **The Dispatch Feed (Inbox)**:
     *   **Task**: Extend `AdminNotification` to support standard `UserNotification` events.
-    *   **Action**: Build the `NotificationFeed.tsx` dropdown attached to a Bell icon in `SiteNav.tsx` to catch the job updates from Sprint 1 and general platform alerts.
+    *   **Action**: Build the `NotificationFeed.tsx` dropdown attached to a Bell icon in `SiteNav.tsx` to catch general platform alerts. Sprint 1 already moved terminal deferred-job delivery out of chat, so the feed now needs to consume that cleaner notification path instead of compensating for chat spam.
 
 ---
 

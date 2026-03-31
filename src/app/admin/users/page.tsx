@@ -9,7 +9,7 @@ import { AdminEmptyState } from "@/components/admin/AdminEmptyState";
 import { requireAdminPageAccess } from "@/lib/journal/admin-journal";
 import { loadAdminUserList } from "@/lib/admin/users/admin-users";
 import { buildAdminPaginationParams } from "@/lib/admin/admin-pagination";
-import { ROLE_OPTIONS } from "@/lib/admin/users/admin-users-actions";
+import { ROLE_OPTIONS, bulkRoleChangeAction } from "@/lib/admin/users/admin-users-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +64,7 @@ export default async function AdminUsersPage({
           <UsersTableClient
             rows={listView.users as unknown as Record<string, unknown>[]}
             emptyMessage="No users yet — share your referral link to get started."
+            action={bulkRoleChangeAction}
           />
         )}
         <AdminPagination

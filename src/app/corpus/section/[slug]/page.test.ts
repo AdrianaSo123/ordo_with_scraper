@@ -2,10 +2,14 @@ import { describe, expect, it, vi } from "vitest";
 
 const {
   getCorpusIndexMock,
+  getViewerRoleMock,
+  handleLibraryAccessDeniedMock,
   redirectMock,
   notFoundMock,
 } = vi.hoisted(() => ({
   getCorpusIndexMock: vi.fn(),
+  getViewerRoleMock: vi.fn(),
+  handleLibraryAccessDeniedMock: vi.fn(),
   redirectMock: vi.fn((path: string) => {
     throw new Error(`redirect:${path}`);
   }),
@@ -18,6 +22,11 @@ vi.mock("@/lib/corpus-library", () => ({
   getCorpusIndex: getCorpusIndexMock,
 }));
 
+vi.mock("@/lib/corpus-access", () => ({
+  getViewerRole: getViewerRoleMock,
+  handleLibraryAccessDenied: handleLibraryAccessDeniedMock,
+}));
+
 vi.mock("next/navigation", () => ({
   redirect: redirectMock,
   notFound: notFoundMock,
@@ -27,6 +36,7 @@ import CorpusSectionResolverPage from "@/app/corpus/section/[slug]/page";
 
 describe("corpus section resolver route", () => {
   it("redirects a section slug to the canonical library route", async () => {
+    getViewerRoleMock.mockResolvedValue("AUTHENTICATED");
     getCorpusIndexMock.mockResolvedValue([
       {
         bookSlug: "software-engineering",
@@ -42,6 +52,7 @@ describe("corpus section resolver route", () => {
   });
 
   it("redirects a book slug to the canonical library book route", async () => {
+    getViewerRoleMock.mockResolvedValue("AUTHENTICATED");
     getCorpusIndexMock.mockResolvedValue([
       {
         bookSlug: "software-engineering",
@@ -57,6 +68,7 @@ describe("corpus section resolver route", () => {
   });
 
   it("returns notFound for unknown section slugs", async () => {
+    getViewerRoleMock.mockResolvedValue("AUTHENTICATED");
     getCorpusIndexMock.mockResolvedValue([]);
 
     await expect(

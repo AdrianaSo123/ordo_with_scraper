@@ -31,7 +31,7 @@ The `SHELL_ROUTES` array in `shell-navigation.ts` has roughly 15 defined routes.
 ## 🟡 Critical Missing Context
 
 ### 4. Notification infrastructure already exists (not acknowledged)
-The docs propose building a "Notification Center from scratch" but completely ignore what's already built:
+The docs propose building a "Notification Center from scratch" but completely ignore what's already built. Sprint 1 also proved the deferred-job worker already has a separate terminal notification path, so the remaining gap is the inbox/feed surface rather than the underlying dispatcher:
 
 | Component | Status | Location |
 |-----------|--------|----------|
@@ -45,13 +45,8 @@ The docs propose building a "Notification Center from scratch" but completely ig
 
 **The system already has a multi-channel notification dispatcher with Web Push support and a signal rule engine.** The FEATURE_AUDIT and OFFICE_REFAC_PLAN should build on this infrastructure, not propose recreating it.
 
-### 5. The real "chat spam" mechanism is identified but not named
-The user's complaint about job retries spamming chat traces to a specific class: [DeferredJobConversationProjector](file:///Users/kwilliams/Projects/is601_demo/src/lib/jobs/deferred-job-conversation-projector.ts). This projector:
-- Creates or updates a message in the conversation for **every** job event
-- On retry, it creates a **new** message (because the job ID changes)
-- Bulk retry of N jobs = N new messages in the chat
-
-The docs say "decouple job updates from chat" but don't identify this specific class as the surgical target. The fix is straightforward: modify `DeferredJobConversationProjector.project()` to route terminal/retry events to the `NotificationDispatcher` instead of creating chat messages.
+### 5. The real "chat spam" mechanism was identified and fixed at the projector level
+The user's complaint about job retries spamming chat traced to a specific class: [DeferredJobConversationProjector](../src/lib/jobs/deferred-job-conversation-projector.ts). The code now keeps the live job status message in chat but stops terminal result/failure/cancel events from rewriting the conversation. The remaining notification delivery path is handled by the worker runtime's separate dispatcher.
 
 ### 6. Consultation Requests are missing from the Feature Audit
 The codebase has a full [ConsultationRequest](file:///Users/kwilliams/Projects/is601_demo/src/core/entities/consultation-request.ts) entity with statuses (`pending`, `reviewed`, `scheduled`, `declined`) and it's already a tab in the Leads pipeline. The Feature Audit doesn't mention it at all — it just says "Leads" and "Deals" without acknowledging this middle pipeline stage.

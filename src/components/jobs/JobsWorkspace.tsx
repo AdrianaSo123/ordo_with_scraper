@@ -1,0 +1,324 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, useTransition } from "react";
+
+import { JobDetailPanel } from "@/components/jobs/JobDetailPanel";
+import {
+  type JobAction,
+  formatJobSummary,
+  formatJobTimestamp,
+  getStatusTone,
+  STATUS_LABELS,
+} from "@/components/jobs/job-workspace-helpers";
+import type { JobHistoryEntry } from "@/lib/jobs/job-event-history";
+import type { JobRequest } from "@/core/entities/job";
+import { buildJobStatusSnapshot } from "@/lib/jobs/job-read-model";
+import type { JobStatusSnapshot } from "@/lib/jobs/job-read-model";
+import {
+  applyJobsWorkspaceEvent,
+  applyOptimisticJobSnapshot,
+  buildOptimisticJobHistoryEntry,
+  createJobsWorkspaceState,
+  getJobsWorkspaceMaxSequence,
+  reconcileSelectedJobsWorkspaceJob,
+  replaceJobsWorkspaceState,
+  selectJobsWorkspaceJob,
+  type JobsWorkspaceState,
+} from "@/components/jobs/job-snapshot-reducer";
+import { useJobsEventStream } from "@/components/jobs/useJobsEventStream";
+
+interface JobsWorkspaceProps {
+  jobs: JobStatusSnapshot[];
+  selectedJob: JobStatusSnapshot | null;
+  selectedJobHistory: JobHistoryEntry[];
+  selectedJobId: string | null;
+  userName: string;
+}
+
+interface JobSelectionResponse {
+  job?: JobStatusSnapshot;
+}
+
+interface JobHistoryResponse {
+  events?: JobHistoryEntry[];
+}
+
+interface JobActionResponse {
+  job?: JobRequest;
+  eventSequence?: number;
+}
+
+function getSyncLabel(syncState: ReturnType<typeof useJobsEventStream>): string {
+  switch (syncState) {
+    case "live":
+      return "Live updates connected.";
+    case "fallback":
+      return "Live updates unavailable. Using periodic refresh fallback.";
+    case "reconnecting":
+    default:
+      return "Live updates reconnecting. Recent state is being refreshed.";
+  }
+}
+
+export function JobsWorkspace({
+  jobs,
+  selectedJob,
+  selectedJobHistory,
+  selectedJobId,
+  userName,
+}: JobsWorkspaceProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [pendingJobId, setPendingJobId] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+  const [workspace, setWorkspace] = useState<JobsWorkspaceState>(() =>
+    createJobsWorkspaceState({
+      jobs,
+      selectedJob,
+      selectedJobHistory,
+      selectedJobId,
+    }),
+  );
+  const selectionRequestRef = useRef(0);
+
+  useEffect(() => {
+    selectionRequestRef.current += 1;
+    setIsHistoryLoading(false);
+    setWorkspace((current) =>
+      replaceJobsWorkspaceState(current, {
+        jobs,
+        selectedJob,
+        selectedJobHistory,
+        selectedJobId,
+      }),
+    );
+  }, [jobs, selectedJob, selectedJobHistory, selectedJobId]);
+
+  const syncState = useJobsEventStream({
+    initialAfterSequence: getJobsWorkspaceMaxSequence(workspace),
+    selectedJobId: workspace.selectedJobId,
+    onEvent: (event) => {
+      setWorkspace((current) => applyJobsWorkspaceEvent(current, event));
+    },
+    onReconciled: (payload) => {
+      setWorkspace((current) => replaceJobsWorkspaceState(current, payload));
+      setIsHistoryLoading(false);
+    },
+  });
+
+  const activeCount = workspace.jobs.filter((job) => job.part.status === "queued" || job.part.status === "running").length;
+  const attentionCount = workspace.jobs.filter((job) => job.part.status === "failed" || job.part.status === "canceled").length;
+  const completedCount = workspace.jobs.filter((job) => job.part.status === "succeeded").length;
+
+  async function loadSelectedJob(jobId: string): Promise<void> {
+    const requestId = selectionRequestRef.current + 1;
+    selectionRequestRef.current = requestId;
+    setIsHistoryLoading(true);
+
+    try {
+      const [jobResponse, historyResponse] = await Promise.all([
+        fetch(`/api/jobs/${encodeURIComponent(jobId)}`, {
+          credentials: "same-origin",
+        }),
+        fetch(`/api/jobs/${encodeURIComponent(jobId)}/events?limit=50`, {
+          credentials: "same-origin",
+        }),
+      ]);
+
+      if (selectionRequestRef.current !== requestId) {
+        return;
+      }
+
+      const jobPayload = jobResponse.ok
+        ? await jobResponse.json() as JobSelectionResponse
+        : null;
+      const historyPayload = historyResponse.ok
+        ? await historyResponse.json() as JobHistoryResponse
+        : null;
+
+      const nextSelectedJob = jobPayload?.job ?? workspace.jobs.find((job) => job.part.jobId === jobId) ?? null;
+      const nextSelectedHistory = Array.isArray(historyPayload?.events) ? historyPayload.events : [];
+
+      setWorkspace((current) =>
+        reconcileSelectedJobsWorkspaceJob(current, jobId, nextSelectedJob, nextSelectedHistory),
+      );
+    } catch (error) {
+      void error;
+      if (selectionRequestRef.current === requestId) {
+        setErrorMessage("Unable to load that job right now.");
+      }
+    } finally {
+      if (selectionRequestRef.current === requestId) {
+        setIsHistoryLoading(false);
+      }
+    }
+  }
+
+  function handleSelectJob(jobId: string): void {
+    if (jobId === workspace.selectedJobId) {
+      return;
+    }
+
+    setErrorMessage(null);
+    setWorkspace((current) => selectJobsWorkspaceJob(current, jobId));
+
+    const params = new URLSearchParams();
+    params.set("jobId", jobId);
+    router.push(`/jobs?${params.toString()}`);
+    void loadSelectedJob(jobId);
+  }
+
+  async function runJobAction(jobId: string, action: JobAction): Promise<void> {
+    setErrorMessage(null);
+    setPendingJobId(jobId);
+
+    try {
+      const response = await fetch(`/api/jobs/${jobId}`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ action }),
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null) as { error?: string } | null;
+        throw new Error(body?.error ?? `Unable to ${action} this job right now.`);
+      }
+
+      const body = await response.json() as JobActionResponse;
+      const nextSnapshot = body.job ? buildJobStatusSnapshot(body.job) : null;
+
+      if (nextSnapshot) {
+        const isSelectedJobAction = workspace.selectedJobId === jobId;
+        const optimisticEntry = buildOptimisticJobHistoryEntry(
+          nextSnapshot,
+          action === "cancel" ? "canceled" : "queued",
+          body.eventSequence,
+        );
+
+        setWorkspace((current) =>
+          applyOptimisticJobSnapshot(current, nextSnapshot, {
+            selectJob: isSelectedJobAction,
+            optimisticHistoryEntry: isSelectedJobAction ? optimisticEntry : undefined,
+          }),
+        );
+
+        if (action === "retry" && isSelectedJobAction && nextSnapshot.part.jobId !== jobId) {
+          const params = new URLSearchParams();
+          params.set("jobId", nextSnapshot.part.jobId);
+          router.replace(`/jobs?${params.toString()}`);
+          void loadSelectedJob(nextSnapshot.part.jobId);
+        }
+      }
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : `Unable to ${action} this job right now.`);
+    } finally {
+      setPendingJobId(null);
+    }
+  }
+
+  function handleJobAction(jobId: string, action: JobAction): void {
+    startTransition(() => {
+      void runJobAction(jobId, action);
+    });
+  }
+
+  return (
+    <section className="jobs-page-shell" data-testid="jobs-workspace-shell">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-(--space-section-default) px-(--space-frame-mobile) py-(--space-frame-mobile) sm:px-(--space-frame-default)">
+        <header className="jobs-hero-surface px-(--space-inset-panel) py-(--space-inset-panel)">
+          <div className="flex flex-col gap-(--space-stack-tight) lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl space-y-(--space-2)">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-foreground/45">Workspace</p>
+              <h1 className="theme-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">Your Jobs</h1>
+              <p className="max-w-2xl text-sm leading-6 text-foreground/68 sm:text-base">
+                Track queued, running, and recent background work tied to this account. Editorial and operator-only jobs still stay scoped to the admin workspace unless they belong to you.
+              </p>
+              <p className="text-sm text-foreground/50">Signed in as {userName}.</p>
+              <p className="text-sm text-foreground/50" data-testid="jobs-sync-state">{getSyncLabel(syncState)}</p>
+            </div>
+
+            <div className="grid gap-(--space-2) sm:grid-cols-3">
+              <div className="jobs-panel-surface min-w-32 px-(--space-3) py-(--space-3)">
+                <p className="text-xs uppercase tracking-[0.18em] text-foreground/45">Active</p>
+                <p className="mt-1 text-2xl font-semibold text-foreground">{activeCount}</p>
+              </div>
+              <div className="jobs-panel-surface min-w-32 px-(--space-3) py-(--space-3)">
+                <p className="text-xs uppercase tracking-[0.18em] text-foreground/45">Needs Attention</p>
+                <p className="mt-1 text-2xl font-semibold text-foreground">{attentionCount}</p>
+              </div>
+              <div className="jobs-panel-surface min-w-32 px-(--space-3) py-(--space-3)">
+                <p className="text-xs uppercase tracking-[0.18em] text-foreground/45">Completed</p>
+                <p className="mt-1 text-2xl font-semibold text-foreground">{completedCount}</p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {errorMessage && (
+          <div role="alert" className="jobs-detail-surface px-(--space-4) py-(--space-3) text-sm text-foreground/78">
+            {errorMessage}
+          </div>
+        )}
+
+        {workspace.jobs.length === 0 ? (
+          <div className="jobs-empty-state px-(--space-inset-panel) py-(--space-16) text-center">
+            <h2 className="text-xl font-semibold text-foreground/72">No jobs yet</h2>
+            <p className="mx-auto mt-(--space-3) max-w-xl text-sm leading-6 text-foreground/55">
+              Background jobs you own will appear here as they queue and complete. If you only use the current admin-only editorial tools, their global queue remains under the admin workspace.
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-(--space-4) xl:grid-cols-2">
+            <div className="grid gap-(--space-3)">
+              {workspace.jobs.map((snapshot) => {
+                const title = snapshot.part.title ?? snapshot.part.label;
+                const isSelected = snapshot.part.jobId === workspace.selectedJobId;
+
+                return (
+                  <button
+                    key={snapshot.part.jobId}
+                    type="button"
+                    className={`jobs-detail-surface w-full px-(--space-inset-panel) py-(--space-inset-panel) text-left transition ${isSelected ? "jobs-card-selected" : "jobs-card-idle"}`}
+                    onClick={() => handleSelectJob(snapshot.part.jobId)}
+                    aria-pressed={isSelected}
+                    data-testid={`job-card-${snapshot.part.jobId}`}
+                  >
+                    <div className="flex flex-wrap items-center gap-(--space-2)">
+                      <span className={`inline-flex rounded-full border px-2 py-0.5 text-[0.68rem] font-semibold uppercase tracking-[0.12em] ${getStatusTone(snapshot.part.status)}`}>
+                        {STATUS_LABELS[snapshot.part.status]}
+                      </span>
+                      <span className="jobs-metric-pill inline-flex rounded-full px-2 py-0.5 text-[0.68rem] font-semibold uppercase tracking-[0.12em] text-foreground/55">
+                        {snapshot.part.toolName}
+                      </span>
+                    </div>
+                    <h2 className="mt-(--space-3) text-lg font-semibold tracking-tight text-foreground">{title}</h2>
+                    {snapshot.part.subtitle && (
+                      <p className="mt-1 text-sm text-foreground/55">{snapshot.part.subtitle}</p>
+                    )}
+                    <p className="mt-(--space-3) text-sm leading-6 text-foreground/68">{formatJobSummary(snapshot)}</p>
+                    <div className="mt-(--space-3) flex flex-wrap items-center gap-(--space-2) text-xs text-foreground/50">
+                      <span>Job ID {snapshot.part.jobId}</span>
+                      <span>Updated {formatJobTimestamp(snapshot.part.updatedAt)}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <JobDetailPanel
+              job={workspace.selectedJob}
+              history={workspace.selectedJobHistory}
+              isHistoryLoading={isHistoryLoading}
+              isPending={pendingJobId === workspace.selectedJobId && isPending}
+              onJobAction={handleJobAction}
+            />
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}

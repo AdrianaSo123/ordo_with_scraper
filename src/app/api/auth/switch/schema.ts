@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const AuthSwitchRequestSchema = z.object({
-  role: z.enum(["ANONYMOUS", "AUTHENTICATED", "STAFF", "ADMIN"]),
+  role: z.enum(["ANONYMOUS", "AUTHENTICATED", "APPRENTICE", "STAFF", "ADMIN"]),
 });
 
 export type AuthSwitchRequest = z.infer<typeof AuthSwitchRequestSchema>;

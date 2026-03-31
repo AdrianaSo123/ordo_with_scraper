@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AppShell } from "@/components/AppShell";
@@ -10,6 +10,7 @@ let pathname = "/";
 const pushMock = vi.fn();
 const switchRoleMock = vi.fn();
 const logoutMock = vi.fn();
+const fetchMock = vi.fn();
 
 const localStorageMock = {
   getItem: vi.fn(() => null),
@@ -60,11 +61,18 @@ beforeEach(() => {
   pushMock.mockReset();
   switchRoleMock.mockReset();
   logoutMock.mockReset();
+  fetchMock.mockReset();
+  fetchMock.mockResolvedValue({
+    ok: true,
+    json: async () => ({ preferences: [] }),
+    status: 200,
+  });
   localStorageMock.getItem.mockReset();
   localStorageMock.getItem.mockReturnValue(null);
   localStorageMock.setItem.mockReset();
   localStorageMock.removeItem.mockReset();
   localStorageMock.clear.mockReset();
+  vi.stubGlobal("fetch", fetchMock);
   vi.stubGlobal("localStorage", localStorageMock);
   vi.stubGlobal("matchMedia", matchMediaMock);
 });
@@ -74,24 +82,38 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function renderShellAcceptance() {
-  return render(
-    <ThemeProvider>
-      <AppShell user={authenticatedUser}>
-        <div>Acceptance Content</div>
-      </AppShell>
-    </ThemeProvider>,
-  );
+async function renderShellAcceptance() {
+  let view: ReturnType<typeof render> | undefined;
+
+  await act(async () => {
+    view = render(
+      <ThemeProvider>
+        <AppShell user={authenticatedUser}>
+          <div>Acceptance Content</div>
+        </AppShell>
+      </ThemeProvider>,
+    );
+    await Promise.resolve();
+  });
+
+  return view as ReturnType<typeof render>;
 }
 
-function renderAnonymousShellAcceptance() {
-  return render(
-    <ThemeProvider>
-      <AppShell user={anonymousUser}>
-        <div>Acceptance Content</div>
-      </AppShell>
-    </ThemeProvider>,
-  );
+async function renderAnonymousShellAcceptance() {
+  let view: ReturnType<typeof render> | undefined;
+
+  await act(async () => {
+    view = render(
+      <ThemeProvider>
+        <AppShell user={anonymousUser}>
+          <div>Acceptance Content</div>
+        </AppShell>
+      </ThemeProvider>,
+    );
+    await Promise.resolve();
+  });
+
+  return view as ReturnType<typeof render>;
 }
 
 function getLinkNames(container: HTMLElement) {
@@ -101,29 +123,33 @@ function getLinkNames(container: HTMLElement) {
 }
 
 describe("shell acceptance", () => {
-  it("renders only the canonical primary navigation contract in the shell header", () => {
-    renderShellAcceptance();
+  it("renders only the canonical primary navigation contract in the shell header", async () => {
+    await renderShellAcceptance();
 
     const nav = screen.getByRole("navigation", { name: "Primary" });
     const navLinks = getLinkNames(nav);
 
-    // Sprint 8 (UX-32): Home/Library/Blog removed from header rail; brand link only
     expect(navLinks).toEqual(["Studio Ordo home"]);
     expect(nav).toHaveAttribute("data-shell-nav-rail", "true");
     expect(nav.querySelector('[data-shell-nav-region="brand"]')).not.toBeNull();
-    // Sprint 8 (UX-32): primary-links region absent when no nav items
-    expect(nav.querySelector('[data-shell-nav-region="primary-links"]')).toBeNull();
     expect(nav.querySelector('[data-shell-nav-region="account-access"]')).not.toBeNull();
+    expect(nav.querySelector('[data-shell-nav-region="primary-links"]')).toBeNull();
+    expect(nav.querySelector('[data-shell-nav-region="search"]')).toBeNull();
     expect(within(nav).getByRole("link", { name: /studio ordo home/i })).toHaveAttribute("href", "/");
-    expect(within(nav).queryByRole("link", { name: "Home" })).toBeNull();
-    expect(within(nav).queryByRole("link", { name: "Library" })).toBeNull();
-    expect(within(nav).queryByRole("link", { name: "Blog" })).toBeNull();
+    fireEvent.click(within(nav).getByRole("button", { name: "Open workspace menu" }));
+
+    const drawer = screen.getByRole("dialog", { name: "Workspace menu" });
+
+    expect(within(drawer).queryByRole("link", { name: "Home" })).toBeNull();
+    expect(within(drawer).getByRole("link", { name: /^Library/i })).toHaveAttribute("href", "/library");
+    expect(within(drawer).getByRole("link", { name: /^Blog/i })).toHaveAttribute("href", "/blog");
+    expect(within(drawer).getByRole("link", { name: "My Jobs" })).toHaveAttribute("href", "/jobs");
     expect(within(nav).queryByRole("link", { name: "Training" })).toBeNull();
     expect(within(nav).queryByRole("link", { name: "Studio" })).toBeNull();
   });
 
-  it("renders only canonical grouped footer links and reuses the shared brand primitive", () => {
-    const { container } = renderShellAcceptance();
+  it("renders only canonical grouped footer links and reuses the shared brand primitive", async () => {
+    const { container } = await renderShellAcceptance();
 
     expect(container.querySelectorAll('[data-shell-brand="true"]')).toHaveLength(2);
 
@@ -136,8 +162,8 @@ describe("shell acceptance", () => {
     expect(within(footer).getByText("Workspace")).toBeInTheDocument();
   });
 
-  it("renders anonymous footer access links without signed-in workspace destinations", () => {
-    renderAnonymousShellAcceptance();
+  it("renders anonymous footer access links without signed-in workspace destinations", async () => {
+    await renderAnonymousShellAcceptance();
 
     const footer = screen.getByRole("contentinfo");
     const footerLinks = getLinkNames(footer);

@@ -72,16 +72,16 @@ describe("job list loader", () => {
     vi.clearAllMocks();
     mockJobQueueDataMapper.countForAdmin.mockResolvedValue(2);
     mockJobQueueDataMapper.countByStatus.mockResolvedValue({ queued: 1, running: 1 });
-    mockJobQueueDataMapper.countByToolName.mockResolvedValue({ blog_generate: 2 });
+    mockJobQueueDataMapper.countByToolName.mockResolvedValue({ produce_blog_article: 2 });
     mockJobQueueDataMapper.listForAdmin.mockResolvedValue([
       {
-        id: "job_1", toolName: "blog_generate", status: "queued", priority: 5,
+        id: "job_1", toolName: "produce_blog_article", status: "queued", priority: 5,
         userId: "usr_1", progressPercent: null, progressLabel: null,
         attemptCount: 1, createdAt: "2024-01-01", startedAt: null,
         completedAt: null, conversationId: "conv_1",
       },
       {
-        id: "job_2", toolName: "blog_generate", status: "running", priority: 3,
+        id: "job_2", toolName: "produce_blog_article", status: "running", priority: 3,
         userId: "usr_2", progressPercent: 50, progressLabel: "Writing",
         attemptCount: 1, createdAt: "2024-01-02", startedAt: "2024-01-02T00:01:00Z",
         completedAt: null, conversationId: "conv_2",
@@ -89,17 +89,19 @@ describe("job list loader", () => {
     ]);
   });
 
-  it("parseAdminJobFilters extracts status and toolName", async () => {
+  it("parseAdminJobFilters extracts status, family, and toolName", async () => {
     const { parseAdminJobFilters } = await import("@/lib/admin/jobs/admin-jobs");
-    const filters = parseAdminJobFilters({ status: "queued", toolName: "blog_generate" });
+    const filters = parseAdminJobFilters({ status: "queued", family: "editorial", toolName: "produce_blog_article" });
     expect(filters.status).toBe("queued");
-    expect(filters.toolName).toBe("blog_generate");
+    expect(filters.family).toBe("editorial");
+    expect(filters.toolName).toBe("produce_blog_article");
   });
 
   it("parseAdminJobFilters defaults to all status when empty", async () => {
     const { parseAdminJobFilters } = await import("@/lib/admin/jobs/admin-jobs");
     const filters = parseAdminJobFilters({});
     expect(filters.status).toBe("all");
+    expect(filters.family).toBe("all");
     expect(filters.toolName).toBe("");
   });
 
@@ -109,10 +111,14 @@ describe("job list loader", () => {
 
     expect(result.total).toBe(2);
     expect(result.statusCounts).toEqual({ queued: 1, running: 1 });
-    expect(result.toolNameCounts).toEqual({ blog_generate: 2 });
+    expect(result.toolNameCounts).toEqual({ produce_blog_article: 2 });
+    expect(result.familyCounts).toEqual({ editorial: 2 });
     expect(result.jobs).toHaveLength(2);
+    expect(result.jobs[0].toolLabel).toBe("Produce Blog Article");
+    expect(result.jobs[0].toolFamily).toBe("editorial");
     expect(result.jobs[0].detailHref).toContain("/admin/jobs/job_1");
     expect(result.jobs[1].duration).toBe("running");
+    expect(result.jobs[1].canCancel).toBe(true);
   });
 });
 
@@ -125,7 +131,7 @@ describe("job detail loader", () => {
 
   it("returns detail view model for existing job", async () => {
     mockJobQueueDataMapper.findJobById.mockResolvedValue({
-      id: "job_1", toolName: "blog_generate", status: "succeeded", priority: 5,
+      id: "job_1", toolName: "publish_content", status: "succeeded", priority: 5,
       userId: "usr_1", progressPercent: 100, progressLabel: "Done",
       attemptCount: 1, createdAt: "2024-01-01", startedAt: "2024-01-01T00:01:00Z",
       completedAt: "2024-01-01T00:02:00Z", conversationId: "conv_1",
@@ -141,7 +147,9 @@ describe("job detail loader", () => {
     const detail = await loadAdminJobDetail("job_1");
 
     expect(detail.job.id).toBe("job_1");
+    expect(detail.job.toolLabel).toBe("Publish Content");
     expect(detail.job.requestPayload).toEqual({ slug: "test" });
+    expect(detail.policy.canManage).toBe(true);
     expect(detail.events).toHaveLength(1);
     expect(detail.events[0].eventType).toBe("queued");
   });
@@ -170,11 +178,11 @@ describe("admin-jobs-routes", () => {
 // ── D5.3: Cancel and retry actions ─────────────────────────────────────
 
 describe("cancel and retry actions structure", () => {
-  it("cancelJobAction is a server action using withAdminAction", () => {
+  it("cancelJobAction is an explicit server action using runAdminAction", () => {
     const source = readSource("src/lib/admin/jobs/admin-jobs-actions.ts");
     expect(source).toContain('"use server"');
     expect(source).toContain("cancelJobAction");
-    expect(source).toContain("withAdminAction");
+    expect(source).toContain("runAdminAction");
     expect(source).toContain("cancelJob");
     expect(source).toContain('revalidatePath("/admin/jobs")');
   });
@@ -182,7 +190,8 @@ describe("cancel and retry actions structure", () => {
   it("retryJobAction validates retriable statuses before creating new job", () => {
     const source = readSource("src/lib/admin/jobs/admin-jobs-actions.ts");
     expect(source).toContain("retryJobAction");
-    expect(source).toContain("retriableStatuses");
+    expect(source).toContain("RETRIABLE_STATUSES");
+    expect(source).toContain("ensureGlobalManagePermission");
     expect(source).toContain("createJob");
   });
 });
@@ -257,9 +266,12 @@ describe("JobsPagePanel monolith deletion", () => {
     expect(fileExists("src/components/jobs/JobsPagePanel.tsx")).toBe(false);
   });
 
-  it("/jobs route redirects to /admin/jobs", () => {
+  it("/jobs route now renders the signed-in workspace instead of redirecting to admin", () => {
     const source = readSource("src/app/jobs/page.tsx");
-    expect(source).toContain('redirect("/admin/jobs")');
+    expect(source).toContain("loadUserJobsWorkspace");
+    expect(source).toContain("<JobsWorkspace");
+    expect(source).toContain('redirect("/login")');
+    expect(source).not.toContain('redirect("/admin/jobs")');
     // No import of the deleted monolith component
     expect(source).not.toMatch(/from\s+["'].*JobsPagePanel/);
   });
@@ -298,19 +310,19 @@ describe("System page configuration sections", () => {
 // ── D5.8: Dashboard signal cards ───────────────────────────────────────
 
 describe("Dashboard signal card wiring", () => {
-  it("calls all 10 loaders via Promise.allSettled", () => {
+  it("calls the smaller cross-workspace loader set via Promise.allSettled", () => {
     const source = readSource("src/app/admin/page.tsx");
     expect(source).toContain("Promise.allSettled");
     expect(source).toContain("loadSystemHealthBlock");
     expect(source).toContain("loadLeadQueueBlock");
     expect(source).toContain("loadConsultationRequestQueueBlock");
-    expect(source).toContain("loadDealQueueBlock");
     expect(source).toContain("loadTrainingPathQueueBlock");
     expect(source).toContain("loadOverdueFollowUpsBlock");
     expect(source).toContain("loadRoutingReviewBlock");
-    expect(source).toContain("loadFunnelRecommendationsBlock");
     expect(source).toContain("loadAnonymousOpportunitiesBlock");
     expect(source).toContain("loadRecurringPainThemesBlock");
+    expect(source).toContain("loadAdminJournalList");
+    expect(source).toContain("loadAdminJobList");
   });
 
   it("renders graceful fallback for failed signals", () => {
@@ -330,20 +342,22 @@ describe("Dashboard signal card wiring", () => {
 // ── D5.8: Dashboard action chips ───────────────────────────────────────
 
 describe("Dashboard action chips", () => {
-  it("every card has concrete action chip links", () => {
+  it("overview cards link into their owning workspaces", () => {
     const source = readSource("src/app/admin/page.tsx");
     expect(source).toContain("haptic-press");
     expect(source).toContain('href="/admin/system"');
-    expect(source).toContain('href="/admin/leads"');
+    expect(source).toContain("getAdminLeadsListPath");
+    expect(source).toContain("getAdminJournalListPath");
+    expect(source).toContain("getAdminJobsListPath");
     expect(source).toContain('href="/admin/conversations"');
   });
 
-  it("overdue follow-ups card shows triage and view-all action chips", () => {
+  it("dashboard exposes the new cross-workspace overview cards", () => {
     const source = readSource("src/app/admin/page.tsx");
-    expect(source).toContain("Overdue follow-ups");
-    expect(source).toContain("Triage oldest");
-    expect(source).toContain("overdueLeadCount");
-    expect(source).toContain("overdueDealCount");
+    expect(source).toContain("Pipeline attention");
+    expect(source).toContain("Conversation attention");
+    expect(source).toContain("Content operations");
+    expect(source).toContain("Jobs health");
   });
 });
 

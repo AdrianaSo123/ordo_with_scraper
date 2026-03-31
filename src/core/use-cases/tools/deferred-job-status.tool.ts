@@ -4,6 +4,10 @@ import type { ToolExecutionContext } from "@/core/tool-registry/ToolExecutionCon
 import { buildJobStatusToolDescription } from "@/core/entities/job-status-response-strategy";
 import type { JobStatusQuery } from "@/core/use-cases/JobStatusQuery";
 import { type JobStatusSnapshot, getActiveJobStatuses } from "@/lib/jobs/job-read-model";
+import {
+  getGlobalJobOperatorRoles,
+  getSignedInJobAudienceRoles,
+} from "@/lib/jobs/job-capability-registry";
 
 interface DeferredJobStatusInput {
   job_id: string;
@@ -158,7 +162,7 @@ export function createGetDeferredJobStatusTool(
       },
     },
     command: new GetDeferredJobStatusCommand(query),
-    roles: ["ADMIN"],
+    roles: getGlobalJobOperatorRoles(),
     category: "content",
   };
 }
@@ -185,7 +189,7 @@ export function createListDeferredJobsTool(
       },
     },
     command: new ListDeferredJobsCommand(query),
-    roles: ["ADMIN"],
+    roles: getGlobalJobOperatorRoles(),
     category: "content",
   };
 }
@@ -206,7 +210,7 @@ export function createGetMyJobStatusTool(
       },
     },
     command: new GetMyJobStatusCommand(query),
-    roles: ["AUTHENTICATED", "APPRENTICE", "STAFF", "ADMIN"],
+    roles: getSignedInJobAudienceRoles(),
     category: "system",
   };
 }
@@ -233,7 +237,7 @@ export function createListMyJobsTool(
       },
     },
     command: new ListMyJobsCommand(query),
-    roles: ["AUTHENTICATED", "APPRENTICE", "STAFF", "ADMIN"],
+    roles: getSignedInJobAudienceRoles(),
     category: "system",
   };
 }

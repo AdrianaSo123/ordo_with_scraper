@@ -30,7 +30,7 @@ Studio Ordo combines a user-facing chat application with a structured backend fo
 
 - Registry-based tool orchestration with RBAC middleware
 - Prompt composition with base identity, role directives, user preferences, routing context, summaries, and a dynamic tool manifest
-- MCP servers for embeddings, corpus management, prompt versioning, analytics, and calculator operations
+- Standalone MCP servers for calculator and embeddings workflows, plus app-local `@mcp/*` modules for analytics, prompts, and related operator helpers
 - Deterministic QA via Vitest, Playwright, env validation, release verification, and secret scanning
 - Spec-driven delivery under `docs/_specs/`
 
@@ -117,6 +117,7 @@ These are the tools exposed directly to the chat model through the internal `Too
 - `get_checklist`
 - `list_practitioners`
 - `set_theme`
+- `inspect_theme`
 - `adjust_ui`
 - `navigate`
 - `generate_chart`
@@ -134,10 +135,12 @@ These are composed in `src/lib/chat/tool-composition-root.ts` and enforced by RB
 
 ### 2. MCP tools
 
-The repository also ships MCP servers for calculator operations and a larger embeddings/corpus/prompts/analytics stack.
+The repository currently ships two standalone MCP server entrypoints: calculator and embeddings.
 
 - `npm run mcp:calculator`
 - `npm run mcp:embeddings`
+
+Analytics, prompt, and related modules under `mcp/` are also reused directly inside the app through local `@mcp/*` imports. They are not separate remote MCP servers in the current runtime.
 
 For the full MCP catalog and usage guidance, see [docs/operations/user-handbook.md](docs/operations/user-handbook.md).
 

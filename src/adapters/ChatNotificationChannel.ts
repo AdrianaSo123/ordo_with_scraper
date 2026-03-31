@@ -1,4 +1,4 @@
-import type { AdminNotification, NotificationChannel } from "@/core/entities/NotificationChannel";
+import type { AppNotification, NotificationChannel } from "@/core/entities/NotificationChannel";
 import type { MessageDataMapper } from "@/adapters/MessageDataMapper";
 
 /**
@@ -12,7 +12,7 @@ export class ChatNotificationChannel implements NotificationChannel {
     private readonly getAdminConversationId: () => Promise<string | null>,
   ) {}
 
-  async send(notification: AdminNotification): Promise<void> {
+  async send(notification: AppNotification): Promise<void> {
     const conversationId = await this.getAdminConversationId();
     if (!conversationId) return;
 

@@ -6,6 +6,17 @@ export interface AdminNotification {
   signalId?: string;
 }
 
+export interface UserNotification {
+  title: string;
+  body: string;
+  severity: "info" | "warning" | "critical";
+  actionUrl?: string;
+  userId?: string;
+  scope?: "user";
+}
+
+export type AppNotification = AdminNotification | UserNotification;
+
 export interface NotificationChannel {
-  send(notification: AdminNotification): Promise<void>;
+  send(notification: AppNotification): Promise<void>;
 }

@@ -44,14 +44,12 @@ describe("D10.1: Admin layout — skip-to-content link", () => {
   });
 });
 
-// ── D10.2: AdminDrawer removed from admin layout ──────────────────────
+// ── D10.2: Admin layout avoids a second mobile hamburger ─────────────
 
-describe("D10.2: Admin layout — AdminDrawer removal", () => {
+describe("D10.2: Admin layout — no dedicated mobile AdminDrawer", () => {
   it("admin layout does not render AdminDrawer", () => {
     const source = readSource("src/app/admin/layout.tsx");
-    // AdminDrawer should not be instantiated in JSX
-    expect(source).not.toContain("<AdminDrawer");
-    expect(source).not.toContain("<AdminDrawer/>");
+    expect(source).not.toContain("<AdminDrawer />");
   });
 
   it("admin layout does not import AdminDrawer", () => {
@@ -59,29 +57,16 @@ describe("D10.2: Admin layout — AdminDrawer removal", () => {
     expect(source).not.toMatch(/import.*AdminDrawer/);
   });
 
-  // Edge: AdminDrawer component file may still exist (not deleted this sprint)
-  it("AdminDrawer component file still exists (not deleted)", () => {
-    // The file exists for backward reference; removal of render is sufficient
-    // This test documents the conscious choice to keep the file
-    const drawerExists = fileExists(
-      "src/components/admin/AdminDrawer.tsx",
-    );
-    // If it never existed, that's also acceptable
-    if (drawerExists) {
-      const source = readSource("src/components/admin/AdminDrawer.tsx");
-      // It may have a deprecated comment
-      expect(typeof source).toBe("string");
-    }
-    // Pass either way — what matters is it's not rendered in layout
-    expect(true).toBe(true);
+  it("admin layout does not render a separate mobile admin toolbar", () => {
+    const source = readSource("src/app/admin/layout.tsx");
+    expect(source).not.toContain("data-admin-mobile-toolbar");
   });
 });
 
-// ── D10.3: AccountMenu admin section for admin users ──────────────────
+// ── D10.3: AccountMenu stays self-service only ───────────────────────
 
-describe("D10.3: AccountMenu — admin section group", () => {
-  it("AccountMenu source references admin navigation items or adminNavItems", () => {
-    // Find the AccountMenu component — it may be in a few locations
+describe("D10.3: AccountMenu — self-service scope", () => {
+  it("AccountMenu source resolves routes from shared shell navigation", () => {
     const candidates = [
       "src/components/shell/AccountMenu.tsx",
       "src/components/AccountMenu.tsx",
@@ -91,11 +76,10 @@ describe("D10.3: AccountMenu — admin section group", () => {
       .map((p) => (fileExists(p) ? readSource(p) : ""))
       .find((s) => s.length > 0);
     expect(source).toBeDefined();
-    // Should reference admin routes or ADMIN role
-    expect(source).toMatch(/ADMIN|adminNav|admin-nav|admin_nav|AdminNav/i);
+    expect(source).toMatch(/resolveAccountMenuRoutes/);
   });
 
-  it("AccountMenu source contains conditional rendering for admin users", () => {
+  it("AccountMenu source references ADMIN only for simulation controls", () => {
     const candidates = [
       "src/components/shell/AccountMenu.tsx",
       "src/components/AccountMenu.tsx",
@@ -103,14 +87,13 @@ describe("D10.3: AccountMenu — admin section group", () => {
     const source = candidates
       .map((p) => (fileExists(p) ? readSource(p) : ""))
       .find((s) => s.length > 0) ?? "";
-    // Should conditionally show admin links
-    expect(source).toMatch(/isAdmin|role.*ADMIN|ADMIN.*role/i);
+    expect(source).toMatch(/ADMIN/);
+    expect(source).not.toMatch(/href.*\/admin/g);
   });
 
-  it("AccountMenu renders admin menu items for admin user", async () => {
+  it("AccountMenu renders no admin workspace links for admin users", async () => {
     vi.mock("@/core/entities/user", () => ({}));
 
-    // Locate a working import path
     let AccountMenu: React.ComponentType<{ role?: string }> | undefined;
     try {
       const mod = await import("@/components/AccountMenu");
@@ -121,22 +104,17 @@ describe("D10.3: AccountMenu — admin section group", () => {
 
     if (AccountMenu) {
       render(<AccountMenu role="ADMIN" />);
-      // Should have at least one admin-area link visible
-      const adminLinks = document.querySelectorAll(
-        'a[href^="/admin"]',
-      );
-      expect(adminLinks.length).toBeGreaterThan(0);
+      const adminLinks = document.querySelectorAll('a[href^="/admin"]');
+      expect(adminLinks.length).toBe(0);
     } else {
-      // Validate at source level instead
-      const source = fileExists("src/components/shell/AccountMenu.tsx")
-        ? readSource("src/components/shell/AccountMenu.tsx")
+      const source = fileExists("src/components/AccountMenu.tsx")
+        ? readSource("src/components/AccountMenu.tsx")
         : "";
-      expect(source).toContain("/admin");
+      expect(source).not.toMatch(/href.*\/admin/g);
     }
   });
 
-  // Negative: non-admin users should not see admin links in AccountMenu
-  it("AccountMenu source guards admin links behind role check", () => {
+  it("AccountMenu source does not hardcode admin workspace links", () => {
     const candidates = [
       "src/components/shell/AccountMenu.tsx",
       "src/components/AccountMenu.tsx",
@@ -144,27 +122,10 @@ describe("D10.3: AccountMenu — admin section group", () => {
     const source = candidates
       .map((p) => (fileExists(p) ? readSource(p) : ""))
       .find((s) => s.length > 0) ?? "";
-    // The admin section must be inside a conditional
-    expect(source).toMatch(/(isAdmin|role\s*===?\s*["']ADMIN["']|ADMIN)/);
+    expect(source).not.toMatch(/href.*\/admin/g);
   });
 
-  // Negative: admin section does not render for AUTHENTICATED users without ADMIN role
-  it("AccountMenu renders no admin section for non-admin role at source level", () => {
-    const source = fileExists("src/components/shell/AccountMenu.tsx")
-      ? readSource("src/components/shell/AccountMenu.tsx")
-      : "";
-    if (source) {
-      // Admin section must be gated, not unconditional
-      const adminHrefCount = (source.match(/href.*\/admin/g) ?? []).length;
-      const conditionalCount = (
-        source.match(/isAdmin|&&.*admin|admin.*&&/gi) ?? []
-      ).length;
-      expect(conditionalCount).toBeGreaterThan(0);
-    }
-  });
-
-  // Edge: admin section has a label/heading to distinguish it from personal items
-  it("AccountMenu source contains an Admin section label", () => {
+  it("AccountMenu source keeps account-scoped headings and controls", () => {
     const candidates = [
       "src/components/shell/AccountMenu.tsx",
       "src/components/AccountMenu.tsx",
@@ -172,7 +133,7 @@ describe("D10.3: AccountMenu — admin section group", () => {
     const source = candidates
       .map((p) => (fileExists(p) ? readSource(p) : ""))
       .find((s) => s.length > 0) ?? "";
-    expect(source).toMatch(/Admin|admin-section|adminSection/i);
+    expect(source).toMatch(/Workspace|Account|System Legibility/i);
   });
 });
 
@@ -202,28 +163,10 @@ describe("D10.5: Detail pages — breadcrumbs and back-link", () => {
       parentLabel: "All Leads",
     },
     {
-      path: "src/app/admin/deals/[id]/page.tsx",
-      label: "Deals detail",
-      parentHref: "/admin/deals",
-      parentLabel: "All Deals",
-    },
-    {
-      path: "src/app/admin/training/[id]/page.tsx",
-      label: "Training detail",
-      parentHref: "/admin/training",
-      parentLabel: "All Training",
-    },
-    {
       path: "src/app/admin/conversations/[id]/page.tsx",
       label: "Conversations detail",
       parentHref: "/admin/conversations",
       parentLabel: "All Conversations",
-    },
-    {
-      path: "src/app/admin/prompts/[id]/page.tsx",
-      label: "Prompts detail",
-      parentHref: "/admin/prompts",
-      parentLabel: "All Prompts",
     },
   ];
 
@@ -263,9 +206,27 @@ describe("D10.5: Detail pages — breadcrumbs and back-link", () => {
   });
 });
 
-// ── D10.6: Admin layout main landmark ────────────────────────────────
+// ── D10.6: Duplicate deal/training detail routes redirect canonically ─
 
-describe("D10.6: Admin layout — <main> landmark element", () => {
+describe("D10.6: Duplicate pipeline detail routes redirect to leads detail", () => {
+  it("deals detail route uses permanentRedirect", () => {
+    const source = readSource("src/app/admin/deals/[id]/page.tsx");
+    expect(source).toContain("permanentRedirect");
+    expect(source).toContain("getAdminLeadsDetailPath");
+    expect(source).not.toContain("/admin/deals");
+  });
+
+  it("training detail route uses permanentRedirect", () => {
+    const source = readSource("src/app/admin/training/[id]/page.tsx");
+    expect(source).toContain("permanentRedirect");
+    expect(source).toContain("getAdminLeadsDetailPath");
+    expect(source).not.toContain("/admin/training");
+  });
+});
+
+// ── D10.7: Admin layout main landmark ────────────────────────────────
+
+describe("D10.7: Admin layout — <main> landmark element", () => {
   it("admin layout renders a <main> element", () => {
     const source = readSource("src/app/admin/layout.tsx");
     expect(source).toMatch(/<main[\s>]/);

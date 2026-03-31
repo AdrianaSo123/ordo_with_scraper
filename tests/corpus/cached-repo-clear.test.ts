@@ -4,7 +4,7 @@ import type { CorpusRepository } from "@/core/use-cases/CorpusRepository";
 import type { Document, Section } from "@/core/entities/corpus";
 
 function makeDocument(slug: string): Document {
-  return { slug, title: `Book ${slug}`, number: "I" };
+  return { slug, title: `Book ${slug}`, number: "I", audience: "public" };
 }
 
 function makeMockInner(initial: Document[]) {

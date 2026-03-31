@@ -1,6 +1,6 @@
 import webpush from "web-push";
 import type {
-  AdminNotification,
+  AppNotification,
   NotificationChannel,
 } from "@/core/entities/NotificationChannel";
 import type { BrowserPushSubscription, PushSubscriptionRecord } from "@/core/entities/push-subscription";
@@ -41,7 +41,7 @@ export class PushNotificationChannel implements NotificationChannel {
     private readonly adminUserId: string,
   ) {}
 
-  async send(notification: AdminNotification): Promise<void> {
+  async send(notification: AppNotification): Promise<void> {
     if (!ensureWebPushConfigured()) return;
 
     const subscriptions = await this.repository.listByUser(this.adminUserId);

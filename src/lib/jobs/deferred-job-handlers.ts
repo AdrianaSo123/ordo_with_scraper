@@ -1,4 +1,10 @@
-import { getBlogAssetRepository, getBlogPostRepository, getJobQueueRepository } from "@/adapters/RepositoryFactory";
+import {
+  getBlogAssetRepository,
+  getBlogPostRepository,
+  getBlogPostRevisionRepository,
+  getJobQueueRepository,
+  getJobStatusQuery,
+} from "@/adapters/RepositoryFactory";
 import {
   executeDraftContent,
   executePublishContent,
@@ -21,18 +27,44 @@ import {
   parseQaBlogArticleInput,
   parseResolveBlogArticleQaInput,
 } from "@/core/use-cases/tools/blog-production.tool";
+import {
+  parsePrepareJournalPostForPublishInput,
+  PrepareJournalPostForPublishInteractor,
+} from "@/core/use-cases/tools/journal-write.tool";
 import { getBlogArticleProductionService, getBlogImageGenerationService } from "@/lib/blog/blog-production-root";
 import type { DeferredJobHandler } from "@/lib/jobs/deferred-job-worker";
+
+export const DEFERRED_JOB_HANDLER_NAMES = [
+  "draft_content",
+  "publish_content",
+  "prepare_journal_post_for_publish",
+  "generate_blog_image",
+  "compose_blog_article",
+  "qa_blog_article",
+  "resolve_blog_article_qa",
+  "generate_blog_image_prompt",
+  "produce_blog_article",
+] as const;
+
+export type DeferredJobHandlerName = (typeof DEFERRED_JOB_HANDLER_NAMES)[number];
 
 export function getDeferredJobRepository() {
   return getJobQueueRepository();
 }
 
-export function createDeferredJobHandlers(): Record<string, DeferredJobHandler> {
+export function createDeferredJobHandlers(): Record<DeferredJobHandlerName, DeferredJobHandler> {
   const blogRepo = getBlogPostRepository();
   const blogAssetRepo = getBlogAssetRepository();
+  const blogRevisionRepo = getBlogPostRevisionRepository();
   const blogImageService = getBlogImageGenerationService();
   const blogArticleService = getBlogArticleProductionService();
+  const jobStatusQuery = getJobStatusQuery();
+  const prepareJournalPostForPublishInteractor = new PrepareJournalPostForPublishInteractor(
+    blogRepo,
+    blogRevisionRepo,
+    jobStatusQuery,
+    blogArticleService,
+  );
 
   return {
     draft_content: async (job) => executeDraftContent(
@@ -53,6 +85,10 @@ export function createDeferredJobHandlers(): Record<string, DeferredJobHandler> 
         conversationId: job.conversationId,
       },
       blogAssetRepo,
+    ),
+    prepare_journal_post_for_publish: async (job) => prepareJournalPostForPublishInteractor.execute(
+      parsePrepareJournalPostForPublishInput(job.requestPayload),
+      job.userId ?? "unknown",
     ),
     generate_blog_image: async (job) => executeGenerateBlogImage(
       blogImageService,

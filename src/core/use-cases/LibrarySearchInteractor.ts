@@ -28,6 +28,9 @@ export class LibrarySearchInteractor implements UseCase<SearchRequest, LibrarySe
     const sections = await this.corpusRepository.getAllSections();
 
     const documentMap = new Map(documents.map((document) => [document.slug, document]));
+    const allSectionKeys = new Set(
+      sections.map((section) => `${section.documentSlug}/${section.sectionSlug}`),
+    );
     const visibleSections = role
       ? sections.filter((section) => canAccessAudience(section.audience, role))
       : sections;
@@ -43,13 +46,24 @@ export class LibrarySearchInteractor implements UseCase<SearchRequest, LibrarySe
         const sectionSlug = result.chapterSlug ?? result.sectionSlug;
 
         if (documentSlug && sectionSlug) {
-          return visibleSectionKeys.has(`${documentSlug}/${sectionSlug}`);
+          const sectionKey = `${documentSlug}/${sectionSlug}`;
+
+          if (visibleSectionKeys.has(sectionKey)) {
+            return true;
+          }
+
+          if (allSectionKeys.has(sectionKey)) {
+            return false;
+          }
+
+          const document = documentMap.get(documentSlug);
+          return document ? canAccessAudience(document.audience, role) : true;
         }
 
         if (!documentSlug) return false;
 
         const document = documentMap.get(documentSlug);
-        return !!document && canAccessAudience(document.audience, role);
+        return document ? canAccessAudience(document.audience, role) : true;
       });
 
       return filteredResults.slice(0, maxResults).map((hr) => ({

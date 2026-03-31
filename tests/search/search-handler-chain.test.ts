@@ -17,7 +17,7 @@ import type { Document } from "@/core/entities/corpus";
 import { Section } from "@/core/entities/corpus";
 
 const mockDocuments: Document[] = [
-  { slug: "book-1", title: "Book One", number: "1", id: "1" },
+  { slug: "book-1", title: "Book One", number: "1", id: "1", audience: "public" },
 ];
 
 const mockSections: Section[] = [

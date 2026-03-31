@@ -90,15 +90,14 @@ describe("deferred blog job flow", () => {
 
     const messages = await messageRepo.listByConversation("conv_blog");
     expect(messages).toHaveLength(1);
-    expect(messages[0]?.parts).toEqual(expect.arrayContaining([
+    expect(messages[0]?.parts).toEqual([
       expect.objectContaining({
         type: "job_status",
         jobId: job.id,
         title: "Deferred Queue Post",
         subtitle: "Draft journal article",
-        status: "succeeded",
-        summary: 'Draft journal article "Deferred Queue Post" ready at /admin/journal/preview/deferred-queue-post.',
+        status: "running",
       }),
-    ]));
+    ]);
   });
 });

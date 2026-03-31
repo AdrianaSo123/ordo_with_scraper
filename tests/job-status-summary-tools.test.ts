@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createJobStatusQuery } from "@/lib/jobs/job-status-query";
 import type { JobQueueRepository } from "@/core/use-cases/JobQueueRepository";
+import { getSignedInJobAudienceRoles } from "@/lib/jobs/job-capability-registry";
 
 import {
   createGetMyJobStatusTool,
@@ -68,6 +69,7 @@ describe("job status summary tools", () => {
     });
 
     const tool = createListMyJobsTool(createJobStatusQuery(repository));
+  expect(tool.roles).toEqual(getSignedInJobAudienceRoles());
     const result = await tool.command.execute({}, { role: "AUTHENTICATED", userId: "usr_member" });
 
     expect(listJobsByUserMock).toHaveBeenCalledWith("usr_member", {
@@ -86,6 +88,7 @@ describe("job status summary tools", () => {
     listJobsByUserMock.mockResolvedValue([]);
 
     const tool = createListMyJobsTool(createJobStatusQuery(repository));
+  expect(tool.roles).toEqual(getSignedInJobAudienceRoles());
     const result = await tool.command.execute({ active_only: false, limit: 25 }, { role: "STAFF", userId: "usr_staff" });
 
     expect(listJobsByUserMock).toHaveBeenCalledWith("usr_staff", {
@@ -123,6 +126,7 @@ describe("job status summary tools", () => {
     findLatestEventForJobMock.mockResolvedValue(null);
 
     const tool = createGetMyJobStatusTool(createJobStatusQuery(repository));
+  expect(tool.roles).toEqual(getSignedInJobAudienceRoles());
     const result = await tool.command.execute({ job_id: "job_9" }, { role: "APPRENTICE", userId: "usr_member" });
 
     expect(listJobsByUserMock).toHaveBeenCalledWith("usr_member", { limit: 100 });
@@ -173,6 +177,7 @@ describe("job status summary tools", () => {
     findLatestEventForJobMock.mockResolvedValue(null);
 
     const tool = createGetMyJobStatusTool(createJobStatusQuery(repository));
+  expect(tool.roles).toEqual(getSignedInJobAudienceRoles());
     const result = await tool.command.execute({ job_id: "job_ready_1" }, { role: "ADMIN", userId: "usr_member" });
 
     expect(result.job.part).toMatchObject({
@@ -185,6 +190,7 @@ describe("job status summary tools", () => {
 
   it("rejects anonymous callers", async () => {
     const tool = createListMyJobsTool(createJobStatusQuery(repository));
+    expect(tool.roles).toEqual(getSignedInJobAudienceRoles());
 
     await expect(tool.command.execute({}, { role: "ANONYMOUS", userId: "anon_1" })).rejects.toThrow(
       "Sign in is required to inspect your jobs.",

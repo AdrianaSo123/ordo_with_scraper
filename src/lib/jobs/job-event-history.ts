@@ -15,3 +15,5 @@ export function mapJobEventHistory(job: JobRequest, events: JobEvent[]) {
     part: buildJobStatusPartFromProjection(projectJobForEvent(job, event), event),
   }));
 }
+
+export type JobHistoryEntry = ReturnType<typeof mapJobEventHistory>[number];

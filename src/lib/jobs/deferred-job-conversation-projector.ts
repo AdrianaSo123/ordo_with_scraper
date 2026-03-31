@@ -14,6 +14,10 @@ function replaceJobStatusPart(parts: MessagePart[] | undefined, nextPart: JobSta
   return [...preserved, nextPart];
 }
 
+function isTerminalEvent(eventType: JobEvent["eventType"]): boolean {
+  return eventType === "result" || eventType === "failed" || eventType === "canceled";
+}
+
 export class DeferredJobConversationProjector {
   constructor(
     private readonly conversationRepo: ConversationRepository,
@@ -23,6 +27,22 @@ export class DeferredJobConversationProjector {
   async project(job: JobRequest, event: JobEvent): Promise<Message> {
     const nextPart = buildJobStatusPart(job, event);
     const existing = await this.findExistingMessage(job.conversationId, job.id);
+
+    if (isTerminalEvent(event.eventType)) {
+      if (existing) {
+        await this.conversationRepo.touch(job.conversationId);
+        return existing;
+      }
+
+      const created = await this.messageRepo.create({
+        conversationId: job.conversationId,
+        role: "assistant",
+        content: "",
+        parts: [nextPart],
+      });
+      await this.conversationRepo.recordMessageAppended(job.conversationId, created.createdAt);
+      return created;
+    }
 
     if (existing) {
       const updated = await this.messageRepo.update(existing.id, {

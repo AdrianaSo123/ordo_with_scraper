@@ -41,22 +41,25 @@ async function registerAndSimulateAdmin(page: Page) {
 }
 
 test.describe("Admin shell responsive", () => {
-  test("desktop sidebar exposes the full admin route set with preview status", async ({ page }) => {
+  test("desktop sidebar exposes the live admin route set", async ({ page }) => {
     await stubShellRequests(page);
     await registerAndSimulateAdmin(page);
 
     await page.goto("/admin");
 
-    const sidebar = page.getByLabel("Admin");
+    const sidebar = page.locator('aside[aria-label="Admin"]');
 
     await expect(page.getByRole("heading", { name: "Admin dashboard" })).toBeVisible();
     await expect(sidebar.getByRole("link", { name: "Dashboard" })).toBeVisible();
-    await expect(sidebar.getByRole("link", { name: "Users preview" })).toBeVisible();
-    await expect(sidebar.getByRole("link", { name: "System preview" })).toBeVisible();
+    await expect(sidebar.getByRole("link", { name: "Users" })).toBeVisible();
+    await expect(sidebar.getByRole("link", { name: "Leads" })).toBeVisible();
     await expect(sidebar.getByRole("link", { name: "Journal" })).toBeVisible();
-    await expect(sidebar.getByRole("link", { name: "Leads preview" })).toBeVisible();
+    await expect(sidebar.getByRole("link", { name: "Prompts" })).toBeVisible();
+    await expect(sidebar.getByRole("link", { name: "Conversations" })).toBeVisible();
+    await expect(sidebar.getByRole("link", { name: "Jobs" })).toBeVisible();
+    await expect(sidebar.getByRole("link", { name: "System" })).toBeVisible();
 
-    await sidebar.getByRole("link", { name: "Users preview" }).click();
+    await sidebar.getByRole("link", { name: "Users" }).click();
     await expect(page).toHaveURL(/\/admin\/users$/);
     await expect(page.getByRole("heading", { name: "Users" })).toBeVisible();
   });
@@ -64,24 +67,42 @@ test.describe("Admin shell responsive", () => {
   test.describe("mobile", () => {
     test.use({ viewport: { width: 390, height: 844 } });
 
-    test("bottom nav keeps parity with desktop and reaches preview routes", async ({ page }) => {
+    test("mobile admin pages expose the shared workspace menu", async ({ page }) => {
       await stubShellRequests(page);
       await registerAndSimulateAdmin(page);
 
       await page.goto("/admin");
 
-      const mobileNav = page.getByLabel("Admin mobile");
-
       await expect(page.getByRole("heading", { name: "Admin dashboard" })).toBeVisible();
-      await expect(mobileNav.getByRole("link", { name: "Dashboard" })).toBeVisible();
-      await expect(mobileNav.getByRole("link", { name: "Users preview" })).toBeVisible();
-      await expect(mobileNav.getByRole("link", { name: "System preview" })).toBeVisible();
-      await expect(mobileNav.getByRole("link", { name: "Journal" })).toBeVisible();
-      await expect(mobileNav.getByRole("link", { name: "Leads preview" })).toBeVisible();
+      await expect(page.locator('[data-admin-shell="true"]')).toBeVisible();
+      await expect(page.locator('aside[aria-label="Admin"]')).toBeHidden();
 
-      await mobileNav.getByRole("link", { name: "Leads preview" }).click();
-      await expect(page).toHaveURL(/\/admin\/leads$/);
-      await expect(page.getByRole("heading", { name: "Leads" })).toBeVisible();
+      const trigger = page.locator('[data-shell-workspace-menu-trigger="true"]');
+      await expect(trigger).toBeVisible();
+
+      await trigger.click();
+
+      const dialog = page.getByRole("dialog", { name: "Workspace menu" });
+      await expect(dialog).toBeVisible();
+      await expect(dialog.getByRole("heading", { name: "Overview" })).toBeVisible();
+      await expect(dialog.getByRole("heading", { name: "Operations" })).toBeVisible();
+      await expect(dialog.getByRole("heading", { name: "Content" })).toBeVisible();
+      await expect(dialog.getByRole("heading", { name: "Governance" })).toBeVisible();
+      await expect(dialog.getByRole("heading", { name: "Platform" })).toBeVisible();
+      await expect(dialog.getByRole("link", { name: "Dashboard" })).toBeVisible();
+      await expect(dialog.getByRole("link", { name: "Leads" })).toBeVisible();
+      await expect(dialog.getByRole("link", { name: "Conversations" })).toBeVisible();
+      await expect(dialog.getByRole("link", { name: "My Jobs" })).toBeVisible();
+      await expect(dialog.getByRole("link", { name: "Global Jobs" })).toBeVisible();
+      await expect(dialog.getByRole("link", { name: "Journal" })).toBeVisible();
+      await expect(dialog.getByRole("link", { name: "Users" })).toBeVisible();
+      await expect(dialog.getByRole("link", { name: "Prompts" })).toBeVisible();
+      await expect(dialog.getByRole("link", { name: "System" })).toBeVisible();
+
+      await dialog.getByRole("link", { name: "Global Jobs" }).click();
+      await expect(page).toHaveURL(/\/admin\/jobs$/);
+      await expect(page.getByRole("heading", { name: "Jobs" })).toBeVisible();
+      await expect(page.getByRole("dialog", { name: "Workspace menu" })).toHaveCount(0);
     });
   });
 });

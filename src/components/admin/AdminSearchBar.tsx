@@ -17,7 +17,12 @@ export function AdminSearchBar({
 }) {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   let router: { push: (url: string) => void } = { push: () => {} };
-  try { router = NextNavigation.useRouter!(); } catch { /* test env without useRouter mock */ }
+  try {
+    router = NextNavigation.useRouter!();
+  } catch (error) {
+    void error;
+    // Test environments can render this component without a mocked router.
+  }
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<AdminSearchResult[]>([]);
   const [open, setOpen] = useState(false);

@@ -5,7 +5,7 @@
 > **Scope:** Define one global top-rail search surface for all users, move search ownership out of admin page layouts, and make content/search access enforce the same role-aware policy across shell UI, library routes, chat tools, and future member-content expansion.
 > **Dependencies:** RBAC, Shell Navigation And Design System, Footer Information Architecture, Librarian
 > **Affects:** `src/components/SiteNav.tsx`, `src/components/AppShell.tsx`, `src/lib/shell/shell-navigation.ts`, `src/lib/auth.ts`, `src/lib/admin/search/admin-search.ts`, `src/core/entities/corpus.ts`, `src/core/use-cases/CorpusRepository.ts`, `src/adapters/FileSystemCorpusRepository.ts`, `src/lib/corpus-library.ts`, `src/app/library/**`, `src/core/use-cases/tools/search-corpus.tool.ts`, `src/core/use-cases/tools/get-section.tool.ts`, `src/core/tool-registry/ToolResultFormatter.ts`
-> **Motivation:** The business needs search and retrieval to reflect account level at the core of the system. Anonymous users may search public content. Signed-in members may search public plus member content. Admin/operator search remains role-gated. The current codebase already implements part of that contract, but the global search backend does not yet compose corpus content into the shell search surface.
+> **Motivation:** The business needs search and retrieval to reflect account level at the core of the system. Anonymous users may search public content. Signed-in members may search public plus member content. Admin/operator search remains role-gated. The current codebase now composes corpus content into the shell search surface, and the remaining work is direct-route enforcement plus any future inbox/feed surface that consumes the notification path.
 > **Requirement IDs:** `GSCA-XXX`
 
 ---
@@ -26,7 +26,7 @@ The remaining question is not shell placement, but whether the search backend co
 
 ### 1.2 Access Control Is Partially Shared Across Layers
 
-The runtime already has a shared content-audience model, but some search and retrieval paths still need to converge on it.
+The runtime already has a shared content-audience model, and the remaining question is whether every direct-navigation path and future alert surface stays aligned to it.
 
 Verified current state:
 
@@ -36,7 +36,7 @@ Verified current state:
 4. `RoleAwareSearchFormatter` still strips passage and slug detail for anonymous `search_corpus` results. `[GSCA-008]`
 5. `src/lib/access/content-access.ts` now provides the shared `ContentAudience` contract and audience-role helpers. `[GSCA-009]`
 
-Tool-layer policy is no longer the only protection, but search composition has not yet caught up with corpus visibility. `[GSCA-010]`
+Tool-layer policy is no longer the only protection, and search composition now catches up with corpus visibility. `[GSCA-010]`
 
 ### 1.3 Library Routes Already Enforce Audience Metadata
 
@@ -49,7 +49,7 @@ Verified current state:
 3. `FileSystemCorpusRepository` parses `book.json` audience metadata and chapter frontmatter audience overrides. `[GSCA-013]`
 4. `Document` and `Section` now carry `audience: ContentAudience`. `[GSCA-014]`
 
-The remaining work is making every discoverability surface use that same model, especially the global search composition path. `[GSCA-015]`
+The remaining work is making every discoverability surface use that same model, especially direct-route enforcement and any future inbox/feed surface. `[GSCA-015]`
 
 ### 1.4 The Business Requirement Is Stronger Than A UI Move
 
@@ -59,7 +59,7 @@ That requirement is already reflected in project documentation:
 
 1. Brand and business docs require a sparse header with account/workspace access in the top rail. `[GSCA-015]`
 2. RBAC and operations docs describe anonymous access as limited/demo-like and authenticated access as full member library access. `[GSCA-016]`
-3. The current code enforces that distinction in the content model, library routes, and tool boundary, but not yet in the global search composition layer. `[GSCA-017]`
+3. The current code enforces that distinction in the content model, library routes, tool boundary, and the global search composition layer. `[GSCA-017]`
 
 Without a shared content-access contract, the product can continue to drift into contradictory behavior: one role policy in chat tools, another in shell search, and none in direct content routes. `[GSCA-018]`
 
@@ -276,7 +276,7 @@ export async function searchGlobalEntities(
 Source rules:
 
 1. Shell routes come from `resolveCommandRoutes(user)` or an equivalent shell-truth helper. `[GSCA-065]`
-2. Corpus results still need to be added from role-filtered corpus search/index services. `[GSCA-066]`
+2. Corpus results are now added from role-filtered corpus search/index services. `[GSCA-066]`
 3. Admin entities are included only for `ADMIN`, via `searchAdminEntities()`. `[GSCA-067]`
 4. Member-only future entities can be added later without changing the shell UI contract. `[GSCA-068]`
 
@@ -310,7 +310,7 @@ Required behavior:
 2. Signed-in members may search and view `public` plus `member` content. `[GSCA-081]`
 3. Staff/admin-only content must never be exposed by public routes, search snippets, or client-side filtering alone. `[GSCA-082]`
 4. Admin entity search must remain unavailable outside `ADMIN`. `[GSCA-083]`
-5. Content access is already enforced server-side in routes and use cases, but the shell search composition layer still needs to adopt the same filtering. `[GSCA-084]`
+5. Content access is already enforced server-side in routes and use cases, and the shell search composition layer now adopts the same filtering. `[GSCA-084]`
 6. The role used for chat/tool access and the role used for page/search access comes from the same session model. `[GSCA-085]`
 
 ---

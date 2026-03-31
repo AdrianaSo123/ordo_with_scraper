@@ -27,18 +27,18 @@ export default async function AdminJobDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireAdminPageAccess();
+  const admin = await requireAdminPageAccess();
   const { id } = await params;
-  const detail = await loadAdminJobDetail(id);
-  const { job, events } = detail;
+  const detail = await loadAdminJobDetail(id, admin.roles);
+  const { job, events, policy } = detail;
 
-  const canCancel = job.status === "queued" || job.status === "running";
-  const canRetry = job.status === "failed" || job.status === "canceled";
+  const canCancel = policy.canCancel;
+  const canRetry = policy.canRetry;
 
   return (
     <AdminSection
-      title={`${job.toolName}`}
-      description={`Job ${job.id}`}
+      title={job.toolLabel}
+      description={`Job ${job.id} • ${job.toolFamilyLabel} • ${job.toolName}`}
     >
       <div className="px-(--space-inset-panel)">
         <AdminDetailShell
@@ -55,6 +55,9 @@ export default async function AdminJobDetailPage({
                       : "neutral"
                 }
               >
+                  <p className="mb-(--space-3) text-xs uppercase tracking-[0.18em] text-foreground/45">
+                    {job.toolFamilyLabel} • {job.defaultSurface === "global" ? "Global queue" : "Self-service default"}
+                  </p>
                 {job.progressPercent != null && (
                   <div className="grid gap-(--space-2)">
                     <div className="h-2 w-full rounded-full bg-foreground/8">
@@ -67,6 +70,11 @@ export default async function AdminJobDetailPage({
                       {job.progressPercent}%{job.progressLabel ? ` — ${job.progressLabel}` : ""}
                     </p>
                   </div>
+                )}
+                {!policy.canManage && (
+                  <p className="text-xs text-foreground/50">
+                    This job is visible to your role, but global mutating actions are disabled by capability policy.
+                  </p>
                 )}
               </AdminCard>
 
@@ -157,6 +165,22 @@ export default async function AdminJobDetailPage({
               <section className="rounded-xl border border-foreground/8 p-(--space-inset-panel)">
                 <h2 className="text-sm font-semibold text-foreground/60">Metadata</h2>
                 <dl className="mt-(--space-3) grid gap-(--space-2) text-sm">
+                  <div className="flex justify-between">
+                    <dt className="text-foreground/50">Capability</dt>
+                    <dd className="text-foreground text-xs">{job.toolLabel}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-foreground/50">Family</dt>
+                    <dd className="text-foreground text-xs">{job.toolFamilyLabel}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-foreground/50">Surface</dt>
+                    <dd className="text-foreground text-xs">{job.defaultSurface}</dd>
+                  </div>
+                  <div className="flex justify-between">
+                    <dt className="text-foreground/50">Policy</dt>
+                    <dd className="text-foreground text-xs">{policy.canManage ? "Global manage" : "View only"}</dd>
+                  </div>
                   <div className="flex justify-between">
                     <dt className="text-foreground/50">ID</dt>
                     <dd className="truncate text-foreground text-xs font-mono">{job.id}</dd>

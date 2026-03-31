@@ -146,22 +146,56 @@ export function GlobalSearchBar({
 
   return (
     <div ref={containerRef} className="relative min-w-0 flex-1" data-global-search="true">
-      <button
-        type="button"
-        className="sm:hidden rounded-full border border-foreground/12 p-2"
-        aria-label="Open search"
-        onClick={() => {
-          setMobileExpanded(true);
-          setTimeout(() => inputRef.current?.focus(), 0);
-        }}
-      >
-        <svg className="h-5 w-5 text-foreground/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.3-4.3" />
-        </svg>
-      </button>
+      <div className="sm:hidden">
+        {!mobileExpanded ? (
+          <button
+            type="button"
+            className="shell-nav-icon-button focus-ring inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-foreground/12 bg-background/80 text-foreground/60 transition hover:bg-foreground/4 hover:text-foreground"
+            aria-label="Open search"
+            onClick={() => {
+              setMobileExpanded(true);
+              setTimeout(() => inputRef.current?.focus(), 0);
+            }}
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+          </button>
+        ) : (
+          <div className="flex min-w-0 items-center gap-2 rounded-full border border-foreground/12 bg-background/80 px-3 py-2 shadow-sm backdrop-blur-sm">
+            <svg className="h-4 w-4 shrink-0 text-foreground/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+            <input
+              ref={inputRef}
+              type="search"
+              value={query}
+              onChange={(event) => handleChange(event.target.value)}
+              placeholder={isCommandMode ? commandPlaceholder : entityPlaceholder}
+              aria-label={isCommandMode ? "Navigate to available pages" : "Search pages and accessible content"}
+              className="min-w-0 flex-1 bg-transparent py-0.5 text-sm text-foreground placeholder:text-foreground/40 focus:outline-none"
+            />
+            <button
+              type="button"
+              className="flex h-8 w-8 items-center justify-center rounded-full text-foreground/50 transition hover:bg-foreground/5 hover:text-foreground"
+              aria-label="Close search"
+              onClick={() => {
+                setMobileExpanded(false);
+                setOpen(false);
+                setQuery("");
+              }}
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
+      </div>
 
-      <div className={`${mobileExpanded ? "flex" : "hidden"} min-w-0 items-center sm:flex`}>
+      <div className="hidden min-w-0 items-center sm:flex">
         <div className="relative min-w-0 flex-1">
           <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
             <circle cx="11" cy="11" r="8" />

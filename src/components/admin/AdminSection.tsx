@@ -18,7 +18,7 @@ export function AdminSection({
       {breadcrumbs && breadcrumbs.length > 0 && (
         <AdminBreadcrumb items={breadcrumbs} />
       )}
-      <header className="jobs-hero-surface overflow-hidden px-(--space-inset-panel) py-(--space-inset-panel)">
+      <header className="admin-hero-surface overflow-hidden px-(--space-inset-panel) py-(--space-inset-panel)">
         <div className="grid gap-(--space-3)">
           <p className="shell-section-heading text-foreground/46">Admin platform</p>
           <h2 className="text-[clamp(1.9rem,3vw,2.6rem)] font-semibold tracking-[-0.04em] text-foreground">{title}</h2>

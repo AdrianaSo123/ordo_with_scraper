@@ -5,12 +5,22 @@ const { searchAdminEntitiesMock, resolveCommandRoutesMock } = vi.hoisted(() => (
   resolveCommandRoutesMock: vi.fn(),
 }));
 
+const { getCorpusSummariesMock, searchCorpusMock } = vi.hoisted(() => ({
+  getCorpusSummariesMock: vi.fn(),
+  searchCorpusMock: vi.fn(),
+}));
+
 vi.mock("@/lib/admin/search/admin-search", () => ({
   searchAdminEntities: searchAdminEntitiesMock,
 }));
 
 vi.mock("@/lib/shell/shell-navigation", () => ({
   resolveCommandRoutes: resolveCommandRoutesMock,
+}));
+
+vi.mock("@/lib/corpus-library", () => ({
+  getCorpusSummaries: getCorpusSummariesMock,
+  searchCorpus: searchCorpusMock,
 }));
 
 import { searchGlobalEntities } from "@/lib/search/global-search";
@@ -43,6 +53,43 @@ describe("searchGlobalEntities", () => {
         updatedAt: "2026-03-30T00:00:00.000Z",
       },
     ]);
+    getCorpusSummariesMock.mockResolvedValue([
+      {
+        id: "doc_1",
+        title: "Library Search",
+        slug: "library-search",
+        audience: "public",
+        sectionCount: 2,
+        sections: ["Search Overview", "Advanced Search"],
+        sectionSlugs: ["overview", "advanced-search"],
+        number: "01",
+        chapterCount: 2,
+        chapters: ["Search Overview", "Advanced Search"],
+        chapterSlugs: ["overview", "advanced-search"],
+      },
+    ]);
+    searchCorpusMock.mockImplementation(async (query: string) => {
+      if (query.toLowerCase().includes("lib")) {
+        return [
+      {
+        document: "01. Library Search",
+        documentId: "01",
+        section: "Search Overview",
+        sectionSlug: "overview",
+        documentSlug: "library-search",
+        matchContext: "search overview",
+        relevance: "high",
+        book: "01. Library Search",
+        bookNumber: "01",
+        chapter: "Search Overview",
+        chapterSlug: "overview",
+        bookSlug: "library-search",
+        },
+      ];
+      }
+
+      return [];
+    });
   });
 
   it("returns matching shell routes for non-admin users", async () => {
@@ -57,6 +104,18 @@ describe("searchGlobalEntities", () => {
         title: "Library",
         href: "/library",
         source: "shell",
+      }),
+      expect.objectContaining({
+        kind: "section",
+        title: "Search Overview",
+        href: "/library/library-search/overview",
+        source: "corpus",
+      }),
+      expect.objectContaining({
+        kind: "document",
+        title: "Library Search",
+        href: "/library/library-search",
+        source: "corpus",
       }),
     ]);
     expect(searchAdminEntitiesMock).not.toHaveBeenCalled();
@@ -99,6 +158,7 @@ describe("searchGlobalEntities", () => {
         updatedAt: "2026-03-30T00:00:00.000Z",
       },
     ]);
+    searchCorpusMock.mockResolvedValue([]);
 
     const results = await searchGlobalEntities("admin", {
       id: "usr_admin",

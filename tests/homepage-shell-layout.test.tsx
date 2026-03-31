@@ -37,6 +37,18 @@ vi.mock("@/components/AccountMenu", () => ({
   AccountMenu: () => <div data-testid="account-menu" />,
 }));
 
+vi.mock("@/components/ShellWorkspaceMenu", () => ({
+  ShellWorkspaceMenu: () => <div data-testid="workspace-menu" />,
+}));
+
+vi.mock("@/components/NotificationFeed", () => ({
+  NotificationFeed: () => <div data-testid="notification-feed" />,
+}));
+
+vi.mock("@/components/GlobalSearchBar", () => ({
+  GlobalSearchBar: () => <div data-testid="global-search" />,
+}));
+
 vi.mock("@/components/ThemeProvider", () => ({
   useTheme: () => ({
     accessibility: { density: "normal" },

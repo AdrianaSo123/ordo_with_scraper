@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AppShell } from "@/components/AppShell";
@@ -25,6 +25,14 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/components/AccountMenu", () => ({
   AccountMenu: () => <div data-testid="account-menu" />,
+}));
+
+vi.mock("@/components/ShellWorkspaceMenu", () => ({
+  ShellWorkspaceMenu: () => <div data-testid="workspace-menu" />,
+}));
+
+vi.mock("@/components/NotificationFeed", () => ({
+  NotificationFeed: () => <div data-testid="notification-feed" />,
 }));
 
 describe("site shell composition", () => {
@@ -73,22 +81,34 @@ describe("site shell composition", () => {
 
     const nav = screen.getByRole("navigation", { name: "Primary" });
     const footer = screen.getByRole("contentinfo");
+    const primaryLinksRegion = nav.querySelector('[data-shell-nav-region="primary-links"]');
 
-    // Sprint 8 (UX-32): Library/Home no longer in header; verify footer retains them
-    expect(within(nav).queryByRole("link", { name: "Library" })).toBeNull();
+    expect(primaryLinksRegion).not.toBeNull();
+    fireEvent.click(within(primaryLinksRegion as HTMLElement).getByRole("button", { name: "Open navigation menu" }));
+
+    const drawer = screen.getByRole("dialog", { name: "Primary navigation" });
+
+    expect(within(drawer).getByRole("link", { name: /^Library/i })).toHaveAttribute("aria-current", "page");
     expect(within(footer).getByRole("link", { name: "Library" })).toHaveAttribute("href", "/library");
     expect(within(nav).queryByRole("link", { name: "Home" })).toBeNull();
     expect(within(nav).queryByRole("link", { name: "Dashboard" })).toBeNull();
   });
 
   it("renders the public blog route in both the primary nav and footer", () => {
+    pathname = "/blog";
+
     renderShell();
 
     const nav = screen.getByRole("navigation", { name: "Primary" });
     const footer = screen.getByRole("contentinfo");
+    const primaryLinksRegion = nav.querySelector('[data-shell-nav-region="primary-links"]');
 
-    // Sprint 8 (UX-32): Blog removed from header rail; remains in footer
-    expect(within(nav).queryByRole("link", { name: "Blog" })).toBeNull();
+    expect(primaryLinksRegion).not.toBeNull();
+    fireEvent.click(within(primaryLinksRegion as HTMLElement).getByRole("button", { name: "Open navigation menu" }));
+
+    const drawer = screen.getByRole("dialog", { name: "Primary navigation" });
+
+    expect(within(drawer).getByRole("link", { name: /^Blog/i })).toHaveAttribute("href", "/blog");
     expect(within(footer).getByRole("link", { name: "Blog" })).toHaveAttribute("href", "/blog");
   });
 
@@ -119,17 +139,35 @@ describe("site shell composition", () => {
   });
 
   it("renders only the canonical primary nav labels", () => {
+    pathname = "/library";
+
+    renderShell();
+
+    const nav = screen.getByRole("navigation", { name: "Primary" });
+    const primaryLinksRegion = nav.querySelector('[data-shell-nav-region="primary-links"]');
+
+    expect(resolvePrimaryNavRoutes(baseUser).map((route) => route.id)).toEqual(["corpus", "blog"]);
+    expect(within(nav).getByRole("link", { name: /studio ordo home/i })).toHaveAttribute("href", "/");
+    expect(primaryLinksRegion).not.toBeNull();
+    fireEvent.click(within(primaryLinksRegion as HTMLElement).getByRole("button", { name: "Open navigation menu" }));
+    const drawer = screen.getByRole("dialog", { name: "Primary navigation" });
+    expect(within(nav).queryByRole("link", { name: "Home" })).toBeNull();
+    expect(within(drawer).getByRole("link", { name: /^Library/i })).toHaveAttribute("href", "/library");
+    expect(within(drawer).getByRole("link", { name: /^Blog/i })).toHaveAttribute("href", "/blog");
+    expect(within(drawer).queryByRole("link", { name: "Dashboard" })).toBeNull();
+  });
+
+  it("keeps the home header on the unified utility cluster", () => {
+    pathname = "/";
+
     renderShell();
 
     const nav = screen.getByRole("navigation", { name: "Primary" });
 
-    // Sprint 8 (UX-32): home/corpus/blog no longer in header rail
-    expect(resolvePrimaryNavRoutes(baseUser).map((route) => route.id)).toEqual([]);
-    expect(within(nav).getByRole("link", { name: /studio ordo home/i })).toHaveAttribute("href", "/");
-    // Sprint 8 (UX-32): primary-links region absent when no nav items
     expect(nav.querySelector('[data-shell-nav-region="primary-links"]')).toBeNull();
-    expect(within(nav).queryByRole("link", { name: "Home" })).toBeNull();
-    expect(within(nav).queryByRole("link", { name: "Library" })).toBeNull();
-    expect(within(nav).queryByRole("link", { name: "Blog" })).toBeNull();
+    expect(nav.querySelector('[data-shell-nav-region="search"]')).toBeNull();
+    expect(within(nav).getByTestId("notification-feed")).toBeInTheDocument();
+    expect(within(nav).getByTestId("workspace-menu")).toBeInTheDocument();
+    expect(within(nav).queryByTestId("account-menu")).toBeNull();
   });
 });

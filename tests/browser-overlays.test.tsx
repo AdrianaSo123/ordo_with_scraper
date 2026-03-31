@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import MentionsMenu from "@/components/MentionsMenu";
 import { AccountMenu } from "@/components/AccountMenu";
+import { ShellNavDrawer } from "@/components/ShellNavDrawer";
+import { ShellWorkspaceMenu } from "@/components/ShellWorkspaceMenu";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import type { MentionItem } from "@/core/entities/mentions";
 import type { User } from "@/core/entities/user";
@@ -100,6 +102,45 @@ describe("browser overlay hardening", () => {
     await waitFor(() => {
       expect(screen.queryByText("System Legibility")).not.toBeInTheDocument();
     });
+  });
+
+  it("dismisses the shell navigation drawer on pointer interactions outside the panel", async () => {
+    render(
+      <div data-testid="shell-rail">
+        <ShellNavDrawer user={authenticatedUser} />
+        <button type="button">Outside target</button>
+      </div>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Open navigation menu" }));
+    const dialog = await screen.findByRole("dialog", { name: "Primary navigation" });
+
+    expect(dialog).toBeInTheDocument();
+    expect(screen.getByTestId("shell-rail").contains(dialog)).toBe(false);
+    expect(document.body.contains(dialog)).toBe(true);
+
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Outside target" }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: "Primary navigation" })).not.toBeInTheDocument();
+    });
+  });
+
+  it("portals the workspace menu outside the shell rail container", async () => {
+    render(
+      <ThemeProvider>
+        <div data-testid="shell-rail">
+          <ShellWorkspaceMenu user={authenticatedUser} />
+        </div>
+      </ThemeProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Open workspace menu" }));
+
+    const dialog = await screen.findByRole("dialog", { name: "Workspace menu" });
+
+    expect(screen.getByTestId("shell-rail").contains(dialog)).toBe(false);
+    expect(document.body.contains(dialog)).toBe(true);
   });
 
   it("renders mention suggestions with selectable listbox semantics", () => {

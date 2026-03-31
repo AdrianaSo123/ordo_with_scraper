@@ -33,6 +33,18 @@ vi.mock("@/components/AccountMenu", () => ({
   AccountMenu: () => <div data-testid="account-menu" />,
 }));
 
+vi.mock("@/components/ShellWorkspaceMenu", () => ({
+  ShellWorkspaceMenu: () => <div data-testid="workspace-menu" />,
+}));
+
+vi.mock("@/components/NotificationFeed", () => ({
+  NotificationFeed: () => <div data-testid="notification-feed" />,
+}));
+
+vi.mock("@/components/GlobalSearchBar", () => ({
+  GlobalSearchBar: () => <div data-testid="global-search" />,
+}));
+
 vi.mock("@/components/ThemeProvider", () => ({
   useTheme: () => ({
     accessibility: { density: "normal" },
@@ -162,13 +174,15 @@ describe("homepage shell ownership", () => {
 
     const nav = screen.getByRole("navigation", { name: "Primary" });
     expect(within(nav).getByRole("link", { name: /studio ordo home/i })).toBeInTheDocument();
-    // Sprint 8 (UX-32): Library/Home removed from header rail
+    expect(nav.querySelector('[data-shell-nav-region="primary-links"]')).toBeNull();
+    expect(nav.querySelector('[data-shell-nav-region="search"]')).toBeNull();
     expect(within(nav).queryByRole("link", { name: "Library" })).toBeNull();
     expect(within(nav).queryByRole("link", { name: "Home" })).toBeNull();
     expect(within(nav).queryByRole("link", { name: "Dashboard" })).toBeNull();
-    expect(within(nav).getByTestId("account-menu")).toBeInTheDocument();
-    // Sprint 8 (UX-32): primary-links region absent when no nav items
-    expect(nav.querySelector('[data-shell-nav-region="primary-links"]')).toBeNull();
+    expect(within(nav).queryByTestId("account-menu")).toBeNull();
+    expect(within(nav).queryByTestId("global-search")).toBeNull();
+    expect(within(nav).getByTestId("notification-feed")).toBeInTheDocument();
+    expect(within(nav).getByTestId("workspace-menu")).toBeInTheDocument();
   });
 
   it("does not render a footer substitute inside the embedded chat container", () => {

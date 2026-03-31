@@ -9,7 +9,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { resolveAdminNavigationItems } from "@/lib/admin/admin-navigation";
+import {
+  isAdminNavigationItemActive,
+  resolveAdminNavigationGroups,
+} from "@/lib/admin/admin-navigation";
 import { SHELL_BRAND } from "@/lib/shell/shell-navigation";
 
 export function AdminDrawer() {
@@ -73,7 +76,7 @@ export function AdminDrawer() {
     triggerRef.current?.focus();
   }, []);
 
-  const items = resolveAdminNavigationItems();
+  const groupedItems = resolveAdminNavigationGroups();
 
   return (
     <>
@@ -83,7 +86,7 @@ export function AdminDrawer() {
         type="button"
         aria-label="Open admin menu"
         aria-expanded={open}
-        className="flex h-9 w-9 items-center justify-center rounded-lg text-foreground/60 transition hover:bg-foreground/8 hover:text-foreground sm:hidden"
+        className="admin-nav-trigger flex h-10 w-10 items-center justify-center rounded-full text-foreground/68 transition hover:text-foreground sm:hidden"
         onClick={() => setOpen(true)}
         data-admin-drawer-trigger="true"
       >
@@ -97,7 +100,7 @@ export function AdminDrawer() {
         <div className="fixed inset-0 z-50 sm:hidden" data-admin-drawer="true">
           {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="admin-drawer-backdrop absolute inset-0"
             onClick={close}
             aria-hidden="true"
           />
@@ -107,11 +110,14 @@ export function AdminDrawer() {
             role="dialog"
             aria-modal="true"
             aria-label="Admin navigation"
-            className="glass-surface absolute inset-y-0 left-0 flex w-72 flex-col border-r border-foreground/8 bg-background/95 shadow-2xl"
+            className="admin-drawer-panel safe-area-pt safe-area-pb absolute inset-y-0 left-0 flex w-[min(22rem,calc(100vw-var(--space-3)))] max-w-full flex-col"
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-foreground/8 px-(--space-4) py-(--space-3)">
-              <span className="text-sm font-semibold text-foreground">{SHELL_BRAND.shortName} Admin</span>
+              <div className="grid gap-1">
+                <span className="shell-section-heading text-foreground/42">Admin workspace</span>
+                <span className="text-sm font-semibold text-foreground">{SHELL_BRAND.shortName} Admin</span>
+              </div>
               <button
                 type="button"
                 aria-label="Close admin menu"
@@ -126,32 +132,44 @@ export function AdminDrawer() {
 
             {/* Nav items */}
             <nav className="flex-1 overflow-y-auto px-(--space-2) py-(--space-3)">
-              <ul className="flex flex-col gap-(--space-1)">
-                {items.map((item) => {
-                  const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-                  return (
-                    <li key={item.id}>
-                      <Link
-                        href={item.href}
-                        aria-current={isActive ? "page" : undefined}
-                        className={`flex items-center gap-(--space-3) rounded-xl px-(--space-3) py-(--space-2) text-sm transition ${
-                          isActive
-                            ? "bg-foreground text-background font-medium"
-                            : "text-foreground/70 hover:bg-foreground/6 hover:text-foreground"
-                        }`}
-                      >
-                        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-foreground/8 text-xs font-semibold" aria-hidden="true">
-                          {item.icon}
-                        </span>
-                        <span>{item.label}</span>
-                        {item.status === "preview" && (
-                          <span className="ml-auto rounded-full bg-amber-500/15 px-2 py-0.5 text-[0.6rem] font-medium text-amber-600">preview</span>
-                        )}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
+              <div className="flex flex-col gap-(--space-4)">
+                {groupedItems.map((group) => (
+                  <section key={group.id} className="flex flex-col gap-(--space-2)">
+                    <h2 className="shell-section-heading px-(--space-3) text-foreground/35">
+                      {group.label}
+                    </h2>
+                    <ul className="flex flex-col gap-(--space-1)">
+                      {group.items.map((item) => {
+                        const isActive = isAdminNavigationItemActive(item, pathname);
+                        return (
+                          <li key={item.id}>
+                            <Link
+                              href={item.href}
+                              aria-current={isActive ? "page" : undefined}
+                              aria-label={item.status === "preview" ? `${item.label} preview` : item.label}
+                              className={`admin-nav-link ${isActive ? "admin-nav-link-active" : "admin-nav-link-idle"}`}
+                              onClick={() => setOpen(false)}
+                            >
+                              <span className="admin-nav-link-icon" aria-hidden="true">
+                                {item.icon}
+                              </span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate">{item.label}</span>
+                                <span className="mt-1 block truncate text-xs font-normal normal-case tracking-normal text-inherit opacity-62">
+                                  {item.description}
+                                </span>
+                              </span>
+                              {item.status === "preview" && (
+                                <span className="ml-auto rounded-full bg-amber-500/15 px-2 py-0.5 text-[0.6rem] font-medium text-amber-600">preview</span>
+                              )}
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </section>
+                ))}
+              </div>
             </nav>
 
             {/* Mini footer */}

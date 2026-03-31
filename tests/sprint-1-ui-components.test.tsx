@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { act, render, screen, fireEvent } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 // ── AdminBrowseFilters ─────────────────────────────────────────────────
@@ -333,8 +333,11 @@ describe("AdminDrawer interaction", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
 
     // Simulate route change
-    usePathnameMock.mockReturnValue("/admin/users");
-    rerender(<AdminDrawer />);
+    await act(async () => {
+      usePathnameMock.mockReturnValue("/admin/users");
+      rerender(<AdminDrawer />);
+      await Promise.resolve();
+    });
 
     // requestAnimationFrame is used internally — flush it
     await vi.waitFor(() => {

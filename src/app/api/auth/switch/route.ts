@@ -16,13 +16,12 @@ export async function POST(req: Request) {
       );
     }
 
-    // ADMIN (real or simulated) or dev mode with explicit opt-in required
+    // ADMIN (real or simulated) or dev mode for local role simulation
     const isAdmin = user.roles.includes("ADMIN");
     const env = getEnvConfig();
     const isDevMode = env.NODE_ENV === "development";
-    const devSwitchEnabled = env.ENABLE_DEV_ROLE_SWITCH === "true";
 
-    if (!isAdmin && !(isDevMode && devSwitchEnabled)) {
+    if (!isAdmin && !isDevMode) {
       return NextResponse.json(
         { error: "Forbidden — ADMIN role required" },
         { status: 403 },

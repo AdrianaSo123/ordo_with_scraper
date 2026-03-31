@@ -34,6 +34,9 @@ const {
   loadAdminPromptDetailMock,
   loadAdminConversationsMock,
   loadAdminConversationDetailMock,
+  loadRoutingReviewBlockMock,
+  loadAnonymousOpportunitiesBlockMock,
+  loadRecurringPainThemesBlockMock,
 } = vi.hoisted(() => ({
   requireAdminPageAccessMock: vi.fn(),
   revalidatePathMock: vi.fn(),
@@ -54,6 +57,9 @@ const {
   loadAdminPromptDetailMock: vi.fn(),
   loadAdminConversationsMock: vi.fn(),
   loadAdminConversationDetailMock: vi.fn(),
+  loadRoutingReviewBlockMock: vi.fn(),
+  loadAnonymousOpportunitiesBlockMock: vi.fn(),
+  loadRecurringPainThemesBlockMock: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -105,6 +111,15 @@ vi.mock("@/lib/admin/prompts/admin-prompts", () => ({
 vi.mock("@/lib/admin/conversations/admin-conversations", () => ({
   loadAdminConversations: loadAdminConversationsMock,
   loadAdminConversationDetail: loadAdminConversationDetailMock,
+}));
+
+vi.mock("@/lib/operator/loaders/admin-loaders", () => ({
+  loadRoutingReviewBlock: loadRoutingReviewBlockMock,
+}));
+
+vi.mock("@/lib/operator/loaders/analytics-loaders", () => ({
+  loadAnonymousOpportunitiesBlock: loadAnonymousOpportunitiesBlockMock,
+  loadRecurringPainThemesBlock: loadRecurringPainThemesBlockMock,
 }));
 
 // ── Imports under test ─────────────────────────────────────────────────
@@ -757,6 +772,153 @@ describe("D4.9 — Conversations Browse page", () => {
     render(jsx);
 
     expect(screen.getByText("No conversations found")).toBeInTheDocument();
+  });
+
+  it("renders routing review as a local workspace view", async () => {
+    loadAdminConversationsMock.mockResolvedValue({
+      entries: [],
+      total: 0,
+      statusCounts: { active: 0, archived: 0 },
+      laneCounts: {},
+      filters: {},
+    });
+    loadRoutingReviewBlockMock.mockResolvedValue({
+      data: {
+        summary: {
+          recentlyChangedCount: 1,
+          uncertainCount: 1,
+          followUpReadyCount: 1,
+        },
+        recentlyChanged: [
+          {
+            conversationId: "conv_1",
+            href: "/admin/conversations/conv_1",
+            title: "Routing Shift",
+            fromLane: "individual",
+            toLane: "organization",
+            recommendedNextStep: "Confirm organization intent",
+            changedAt: "2026-03-31T10:00:00Z",
+          },
+        ],
+        uncertainConversations: [
+          {
+            conversationId: "conv_2",
+            href: "/admin/conversations/conv_2",
+            title: "Unclear lane",
+            lane: "individual",
+            laneConfidence: 0.42,
+            recommendedNextStep: null,
+            detectedNeedSummary: "Wants help but scope is unclear",
+          },
+        ],
+        followUpReady: [
+          {
+            conversationId: "conv_3",
+            href: "/admin/conversations/conv_3",
+            title: "Ready for follow-up",
+            lane: "organization",
+            laneConfidence: 0.88,
+            recommendedNextStep: "Send founder follow-up",
+            detectedNeedSummary: null,
+          },
+        ],
+      },
+    });
+
+    const jsx = await AdminConversationsPage({
+      searchParams: Promise.resolve({ view: "review" }),
+    });
+    render(jsx);
+
+    expect(screen.getByRole("navigation", { name: "Conversation workspace views" })).toBeInTheDocument();
+    expect(screen.getByText("Recently changed")).toBeInTheDocument();
+    expect(screen.getByText("Uncertain routes")).toBeInTheDocument();
+    expect(screen.getByText("Follow-up ready")).toBeInTheDocument();
+    expect(screen.getByText("Routing Shift")).toBeInTheDocument();
+  });
+
+  it("renders anonymous opportunities as a local workspace view", async () => {
+    loadAdminConversationsMock.mockResolvedValue({
+      entries: [],
+      total: 0,
+      statusCounts: { active: 0, archived: 0 },
+      laneCounts: {},
+      filters: {},
+    });
+    loadAnonymousOpportunitiesBlockMock.mockResolvedValue({
+      data: {
+        summary: {
+          opportunityCount: 1,
+          organizationCount: 1,
+          individualCount: 0,
+          developmentCount: 0,
+        },
+        opportunities: [
+          {
+            conversationId: "conv_4",
+            href: "/admin/conversations/conv_4",
+            title: "Anonymous buyer",
+            lane: "organization",
+            messageCount: 6,
+            recommendedNextStep: "Offer founder outreach",
+            detectedNeedSummary: null,
+            likelyFrictionReason: null,
+            opportunityScore: 91,
+          },
+        ],
+        emptyReason: null,
+      },
+    });
+
+    const jsx = await AdminConversationsPage({
+      searchParams: Promise.resolve({ view: "opportunities" }),
+    });
+    render(jsx);
+
+    expect(screen.getByText("Anonymous opportunities")).toBeInTheDocument();
+    expect(screen.getByText("Anonymous buyer")).toBeInTheDocument();
+    expect(screen.getByText(/Score 91/)).toBeInTheDocument();
+  });
+
+  it("renders recurring themes as a local workspace view", async () => {
+    loadAdminConversationsMock.mockResolvedValue({
+      entries: [],
+      total: 0,
+      statusCounts: { active: 0, archived: 0 },
+      laneCounts: {},
+      filters: {},
+    });
+    loadRecurringPainThemesBlockMock.mockResolvedValue({
+      data: {
+        summary: { analyzedSummaryCount: 12, recurringThemeCount: 1 },
+        themes: [
+          {
+            id: "theme_1",
+            label: "Slow onboarding",
+            occurrenceCount: 3,
+            latestSeenAt: "2026-03-31T08:00:00Z",
+            exampleSummary: "Prospects keep asking for a faster ramp.",
+            sampleConversations: [
+              {
+                conversationId: "conv_5",
+                href: "/admin/conversations/conv_5",
+                title: "Onboarding concern",
+              },
+            ],
+          },
+        ],
+        emptyReason: null,
+      },
+    });
+
+    const jsx = await AdminConversationsPage({
+      searchParams: Promise.resolve({ view: "themes" }),
+    });
+    render(jsx);
+
+    expect(screen.getByText("Recurring pain themes")).toBeInTheDocument();
+    expect(screen.getByText("Slow onboarding")).toBeInTheDocument();
+    expect(screen.getByText("Onboarding concern")).toBeInTheDocument();
   });
 });
 

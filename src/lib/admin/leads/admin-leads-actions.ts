@@ -1,7 +1,7 @@
 import { revalidatePath } from "next/cache";
 
 import { readRequiredText, readOptionalText } from "@/lib/admin/shared/admin-form-parsers";
-import { withAdminAction } from "@/lib/admin/shared/admin-action-helpers";
+import { runAdminAction } from "@/lib/admin/shared/admin-action-helpers";
 import {
   getLeadRecordDataMapper,
   getConsultationRequestDataMapper,
@@ -81,96 +81,124 @@ export function parseBulkTriageForm(formData: FormData): { ids: string[]; triage
 
 // ── Server actions ─────────────────────────────────────────────────────
 
-export const updateTriageStateAction = withAdminAction(async (_admin, formData) => {
-  const id = readRequiredText(formData, "id");
-  const { triageState, founderNote } = parseTriageForm(formData);
-  const mapper = getLeadRecordDataMapper();
-  await mapper.updateTriageState(id, triageState as LeadTriageState, { founderNote });
-  revalidatePath("/admin/leads");
-});
+export async function updateTriageStateAction(formData: FormData) {
+  "use server";
 
-export const updateConsultationStatusAction = withAdminAction(async (_admin, formData) => {
-  const id = readRequiredText(formData, "id");
-  const { status } = parseConsultationStatusForm(formData);
-  const mapper = getConsultationRequestDataMapper();
-  await mapper.updateStatus(id, status as ConsultationRequestStatus);
-  revalidatePath("/admin/leads");
-});
-
-export const updateDealStatusAction = withAdminAction(async (_admin, formData) => {
-  const id = readRequiredText(formData, "id");
-  const { status, founderNote } = parseDealStatusForm(formData);
-  const mapper = getDealRecordDataMapper();
-  await mapper.updateStatus(id, status as DealStatus, { founderNote });
-  revalidatePath("/admin/leads");
-});
-
-export const updateTrainingStatusAction = withAdminAction(async (_admin, formData) => {
-  const id = readRequiredText(formData, "id");
-  const { status } = parseTrainingStatusForm(formData);
-  const mapper = getTrainingPathRecordDataMapper();
-  await mapper.updateStatus(id, status as TrainingPathStatus);
-  revalidatePath("/admin/leads");
-});
-
-export const updateFollowUpAction = withAdminAction(async (_admin, formData) => {
-  const id = readRequiredText(formData, "id");
-  const entityType = readRequiredText(formData, "entityType");
-  const { followUpAt } = parseFollowUpForm(formData);
-
-  if (entityType === "lead") {
+  return runAdminAction(formData, async (_admin, formData) => {
+    const id = readRequiredText(formData, "id");
+    const { triageState, founderNote } = parseTriageForm(formData);
     const mapper = getLeadRecordDataMapper();
-    await mapper.updateFollowUp(id, followUpAt);
-  } else if (entityType === "deal") {
+    await mapper.updateTriageState(id, triageState as LeadTriageState, { founderNote });
+    revalidatePath("/admin/leads");
+  });
+}
+
+export async function updateConsultationStatusAction(formData: FormData) {
+  "use server";
+
+  return runAdminAction(formData, async (_admin, formData) => {
+    const id = readRequiredText(formData, "id");
+    const { status } = parseConsultationStatusForm(formData);
+    const mapper = getConsultationRequestDataMapper();
+    await mapper.updateStatus(id, status as ConsultationRequestStatus);
+    revalidatePath("/admin/leads");
+  });
+}
+
+export async function updateDealStatusAction(formData: FormData) {
+  "use server";
+
+  return runAdminAction(formData, async (_admin, formData) => {
+    const id = readRequiredText(formData, "id");
+    const { status, founderNote } = parseDealStatusForm(formData);
     const mapper = getDealRecordDataMapper();
-    await mapper.updateFollowUp(id, followUpAt);
-  } else {
-    throw new Error(`Unsupported entity type for follow-up: ${entityType}`);
-  }
-  revalidatePath("/admin/leads");
-});
+    await mapper.updateStatus(id, status as DealStatus, { founderNote });
+    revalidatePath("/admin/leads");
+  });
+}
 
-export const bulkTriageAction = withAdminAction(async (_admin, formData) => {
-  const { ids, triageState } = parseBulkTriageForm(formData);
-  const mapper = getLeadRecordDataMapper();
-  for (const id of ids) {
-    await mapper.updateTriageState(id, triageState as LeadTriageState);
-  }
-  revalidatePath("/admin/leads");
-});
+export async function updateTrainingStatusAction(formData: FormData) {
+  "use server";
 
-export const updateFounderNoteAction = withAdminAction(async (_admin, formData) => {
-  const id = readRequiredText(formData, "id");
-  const entityType = readRequiredText(formData, "entityType");
-  const founderNote = readOptionalText(formData, "founderNote") ?? "";
-  const currentStatus = readRequiredText(formData, "currentStatus");
+  return runAdminAction(formData, async (_admin, formData) => {
+    const id = readRequiredText(formData, "id");
+    const { status } = parseTrainingStatusForm(formData);
+    const mapper = getTrainingPathRecordDataMapper();
+    await mapper.updateStatus(id, status as TrainingPathStatus);
+    revalidatePath("/admin/leads");
+  });
+}
 
-  switch (entityType) {
-    case "lead": {
+export async function updateFollowUpAction(formData: FormData) {
+  "use server";
+
+  return runAdminAction(formData, async (_admin, formData) => {
+    const id = readRequiredText(formData, "id");
+    const entityType = readRequiredText(formData, "entityType");
+    const { followUpAt } = parseFollowUpForm(formData);
+
+    if (entityType === "lead") {
       const mapper = getLeadRecordDataMapper();
-      await mapper.updateTriageState(id, currentStatus as LeadTriageState, { founderNote });
-      break;
-    }
-    case "consultation": {
-      const mapper = getConsultationRequestDataMapper();
-      await mapper.updateStatus(id, currentStatus as ConsultationRequestStatus, { founderNote });
-      break;
-    }
-    case "deal": {
+      await mapper.updateFollowUp(id, followUpAt);
+    } else if (entityType === "deal") {
       const mapper = getDealRecordDataMapper();
-      await mapper.updateStatus(id, currentStatus as DealStatus, { founderNote });
-      break;
+      await mapper.updateFollowUp(id, followUpAt);
+    } else {
+      throw new Error(`Unsupported entity type for follow-up: ${entityType}`);
     }
-    case "training": {
-      const mapper = getTrainingPathRecordDataMapper();
-      await mapper.updateStatus(id, currentStatus as TrainingPathStatus, { founderNote });
-      break;
+    revalidatePath("/admin/leads");
+  });
+}
+
+export async function bulkTriageAction(formData: FormData) {
+  "use server";
+
+  return runAdminAction(formData, async (_admin, formData) => {
+    const { ids, triageState } = parseBulkTriageForm(formData);
+    const mapper = getLeadRecordDataMapper();
+    for (const id of ids) {
+      await mapper.updateTriageState(id, triageState as LeadTriageState);
     }
-    default:
-      throw new Error(`Unsupported entity type for founder note: ${entityType}`);
-  }
-  revalidatePath("/admin/leads");
-});
+    revalidatePath("/admin/leads");
+  });
+}
+
+export async function updateFounderNoteAction(formData: FormData) {
+  "use server";
+
+  return runAdminAction(formData, async (_admin, formData) => {
+    const id = readRequiredText(formData, "id");
+    const entityType = readRequiredText(formData, "entityType");
+    const founderNote = readOptionalText(formData, "founderNote") ?? "";
+    const currentStatus = readRequiredText(formData, "currentStatus");
+
+    switch (entityType) {
+      case "lead": {
+        const mapper = getLeadRecordDataMapper();
+        await mapper.updateTriageState(id, currentStatus as LeadTriageState, { founderNote });
+        break;
+      }
+      case "consultation": {
+        const mapper = getConsultationRequestDataMapper();
+        await mapper.updateStatus(id, currentStatus as ConsultationRequestStatus, { founderNote });
+        break;
+      }
+      case "deal": {
+        const mapper = getDealRecordDataMapper();
+        await mapper.updateStatus(id, currentStatus as DealStatus, { founderNote });
+        break;
+      }
+      case "training": {
+        const mapper = getTrainingPathRecordDataMapper();
+        await mapper.updateStatus(id, currentStatus as TrainingPathStatus, { founderNote });
+        break;
+      }
+      default:
+        throw new Error(`Unsupported entity type for founder note: ${entityType}`);
+    }
+    revalidatePath("/admin/leads");
+  });
+}
 
 // ── Status option arrays for UI selects ────────────────────────────────
 

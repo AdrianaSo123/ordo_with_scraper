@@ -1,6 +1,8 @@
-"use client";
+'use client';
 
-import { AdminDataTable, type ColumnDef } from "@/components/admin/AdminDataTable";
+import { AdminBulkTableWrapper } from "@/components/admin/AdminBulkTableWrapper";
+import type { BulkAction } from "@/components/admin/AdminBulkActionBar";
+import type { ColumnDef } from "@/components/admin/AdminDataTable";
 
 interface UserRow {
   name: string;
@@ -41,16 +43,26 @@ const columns: ColumnDef[] = [
 export function UsersTableClient({
   rows,
   emptyMessage,
+  action,
 }: {
   rows: Record<string, unknown>[];
   emptyMessage: string;
+  action: (formData: FormData) => void;
 }) {
+  const bulkActions: BulkAction[] = [
+    { label: "Set User", action: "bulkRoleChange", hiddenFields: { roleId: "role_authenticated" } },
+    { label: "Set Apprentice", action: "bulkRoleChange", hiddenFields: { roleId: "role_apprentice" } },
+    { label: "Set Staff", action: "bulkRoleChange", hiddenFields: { roleId: "role_staff" } },
+    { label: "Set Admin", action: "bulkRoleChange", hiddenFields: { roleId: "role_admin" } },
+  ];
+
   return (
-    <AdminDataTable
+    <AdminBulkTableWrapper
+      action={action}
       columns={columns}
       rows={rows}
       emptyMessage={emptyMessage}
-      selectable
+      bulkActions={bulkActions}
     />
   );
 }

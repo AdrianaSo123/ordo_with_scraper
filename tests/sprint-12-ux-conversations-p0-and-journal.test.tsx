@@ -20,6 +20,8 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
+const noopConversationTableAction = (_formData: FormData) => {};
+
 // ── D12.1: ConversationsTableClient source checks ─────────────────────
 
 describe("D12.1: ConversationsTableClient — file and 'use client' directive", () => {
@@ -71,10 +73,14 @@ describe("D12.1: ConversationsTableClient — file and 'use client' directive", 
         total={1}
         page={1}
         pageSize={25}
+        action={noopConversationTableAction}
       />,
     );
-    const link = screen.getByRole("link", { name: /Lead follow-up/i });
-    expect(link.getAttribute("href")).toBe("/admin/conversations/conv_1");
+    const links = screen.getAllByRole("link", { name: /Lead follow-up/i });
+    expect(links).toHaveLength(2);
+    for (const link of links) {
+      expect(link.getAttribute("href")).toBe("/admin/conversations/conv_1");
+    }
   });
 
   // Negative: untitled conversation renders fallback label
@@ -97,13 +103,14 @@ describe("D12.1: ConversationsTableClient — file and 'use client' directive", 
         total={1}
         page={1}
         pageSize={25}
+        action={noopConversationTableAction}
       />,
     );
-    expect(screen.getByText(/untitled/i)).toBeDefined();
+    expect(screen.getAllByText(/untitled/i)).toHaveLength(2);
   });
 
-  // Edge: empty rows renders table with no data rows
-  it("empty rows renders a table with no data rows", async () => {
+  // Edge: empty rows render the wrapper empty state instead of data rows
+  it("empty rows render the empty-state message", async () => {
     const { ConversationsTableClient } = await import(
       "@/components/admin/ConversationsTableClient"
     );
@@ -113,10 +120,10 @@ describe("D12.1: ConversationsTableClient — file and 'use client' directive", 
         total={0}
         page={1}
         pageSize={25}
+        action={noopConversationTableAction}
       />,
     );
-    // Should not throw; zero rows is valid
-    expect(screen.queryAllByRole("row").length).toBeGreaterThanOrEqual(1); // header row only
+    expect(screen.getByText("No conversations found.")).toBeInTheDocument();
   });
 });
 
@@ -224,6 +231,17 @@ describe("D12.5: Journal admin page — layout, filters, and table accessibility
   it("journal page uses AdminBrowseFilters instead of raw inline form", () => {
     const source = readSource("src/app/admin/journal/page.tsx");
     expect(source).toContain("AdminBrowseFilters");
+  });
+
+  it("journal workspace pages use the local AdminWorkspaceNav", () => {
+    const listSource = readSource("src/app/admin/journal/page.tsx");
+    const attributionSource = readSource("src/app/admin/journal/attribution/page.tsx");
+    const detailSource = readSource("src/app/admin/journal/[id]/page.tsx");
+
+    expect(listSource).toContain("AdminWorkspaceNav");
+    expect(attributionSource).toContain("AdminWorkspaceNav");
+    expect(detailSource).toContain("AdminWorkspaceNav");
+    expect(listSource).toContain("Journal workspace navigation");
   });
 
   it("journal page does NOT have raw inline <form> filter block", () => {

@@ -25,6 +25,21 @@ export interface ShellFooterGroup {
   visibility: ShellVisibility;
 }
 
+export interface ShellNavDrawerGroup {
+  id: string;
+  label: string;
+  description?: string;
+  routeIds: string[];
+  visibility: ShellVisibility;
+}
+
+export interface ResolvedShellNavDrawerGroup {
+  id: string;
+  label: string;
+  description?: string;
+  routes: ShellRouteDefinition[];
+}
+
 export interface ShellBrandMetadata {
   name: string;
   shortName: string;
@@ -41,7 +56,7 @@ export const SHELL_BRAND: ShellBrandMetadata = {
   markText: DEFAULT_IDENTITY.markText,
 };
 
-const SIGNED_IN_ROLES = ["AUTHENTICATED", "STAFF", "ADMIN"] as const;
+const SIGNED_IN_ROLES = ["AUTHENTICATED", "APPRENTICE", "STAFF", "ADMIN"] as const;
 
 export const SHELL_ROUTES: readonly ShellRouteDefinition[] = [
   {
@@ -219,10 +234,24 @@ function matchesVisibility(
   return roles.some((role) => visibility.includes(role));
 }
 
+function resolveRouteSet(
+  routeIds: readonly string[],
+  user: Pick<SessionUser, "roles"> | null | undefined,
+  visibilityResolver: (route: ShellRouteDefinition) => ShellVisibility | undefined,
+): ShellRouteDefinition[] {
+  return routeIds
+    .map(getShellRouteById)
+    .filter((route) => matchesVisibility(visibilityResolver(route), user));
+}
+
 export function resolvePrimaryNavRoutes(
   user?: Pick<SessionUser, "roles"> | null,
 ): ShellRouteDefinition[] {
-  return SHELL_ROUTES.filter((route) => matchesVisibility(route.headerVisibility, user));
+  return resolveRouteSet(
+    PRIMARY_NAV_ROUTE_IDS,
+    user,
+    (route) => route.footerVisibility ?? route.headerVisibility ?? route.accountVisibility ?? "all",
+  );
 }
 
 export function resolveCommandRoutes(
@@ -237,8 +266,6 @@ export function resolveCommandRoutes(
       ),
   );
 }
-
-export const PRIMARY_NAV_ITEMS: readonly ShellRouteDefinition[] = resolvePrimaryNavRoutes();
 
 export const SHELL_FOOTER_GROUPS: readonly ShellFooterGroup[] = [
   {
@@ -261,7 +288,26 @@ export const SHELL_FOOTER_GROUPS: readonly ShellFooterGroup[] = [
   },
 ] as const;
 
-export const ACCOUNT_MENU_ROUTE_IDS = ["admin-dashboard", "jobs", "journal-admin", "profile"] as const;
+export const PRIMARY_NAV_ROUTE_IDS = ["corpus", "blog"] as const;
+export const ACCOUNT_MENU_ROUTE_IDS = ["jobs", "profile"] as const;
+export const RAIL_MENU_ROUTE_IDS = ["corpus", "blog"] as const;
+
+export const SHELL_NAV_DRAWER_GROUPS: readonly ShellNavDrawerGroup[] = [
+  {
+    id: "explore",
+    label: "Explore",
+    description: "Browse the public library and published journal surfaces.",
+    routeIds: ["corpus", "blog"],
+    visibility: "all",
+  },
+  {
+    id: "workspace",
+    label: "Workspace",
+    description: "Open signed-in work surfaces and personal context.",
+    routeIds: ["jobs", "profile"],
+    visibility: SIGNED_IN_ROLES,
+  },
+] as const;
 
 export const SHELL_ROUTE_BY_ID = new Map(
   SHELL_ROUTES.map((route) => [route.id, route] as const),
@@ -275,6 +321,8 @@ export function getShellRouteById(routeId: string): ShellRouteDefinition {
 
   return route;
 }
+
+export const PRIMARY_NAV_ITEMS: readonly ShellRouteDefinition[] = resolvePrimaryNavRoutes();
 
 export function resolveFooterGroups(
   user?: Pick<SessionUser, "roles"> | null,
@@ -298,9 +346,35 @@ export function resolveFooterGroupRoutes(
 export function resolveAccountMenuRoutes(
   user?: Pick<SessionUser, "roles"> | null,
 ): ShellRouteDefinition[] {
-  return ACCOUNT_MENU_ROUTE_IDS
-    .map(getShellRouteById)
-    .filter((route) => matchesVisibility(route.accountVisibility, user));
+  return resolveRouteSet(ACCOUNT_MENU_ROUTE_IDS, user, (route) => route.accountVisibility);
+}
+
+export function resolveRailMenuRoutes(
+  user?: Pick<SessionUser, "roles"> | null,
+): ShellRouteDefinition[] {
+  return resolveRouteSet(
+    RAIL_MENU_ROUTE_IDS,
+    user,
+    (route) => route.footerVisibility ?? route.headerVisibility ?? route.accountVisibility ?? "all",
+  );
+}
+
+export function resolveShellNavDrawerGroups(
+  user?: Pick<SessionUser, "roles"> | null,
+): ResolvedShellNavDrawerGroup[] {
+  return SHELL_NAV_DRAWER_GROUPS
+    .filter((group) => matchesVisibility(group.visibility, user))
+    .map((group) => ({
+      id: group.id,
+      label: group.label,
+      description: group.description,
+      routes: resolveRouteSet(
+        group.routeIds,
+        user,
+        (route) => route.footerVisibility ?? route.accountVisibility ?? route.headerVisibility ?? "all",
+      ),
+    }))
+    .filter((group) => group.routes.length > 0);
 }
 
 export function resolveShellHomeHref(): string {
