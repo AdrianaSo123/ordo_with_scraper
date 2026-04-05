@@ -35,6 +35,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/docs ./docs
 COPY --from=builder --chown=nextjs:nodejs /app/release ./release
 COPY --from=builder --chown=nextjs:nodejs /app/config ./config
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
+COPY --from=builder --chown=nextjs:nodejs /app/mcp ./mcp
 COPY --from=builder --chown=nextjs:nodejs /app/src ./src
 
 USER nextjs
