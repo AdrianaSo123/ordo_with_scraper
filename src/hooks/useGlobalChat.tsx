@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import type { Conversation } from "@/core/entities/conversation";
 import type { ConversationRoutingSnapshot } from "@/core/entities/conversation-routing";
 export type { MessagePart } from "@/core/entities/message-parts";
@@ -59,6 +60,7 @@ export function ChatProvider({
   children: ReactNode;
   initialRole?: RoleName;
 }) {
+  const currentPathname = usePathname();
   const prompts = useInstancePrompts();
   const [referralCtx, setReferralCtx] = useState<ReferralContext | undefined>(undefined);
   const referralResolved = useRef(false);
@@ -110,6 +112,7 @@ export function ChatProvider({
 
   const { sendMessage, retryFailedMessage } = useChatSend({
     conversationId,
+    currentPathname,
     refreshConversation,
     dispatch,
     getFailedSend,

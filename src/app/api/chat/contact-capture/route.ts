@@ -4,6 +4,11 @@ import { isConversationLane } from "@/core/entities/conversation-routing";
 import { getLeadCaptureInteractor } from "@/lib/chat/conversation-root";
 import { errorJson, runRouteTemplate, successJson } from "@/lib/chat/http-facade";
 import { resolveUserId } from "@/lib/chat/resolve-user";
+import {
+  evaluatePublicFormRequest,
+  PUBLIC_FORM_HONEYPOT_FIELD_NAME,
+  PUBLIC_FORM_STARTED_AT_FIELD_NAME,
+} from "@/lib/security/public-form-protection";
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -23,7 +28,7 @@ export async function POST(request: NextRequest) {
       "Conversation not found",
     ],
     execute: async (context) => {
-      const body = (await request.json()) as {
+      const body = (await request.json()) as Record<string, unknown> & {
         conversationId?: unknown;
         lane?: unknown;
         name?: unknown;
@@ -39,6 +44,25 @@ export async function POST(request: NextRequest) {
       const lane = typeof body.lane === "string" ? body.lane.trim() : "";
       const name = typeof body.name === "string" ? body.name.trim() : "";
       const email = typeof body.email === "string" ? body.email.trim() : "";
+
+      const protectionResult = evaluatePublicFormRequest({
+        surface: "chat-contact-capture",
+        headers: request.headers,
+        identifier: email,
+        honeypotValue: body[PUBLIC_FORM_HONEYPOT_FIELD_NAME],
+        startedAt: body[PUBLIC_FORM_STARTED_AT_FIELD_NAME],
+      });
+
+      if (!protectionResult.ok) {
+        return errorJson(
+          context,
+          protectionResult.error,
+          protectionResult.status,
+          protectionResult.retryAfterSeconds
+            ? { headers: { "Retry-After": String(protectionResult.retryAfterSeconds) } }
+            : undefined,
+        );
+      }
 
       if (!conversationId) {
         return errorJson(context, "conversationId is required.", 400);

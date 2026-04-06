@@ -1,22 +1,43 @@
 import { createServer } from "node:http";
 import { spawn } from "node:child_process";
 import { resolve } from "node:path";
-import { existsSync, writeFileSync, readFileSync, unlinkSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync, readFileSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import next from "next";
+
+const requiredServerFilesPath = resolve(".next", "required-server-files.json");
+
+if (!process.env.__NEXT_PRIVATE_STANDALONE_CONFIG && existsSync(requiredServerFilesPath)) {
+  try {
+    const requiredServerFiles = JSON.parse(readFileSync(requiredServerFilesPath, "utf-8"));
+    if (requiredServerFiles?.config?.output === "standalone") {
+      process.env.__NEXT_PRIVATE_STANDALONE_CONFIG = JSON.stringify(requiredServerFiles.config);
+    }
+  } catch (error) {
+    console.warn("[startup] unable to load serialized standalone config", error);
+  }
+}
 
 // ── Instance lock ────────────────────────────────────────────────────────────
 
 const dataDir = process.env.DATA_DIR ?? ".data";
 const lockFile = join(dataDir, ".server.lock");
 
+mkdirSync(dataDir, { recursive: true });
+
 if (existsSync(lockFile)) {
   const existing = readFileSync(lockFile, "utf-8").trim();
-  console.error(
-    `Another server instance appears to be running (PID: ${existing}). ` +
-    `SQLite requires single-writer access. Remove ${lockFile} if the previous instance crashed.`
-  );
-  process.exit(1);
+
+  if (isProcessRunning(existing)) {
+    console.error(
+      `Another server instance appears to be running (PID: ${existing}). ` +
+      `SQLite requires single-writer access. Remove ${lockFile} if the previous instance crashed.`
+    );
+    process.exit(1);
+  }
+
+  console.warn(`[startup] removing stale server lock for PID ${existing}`);
+  releaseInstanceLock();
 }
 
 writeFileSync(lockFile, String(process.pid), "utf-8");
@@ -25,9 +46,24 @@ function releaseInstanceLock() {
   try { unlinkSync(lockFile); } catch { /* already cleaned */ }
 }
 
+function isProcessRunning(pidValue) {
+  const pid = Number.parseInt(pidValue, 10);
+  if (!Number.isFinite(pid) || pid <= 0) {
+    return false;
+  }
+
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error?.code === "EPERM";
+  }
+}
+
 const port = Number.parseInt(process.env.PORT ?? "3000", 10);
 const hostname = process.env.HOSTNAME ?? "0.0.0.0";
 const shutdownTimeoutMs = Number.parseInt(process.env.SHUTDOWN_TIMEOUT_MS ?? "10000", 10);
+const workerEnabled = process.env.DISABLE_DEFERRED_JOB_WORKER !== "1";
 
 const app = next({ dev: false, hostname, port });
 const handle = app.getRequestHandler();
@@ -39,7 +75,7 @@ const MAX_WORKER_RESTARTS = 3;
 const RESTART_WINDOW_MS = 60_000;
 
 let workerRestarts = [];
-let workerHealthy = true;
+let workerHealthy = !workerEnabled;
 
 function spawnWorker() {
   const worker = spawn(process.execPath, [tsxCli, "scripts/process-deferred-jobs.ts"], {
@@ -86,7 +122,11 @@ function spawnWorker() {
   return worker;
 }
 
-let workerProcess = spawnWorker();
+let workerProcess = workerEnabled ? spawnWorker() : null;
+
+if (workerEnabled) {
+  workerHealthy = true;
+}
 
 // ── Server setup ─────────────────────────────────────────────────────────────
 
@@ -122,7 +162,7 @@ function shutdown(signal) {
   console.info(`[shutdown] received ${signal}; draining connections`);
   releaseInstanceLock();
 
-  if (!workerProcess.killed) {
+  if (workerProcess && !workerProcess.killed) {
     workerProcess.kill(signal);
   }
 

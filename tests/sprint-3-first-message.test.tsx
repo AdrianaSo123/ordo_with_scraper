@@ -165,14 +165,14 @@ describe("Sprint 3 — Negative tests", () => {
   it("N2: createInitialChatMessages falls back to hardcoded when prompts is undefined", () => {
     const [msg] = createInitialChatMessages("ANONYMOUS");
     expect(msg.content).toContain(
-      "Describe the workflow problem, orchestration gap, or training goal.",
+      "Bring me the messy workflow, bold idea, or half-finished handoff.",
     );
   });
 
   it("N3: createInitialChatMessages falls back when firstMessage.default is undefined", () => {
     const [msg] = createInitialChatMessages("ANONYMOUS", {});
     expect(msg.content).toContain(
-      "Describe the workflow problem, orchestration gap, or training goal.",
+      "Bring me the messy workflow, bold idea, or half-finished handoff.",
     );
   });
 

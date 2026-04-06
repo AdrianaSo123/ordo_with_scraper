@@ -20,6 +20,7 @@ import { useChatStreamRuntime } from "./useChatStreamRuntime";
 
 interface UseChatSendOptions {
   conversationId: string | null;
+  currentPathname: string;
   refreshConversation: (conversationIdOverride?: string | null) => Promise<void>;
   dispatch: Dispatch<ChatAction>;
   getFailedSend: (retryKey: string) => FailedSendPayload | undefined;
@@ -90,6 +91,7 @@ function prepareRetrySend(
 
 export function useChatSend({
   conversationId,
+  currentPathname,
   refreshConversation,
   dispatch,
   getFailedSend,
@@ -102,6 +104,7 @@ export function useChatSend({
   const inFlightRef = useRef(false);
   const runStream = useChatStreamRuntime({
     conversationId,
+    currentPathname,
     dispatch,
     setConversationId,
   });

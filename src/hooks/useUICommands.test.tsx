@@ -129,6 +129,68 @@ describe("useUICommands", () => {
     expect(getByTestId("ui-state")).toHaveAttribute("data-theme", "bauhaus");
   });
 
+  it("clears the theme transition overlay after a command-driven theme change", async () => {
+    const baselineMessages: PresentedMessage[] = [
+      createAssistantMessage("assistant-baseline", "Welcome", []),
+    ];
+    const nextMessages: PresentedMessage[] = [
+      ...baselineMessages,
+      createAssistantMessage("assistant-1", "Switching theme", [{ type: "set_theme", theme: "bauhaus" }]),
+    ];
+
+    const { queryByTestId, rerender } = render(
+      <ThemeProvider>
+        <UICommandsHarness messages={baselineMessages} />
+      </ThemeProvider>,
+    );
+
+    rerender(
+      <ThemeProvider>
+        <UICommandsHarness messages={nextMessages} />
+      </ThemeProvider>,
+    );
+
+    await waitFor(() => {
+      expect(document.documentElement.classList.contains("theme-bauhaus")).toBe(true);
+    });
+
+    expect(queryByTestId("theme-transition-overlay")).toBeInTheDocument();
+
+    await act(async () => {
+      await new Promise((resolve) => window.setTimeout(resolve, 450));
+    });
+
+    await waitFor(() => {
+      expect(queryByTestId("theme-transition-overlay")).not.toBeInTheDocument();
+    });
+  });
+
+  it("pushes the router when a new navigate command arrives after baseline", async () => {
+    const baselineMessages: PresentedMessage[] = [
+      createAssistantMessage("assistant-baseline", "Welcome", []),
+    ];
+    const nextMessages: PresentedMessage[] = [
+      ...baselineMessages,
+      createAssistantMessage("assistant-nav", "Opening library", [{ type: "navigate", path: "/library" }]),
+    ];
+
+    const { rerender } = render(
+      <ThemeProvider>
+        <UICommandsHarness messages={baselineMessages} />
+      </ThemeProvider>,
+    );
+
+    rerender(
+      <ThemeProvider>
+        <UICommandsHarness messages={nextMessages} />
+      </ThemeProvider>,
+    );
+
+    await waitFor(() => {
+      expect(pushMock).toHaveBeenCalledWith("/library");
+    });
+  });
+
   it("applies adjust_ui commands when a new assistant message arrives after baseline", async () => {
     const baselineMessages: PresentedMessage[] = [
       createAssistantMessage("assistant-baseline", "Welcome", []),

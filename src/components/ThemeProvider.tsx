@@ -71,6 +71,8 @@ function skipViewTransition(transition: ViewTransition | null): void {
   }
 }
 
+const THEME_TRANSITION_OVERLAY_DURATION_MS = 350;
+
 export function ThemeProvider({
   children,
   respectSystemDarkMode = true,
@@ -88,7 +90,10 @@ export function ThemeProvider({
   );
   const [mounted, setMounted] = useState(false);
   const [hydrationComplete, setHydrationComplete] = useState(false);
+  const [isTransitionOverlayVisible, setTransitionOverlayVisible] = useState(false);
   const transitionRef = useRef<ViewTransition | null>(null);
+  const transitionOverlayFrameRef = useRef<number | null>(null);
+  const transitionOverlayTimeoutRef = useRef<number | null>(null);
   const lastServerSyncRef = useRef<string | null>(null);
 
   const prevTheme = useRef<Theme>(resolvedInitialThemeState.theme);
@@ -104,6 +109,19 @@ export function ThemeProvider({
 
   const setAccessibilityState = useCallback((settings: AccessibilitySettings) => {
     setAccessibility((current) => normalizeAccessibilitySettings(settings, current));
+  }, []);
+
+  const showTransitionOverlay = useCallback(() => {
+    if (transitionOverlayTimeoutRef.current !== null) {
+      window.clearTimeout(transitionOverlayTimeoutRef.current);
+    }
+
+    setTransitionOverlayVisible(true);
+    setTransitionKey((key) => key + 1);
+    transitionOverlayTimeoutRef.current = window.setTimeout(() => {
+      setTransitionOverlayVisible(false);
+      transitionOverlayTimeoutRef.current = null;
+    }, THEME_TRANSITION_OVERLAY_DURATION_MS);
   }, []);
 
   const applyThemeStateOverrides = useCallback((overrides: PartialThemeStateSnapshot) => {
@@ -170,6 +188,18 @@ export function ThemeProvider({
     });
   }, [applyThemeStateOverrides, respectSystemDarkMode, hydrateFromServer]);
 
+  useEffect(() => () => {
+    if (transitionOverlayFrameRef.current !== null) {
+      window.cancelAnimationFrame(transitionOverlayFrameRef.current);
+      transitionOverlayFrameRef.current = null;
+    }
+
+    if (transitionOverlayTimeoutRef.current !== null) {
+      window.clearTimeout(transitionOverlayTimeoutRef.current);
+      transitionOverlayTimeoutRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     if (!mounted) return;
 
@@ -205,11 +235,17 @@ export function ThemeProvider({
 
     // Trigger overlay animation
     if (prevTheme.current !== theme) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: drives CSS transition overlay
-      setTransitionKey((key) => key + 1);
+      if (transitionOverlayFrameRef.current !== null) {
+        window.cancelAnimationFrame(transitionOverlayFrameRef.current);
+      }
+
+      transitionOverlayFrameRef.current = window.requestAnimationFrame(() => {
+        transitionOverlayFrameRef.current = null;
+        showTransitionOverlay();
+      });
       prevTheme.current = theme;
     }
-  }, [theme, isDark, accessibility, mounted]);
+  }, [theme, isDark, accessibility, mounted, showTransitionOverlay]);
 
   useEffect(() => {
     if (!mounted || !hydrationComplete) {
@@ -289,11 +325,13 @@ export function ThemeProvider({
   return (
     <ThemeContext.Provider value={contextValue}>
       {children}
-      {transitionKey > 0 && mounted && (
+      {isTransitionOverlayVisible && mounted && (
         <div
           key={transitionKey}
           data-testid="theme-transition-overlay"
-          className="pointer-events-none fixed inset-0 z-9999 bg-[oklch(0.5_0_0)] animate-[theme-fade-out_350ms_ease-in-out_forwards]"
+          aria-hidden="true"
+          className="pointer-events-none fixed inset-0 z-9999 animate-[theme-fade-out_350ms_ease-in-out_forwards]"
+          style={{ backgroundColor: "var(--background)" }}
         />
       )}
     </ThemeContext.Provider>

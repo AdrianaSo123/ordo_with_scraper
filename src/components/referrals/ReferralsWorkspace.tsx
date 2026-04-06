@@ -35,7 +35,7 @@ function formatRelativeDate(value: string): string {
 }
 
 function buildCtaCopy(referralUrl: string): string {
-  return `I’ve been working with Studio Ordo on practical AI systems. Use my referral link to start your conversation: ${referralUrl}`;
+  return `I use Studio Ordo for real AI work. Start with my link or QR code: ${referralUrl}`;
 }
 
 export function ReferralsWorkspace({ workspace }: { workspace: ReferralsWorkspaceData }) {
@@ -48,20 +48,20 @@ export function ReferralsWorkspace({ workspace }: { workspace: ReferralsWorkspac
         <header className="flex flex-col gap-(--space-3)">
           <p className="theme-label tier-micro uppercase text-foreground/42">Referrals</p>
           <h1 className="theme-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-            Referral workspace
+            Referral + QR workspace
           </h1>
           <p className="max-w-2xl text-sm leading-6 text-foreground/62 sm:text-base">
-            Share links, milestone visibility, and self-service reporting live here once affiliate access is enabled for your account.
+            Share links, QR assets, milestone visibility, and self-service reporting live here once affiliate access is enabled for your account.
           </p>
         </header>
 
         <section className="profile-panel-surface p-(--space-inset-panel)">
           <p className="theme-label tier-micro uppercase text-foreground/42">Affiliate access</p>
           <h2 className="mt-(--space-2) theme-display text-2xl font-semibold tracking-tight text-foreground">
-            Referral access is not enabled for this account yet
+            Referral and QR access are not enabled yet
           </h2>
           <p className="mt-(--space-3) max-w-2xl text-sm leading-6 text-foreground/58">
-            An administrator still needs to enable affiliate capability before this workspace can show your link, QR code, charts, and milestone feed.
+            An administrator still needs to enable affiliate capability before this workspace can show your canonical link, QR asset, charts, and milestone feed.
           </p>
         </section>
       </main>
@@ -108,10 +108,10 @@ export function ReferralsWorkspace({ workspace }: { workspace: ReferralsWorkspac
       <header className="flex flex-col gap-(--space-3)">
         <p className="theme-label tier-micro uppercase text-foreground/42">Referrals</p>
         <h1 className="theme-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-          Referral workspace
+          Referral + QR workspace
         </h1>
         <p className="max-w-3xl text-sm leading-6 text-foreground/62 sm:text-base">
-          Share your public link, review recent referral milestones, and track how introductions are progressing from first visit through qualified opportunity and credit review.
+          Share your public link or QR, review recent referral milestones, and track how introductions move from first visit through registration, qualified opportunity, and credit review.
         </p>
       </header>
 
@@ -137,10 +137,10 @@ export function ReferralsWorkspace({ workspace }: { workspace: ReferralsWorkspac
           <div className="flex flex-col gap-(--space-2)">
             <p className="theme-label tier-micro uppercase text-foreground/42">Share assets</p>
             <h2 className="theme-display text-2xl font-semibold tracking-tight text-foreground">
-              Keep your link moving
+              Share the link. Drop the QR.
             </h2>
             <p className="text-sm leading-6 text-foreground/58">
-              Copy the canonical link, your referral code, or a short CTA without leaving this workspace.
+              Copy the canonical link, grab the QR, or use ready-to-send intro text without leaving this workspace.
             </p>
           </div>
 
@@ -225,7 +225,7 @@ export function ReferralsWorkspace({ workspace }: { workspace: ReferralsWorkspac
         <article className="profile-panel-surface p-(--space-inset-panel)">
           <p className="theme-label tier-micro uppercase text-foreground/42">Summary</p>
           <h2 className="mt-(--space-2) theme-display text-2xl font-semibold tracking-tight text-foreground">
-            What is happening now
+            What is moving now
           </h2>
           <p className="mt-(--space-3) text-sm leading-6 text-foreground/58">
             {overview?.narrative ?? "No referral activity has been attributed yet."}

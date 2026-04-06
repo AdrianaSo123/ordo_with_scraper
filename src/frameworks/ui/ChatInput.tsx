@@ -43,7 +43,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   onFileSelect,
   onFileRemove,
 }) => {
-  const placeholderText = "Paste the workflow, brief, or handoff...";
+  const placeholderText = "Bring the messy workflow, bold idea, or handoff...";
   const helperText = "Enter to send. Shift+Enter for line break. Attach files if needed.";
   const internalTextareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);

@@ -2,7 +2,7 @@ import { MessageFactory } from "@/core/entities/MessageFactory";
 import type { ChatMessage } from "@/core/entities/chat-message";
 import type { JobStatusMessagePart } from "@/core/entities/message-parts";
 import type { RoleName } from "@/core/entities/user";
-import type { InstancePrompts } from "@/lib/config/defaults";
+import { DEFAULT_PROMPTS, type InstancePrompts } from "@/lib/config/defaults";
 import { interpolateGreeting, type GreetingContext } from "@/lib/chat/greeting-interpolator";
 
 export type ChatAction =
@@ -29,13 +29,17 @@ export type ChatAction =
 
 const CHAT_BOOTSTRAP_COPY: Record<RoleName, { message: string; suggestions: string[] }> = {
   ANONYMOUS: {
-    message: "Describe the workflow problem, orchestration gap, or training goal.",
-    suggestions: [
-      "Audit this workflow",
-      "Stress-test this AI plan",
-      "Train my team",
-      "Show me the weak point",
-    ],
+    message:
+      DEFAULT_PROMPTS.firstMessage?.default
+      ?? "Bring me the messy workflow, bold idea, or half-finished handoff. I can help you map it, search the library, turn it into visuals, or explain the QR referral system.",
+    suggestions:
+      DEFAULT_PROMPTS.defaultSuggestions
+      ?? [
+        "Audit this workflow",
+        "Search the library",
+        "Show me something visual",
+        "Explain the QR referral system",
+      ],
   },
   AUTHENTICATED: {
     message: "Welcome back. Bring me the customer workflow, implementation question, or training decision you need help moving forward.",

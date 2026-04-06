@@ -235,7 +235,7 @@ test.describe("Deferred blog jobs", () => {
 
     await page.goto("/");
 
-    const textarea = page.getByPlaceholder("Paste the workflow, brief, or handoff...");
+    const textarea = page.getByPlaceholder("Bring the messy workflow, bold idea, or handoff...");
     await expect(textarea).toBeVisible();
     await textarea.fill("Draft a blog post about deferred queue reliability.");
     await page.getByRole("button", { name: "Send", exact: true }).click();
@@ -335,7 +335,7 @@ test.describe("Deferred blog jobs", () => {
 
     await page.goto("/");
 
-    const textarea = page.getByPlaceholder("Paste the workflow, brief, or handoff...");
+    const textarea = page.getByPlaceholder("Bring the messy workflow, bold idea, or handoff...");
     await expect(textarea).toBeVisible();
     await textarea.fill("Produce a blog article about AI governance controls for enterprise teams.");
     await page.getByRole("button", { name: "Send", exact: true }).click();
@@ -455,7 +455,7 @@ test.describe("Deferred blog jobs", () => {
     await expect(produceStatus).toContainText("Generating outline");
     await expect(produceStatus).toContainText("18%");
 
-    const textarea = page.getByPlaceholder("Paste the workflow, brief, or handoff...");
+    const textarea = page.getByPlaceholder("Bring the messy workflow, bold idea, or handoff...");
     await expect(textarea).toBeVisible();
     await textarea.fill("Check the status of job job_produce_running_1");
     await page.getByRole("button", { name: "Send", exact: true }).click();

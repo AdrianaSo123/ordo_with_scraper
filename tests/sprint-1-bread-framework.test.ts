@@ -172,15 +172,16 @@ describe("get-current-page tool", () => {
   it("returns route info for a known pathname", async () => {
     const { getCurrentPageTool } = await import("@/core/use-cases/tools/get-current-page.tool");
     const result = await getCurrentPageTool.command.execute({ pathname: "/admin" });
-    expect(result.routeId).toBe("admin-dashboard");
+    expect(result).not.toHaveProperty("routeId");
     expect(result.label).toBe("Admin");
   });
 
   it("returns nulls for an unknown pathname", async () => {
     const { getCurrentPageTool } = await import("@/core/use-cases/tools/get-current-page.tool");
     const result = await getCurrentPageTool.command.execute({ pathname: "/unknown" });
-    expect(result.routeId).toBeNull();
+    expect(result).not.toHaveProperty("routeId");
     expect(result.label).toBeNull();
+    expect(result.description).toBeNull();
   });
 });
 
@@ -189,7 +190,7 @@ describe("list-available-pages tool", () => {
     const { listAvailablePagesTool } = await import("@/core/use-cases/tools/list-available-pages.tool");
     const result = await listAvailablePagesTool.command.execute({}, { role: "ADMIN", userId: "u1" });
     expect(result.routes.length).toBeGreaterThan(0);
-    expect(result.routes.every((r) => r.id && r.href)).toBe(true);
+    expect(result.routes.every((r) => !("id" in r) && Boolean(r.label) && Boolean(r.href))).toBe(true);
   });
 
   it("filters routes by role visibility", async () => {

@@ -27,7 +27,7 @@ describe("GlobalSearchBar", () => {
 
   it("renders the search input on desktop", () => {
     render(<GlobalSearchBar user={user} searchAction={mockSearchAction} />);
-    expect(screen.getByLabelText("Search pages and accessible content")).toBeInTheDocument();
+    expect(screen.getByLabelText("Search pages, library notes, and workspace context")).toBeInTheDocument();
   });
 
   it("renders the mobile toggle button", () => {
@@ -43,7 +43,7 @@ describe("GlobalSearchBar", () => {
   it("does not call search for single character input", async () => {
     vi.useFakeTimers();
     render(<GlobalSearchBar user={user} searchAction={mockSearchAction} />);
-    const input = screen.getByLabelText("Search pages and accessible content");
+    const input = screen.getByLabelText("Search pages, library notes, and workspace context");
     fireEvent.change(input, { target: { value: "a" } });
     act(() => {
       vi.advanceTimersByTime(400);
@@ -55,7 +55,7 @@ describe("GlobalSearchBar", () => {
   it("switches to command mode when the query starts with a slash", () => {
     render(<GlobalSearchBar user={user} searchAction={mockSearchAction} />);
 
-    fireEvent.change(screen.getByLabelText("Search pages and accessible content"), {
+    fireEvent.change(screen.getByLabelText("Search pages, library notes, and workspace context"), {
       target: { value: "/lib" },
     });
 
@@ -79,7 +79,7 @@ describe("GlobalSearchBar", () => {
     ]);
 
     render(<GlobalSearchBar user={user} searchAction={mockSearchAction} />);
-    fireEvent.change(screen.getByLabelText("Search pages and accessible content"), {
+    fireEvent.change(screen.getByLabelText("Search pages, library notes, and workspace context"), {
       target: { value: "keith" },
     });
 

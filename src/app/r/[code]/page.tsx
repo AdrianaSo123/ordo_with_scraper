@@ -22,7 +22,7 @@ export default async function ReferralLandingPage({
         brandName={identity.name}
         eyebrow="Referral unavailable"
         title="That referral link is not active"
-        description="The shared link may be invalid, expired, or no longer enabled. You can still continue into Studio Ordo normally."
+        description="The shared link or QR code may be invalid, expired, or no longer enabled. You can still continue into Studio Ordo normally."
         primaryAction={{ href: "/", label: "Start a normal chat" }}
         secondaryAction={{ href: "/library", label: "Open library" }}
       />
@@ -39,7 +39,7 @@ export default async function ReferralLandingPage({
             {referral.name} invited you into {identity.name}
           </h1>
           <p className="max-w-2xl text-sm leading-6 text-foreground/62 sm:text-base">
-            Start with the main chat surface and the first response will carry this introduction forward. If you want to browse first, the library stays open too.
+            Start with the main chat surface and this validated link or QR code will carry the introduction forward. If you want to browse first, the library stays open too.
           </p>
         </div>
 
@@ -52,7 +52,7 @@ export default async function ReferralLandingPage({
             </p>
           </div>
           <p className="text-sm leading-6 text-foreground/56">
-            This landing page validates the referral before any attribution is carried into chat or later account flows.
+            This landing page validates the referral before any attribution follows you into chat, registration, or later account flows.
           </p>
         </div>
 

@@ -5,6 +5,13 @@ import { buildReferralPath } from "@/lib/referrals/referral-links";
 import { LEGACY_REFERRAL_COOKIE_NAME } from "@/lib/referrals/referral-visit";
 
 const SESSION_COOKIE = "lms_session_token";
+const BASE_SECURITY_HEADERS = {
+  "Content-Security-Policy": "frame-ancestors 'none'",
+  "Permissions-Policy": "camera=(), geolocation=(), microphone=()",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+} as const;
 
 const ANONYMOUS_CONVERSATION_ROUTES = new Set([
   "/api/conversations/active",
@@ -57,6 +64,14 @@ function captureReferral(request: NextRequest): NextResponse | null {
   if (request.cookies.get(LEGACY_REFERRAL_COOKIE_NAME)?.value) {
     response.cookies.delete(LEGACY_REFERRAL_COOKIE_NAME);
   }
+  return applySecurityHeaders(response);
+}
+
+function applySecurityHeaders(response: NextResponse): NextResponse {
+  for (const [header, value] of Object.entries(BASE_SECURITY_HEADERS)) {
+    response.headers.set(header, value);
+  }
+
   return response;
 }
 
@@ -66,7 +81,7 @@ export function proxy(request: NextRequest) {
   // CSRF: Origin check on state-mutating API requests
   if (pathname.startsWith("/api/")) {
     const originResult = checkOrigin(request);
-    if (originResult) return originResult;
+    if (originResult) return applySecurityHeaders(originResult);
   }
 
   if (!pathname.startsWith("/api/")) {
@@ -75,20 +90,20 @@ export function proxy(request: NextRequest) {
       return legacyReferralRedirect;
     }
 
-    return NextResponse.next();
+    return applySecurityHeaders(NextResponse.next());
   }
 
   if (isProtectedRoute(pathname)) {
     const token = request.cookies.get(SESSION_COOKIE)?.value;
     if (!token) {
-      return NextResponse.json(
+      return applySecurityHeaders(NextResponse.json(
         { error: "Authentication required" },
         { status: 401 },
-      );
+      ));
     }
   }
 
-  return NextResponse.next();
+  return applySecurityHeaders(NextResponse.next());
 }
 
 export const config = {

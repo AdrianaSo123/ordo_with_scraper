@@ -179,7 +179,7 @@ describe("shell visual system", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Open account menu" }));
 
-    expect(screen.getByRole("link", { name: "Sign In" }).className).toContain("shell-account-label");
+    expect(screen.getByRole("link", { name: "Login" }).className).toContain("shell-account-label");
     expect(screen.getByRole("link", { name: "Register" }).className).toContain("shell-account-label");
   });
 

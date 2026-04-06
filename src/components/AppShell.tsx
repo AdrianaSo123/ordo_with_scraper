@@ -19,9 +19,7 @@ export function AppShell({ user, children, searchAction }: AppShellProps) {
   const isHomeRoute = pathname === "/";
   const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
   const isJournalRoute = pathname === "/journal"
-    || pathname.startsWith("/journal/")
-    || pathname === "/blog"
-    || pathname.startsWith("/blog/");
+    || pathname.startsWith("/journal/");
   const routeSurface = isHomeRoute
     ? "home"
     : isAdminRoute

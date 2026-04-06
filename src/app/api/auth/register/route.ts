@@ -6,11 +6,44 @@ import {
   DuplicateEmailError,
 } from "@/core/use-cases/RegisterUserInteractor";
 import { migrateAnonymousConversationsToUser } from "@/lib/chat/migrate-anonymous-conversations";
+import {
+  evaluatePublicFormRequest,
+  PUBLIC_FORM_HONEYPOT_FIELD_NAME,
+  PUBLIC_FORM_STARTED_AT_FIELD_NAME,
+} from "@/lib/security/public-form-protection";
+
+function buildProtectedResponse(error: string, status: number, retryAfterSeconds?: number) {
+  return NextResponse.json(
+    { error },
+    {
+      status,
+      headers: retryAfterSeconds ? { "Retry-After": String(retryAfterSeconds) } : undefined,
+    },
+  );
+}
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { email, password, name } = body;
+    const body = await req.json() as Record<string, unknown>;
+    const email = typeof body.email === "string" ? body.email.trim() : "";
+    const password = typeof body.password === "string" ? body.password : "";
+    const name = typeof body.name === "string" ? body.name.trim() : "";
+
+    const protectionResult = evaluatePublicFormRequest({
+      surface: "auth-register",
+      headers: req.headers,
+      identifier: email,
+      honeypotValue: body[PUBLIC_FORM_HONEYPOT_FIELD_NAME],
+      startedAt: body[PUBLIC_FORM_STARTED_AT_FIELD_NAME],
+    });
+
+    if (!protectionResult.ok) {
+      return buildProtectedResponse(
+        protectionResult.error,
+        protectionResult.status,
+        protectionResult.retryAfterSeconds,
+      );
+    }
 
     if (!email || !password || !name) {
       return NextResponse.json(

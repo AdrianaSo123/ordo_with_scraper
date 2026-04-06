@@ -7,10 +7,12 @@ test.describe("Home shell header", () => {
     const nav = page.getByRole("navigation", { name: "Primary" });
 
     await expect(nav.getByRole("link", { name: /Studio Ordo home/i })).toBeVisible();
-    await expect(nav.getByRole("button", { name: "Open notifications" })).toBeVisible();
+    await expect(nav.getByRole("button", { name: "Open notifications" })).toHaveCount(0);
     await expect(nav.getByRole("button", { name: "Open workspace menu" })).toBeVisible();
     await expect(nav.getByRole("button", { name: "Open navigation menu" })).toHaveCount(0);
-    await expect(page.getByLabel("Search pages and accessible content")).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Login" })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Register" })).toBeVisible();
+    await expect(page.getByLabel("Search pages, library notes, and workspace context")).toBeVisible();
     await expect(page.getByRole("button", { name: "Open search" })).toHaveCount(0);
 
     await nav.getByRole("button", { name: "Open workspace menu" }).click();
@@ -18,8 +20,8 @@ test.describe("Home shell header", () => {
     const dialog = page.getByRole("dialog", { name: "Workspace menu" });
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole("link", { name: "Library" })).toBeVisible();
-    await expect(dialog.getByRole("link", { name: "Blog" })).toBeVisible();
-    await expect(dialog.getByRole("link", { name: "Sign In" })).toBeVisible();
+    await expect(dialog.getByRole("link", { name: "Journal" })).toBeVisible();
+    await expect(dialog.getByRole("link", { name: "Login" })).toBeVisible();
     await expect(dialog.getByRole("link", { name: "Register" })).toBeVisible();
   });
 
@@ -29,18 +31,22 @@ test.describe("Home shell header", () => {
     const nav = page.getByRole("navigation", { name: "Primary" });
 
     await expect(nav.getByRole("link", { name: /Studio Ordo home/i })).toBeVisible();
-    await expect(nav.getByRole("button", { name: "Open notifications" })).toBeVisible();
+    await expect(nav.getByRole("button", { name: "Open notifications" })).toHaveCount(0);
     await expect(nav.getByRole("button", { name: "Open workspace menu" })).toBeVisible();
     await expect(nav.getByRole("button", { name: "Open navigation menu" })).toHaveCount(0);
     await expect(nav.getByRole("button", { name: "Open account menu" })).toHaveCount(0);
-    await expect(page.getByLabel("Search pages and accessible content")).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Login" })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "Register" })).toBeVisible();
+    await expect(page.getByLabel("Search pages, library notes, and workspace context")).toBeVisible();
 
     await nav.getByRole("button", { name: "Open workspace menu" }).click();
 
     const dialog = page.getByRole("dialog", { name: "Workspace menu" });
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole("link", { name: "Library" })).toBeVisible();
-    await expect(dialog.getByRole("link", { name: "Blog" })).toBeVisible();
+    await expect(dialog.getByRole("link", { name: "Journal" })).toBeVisible();
+    await expect(dialog.getByRole("link", { name: "Login" })).toBeVisible();
+    await expect(dialog.getByRole("link", { name: "Register" })).toBeVisible();
   });
 
   test.describe("mobile", () => {
@@ -51,10 +57,12 @@ test.describe("Home shell header", () => {
 
       const nav = page.getByRole("navigation", { name: "Primary" });
 
-      await expect(nav.getByRole("button", { name: "Open notifications" })).toBeVisible();
+      await expect(nav.getByRole("button", { name: "Open notifications" })).toHaveCount(0);
       await expect(nav.getByRole("button", { name: "Open workspace menu" })).toBeVisible();
       await expect(nav.getByRole("button", { name: "Open navigation menu" })).toHaveCount(0);
       await expect(nav.getByRole("button", { name: "Open account menu" })).toHaveCount(0);
+      await expect(nav.getByRole("link", { name: "Login" })).toBeVisible();
+      await expect(nav.getByRole("link", { name: "Register" })).toBeVisible();
       await expect(page.getByRole("button", { name: "Open search" })).toHaveCount(0);
 
       await nav.getByRole("button", { name: "Open workspace menu" }).click();
@@ -62,8 +70,8 @@ test.describe("Home shell header", () => {
       const dialog = page.getByRole("dialog", { name: "Workspace menu" });
       await expect(dialog).toBeVisible();
       await expect(dialog.getByRole("link", { name: "Library" })).toBeVisible();
-      await expect(dialog.getByRole("link", { name: "Blog" })).toBeVisible();
-      await expect(dialog.getByRole("link", { name: "Sign In" })).toBeVisible();
+      await expect(dialog.getByRole("link", { name: "Journal" })).toBeVisible();
+      await expect(dialog.getByRole("link", { name: "Login" })).toBeVisible();
       await expect(dialog.getByRole("link", { name: "Register" })).toBeVisible();
 
       await dialog.getByRole("link", { name: "Library" }).click();
@@ -77,12 +85,14 @@ test.describe("Home shell header", () => {
 
       const nav = page.getByRole("navigation", { name: "Primary" });
 
-      await expect(nav.getByRole("button", { name: "Open notifications" })).toBeVisible();
+      await expect(nav.getByRole("button", { name: "Open notifications" })).toHaveCount(0);
       await expect(nav.getByRole("button", { name: "Open workspace menu" })).toBeVisible();
       await expect(nav.getByRole("button", { name: "Open navigation menu" })).toHaveCount(0);
       await expect(nav.getByRole("button", { name: "Open account menu" })).toHaveCount(0);
+      await expect(nav.getByRole("link", { name: "Login" })).toBeVisible();
+      await expect(nav.getByRole("link", { name: "Register" })).toBeVisible();
       await expect(page.getByRole("button", { name: "Open search" })).toHaveCount(0);
-      await expect(page.getByLabel("Search pages and accessible content")).toHaveCount(0);
+      await expect(page.getByLabel("Search pages, library notes, and workspace context")).toHaveCount(0);
     });
   });
 });

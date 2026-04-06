@@ -247,7 +247,7 @@ export function ProfileSettingsPanel({ initialProfile }: ProfileSettingsPanelPro
               </div>
             ) : (
               <div className="profile-empty-state mt-(--space-6) p-(--space-inset-panel) text-sm leading-6 text-foreground/52" data-profile-surface="empty-state">
-                Referral access is not enabled for this account yet. Once an administrator enables affiliate status, the referrals workspace will show your link, QR code, and performance summary automatically.
+                Referral and QR access are not enabled yet. Once an administrator enables affiliate status, the referrals workspace will show your link, QR code, share copy, and performance summary automatically.
               </div>
             )}
           </aside>

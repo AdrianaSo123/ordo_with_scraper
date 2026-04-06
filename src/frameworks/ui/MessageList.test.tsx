@@ -181,7 +181,7 @@ describe("MessageList", () => {
       />,
     );
 
-      const list = screen.getByText("Bring me the workflow.").closest("[data-message-list-mode]");
+      const list = screen.getByText("Bring the mess. We'll make it move.").closest("[data-message-list-mode]");
     expect(list).toHaveAttribute("data-chat-fold-buffer", "true");
     expect(list).toHaveAttribute("data-message-list-state", "hero");
     expect(list?.className).toContain("ui-chat-message-stack");
@@ -190,7 +190,7 @@ describe("MessageList", () => {
 
   it("hides the seeded assistant bubble on the first-screen hero state", () => {
     const messages = [
-      makeMessage({ id: "assistant-1", role: "assistant", rawContent: "Describe the workflow problem, orchestration gap, or training goal.", suggestions: ["Fix a bottleneck"] }),
+      makeMessage({ id: "assistant-1", role: "assistant", rawContent: "Bring me the messy workflow, bold idea, or half-finished handoff. I can help you map it, search the library, turn it into visuals, or explain the QR referral system.", suggestions: ["Fix a bottleneck"] }),
     ];
 
     render(
@@ -206,8 +206,8 @@ describe("MessageList", () => {
       />,
     );
 
-    expect(screen.queryByText("Describe the workflow problem, orchestration gap, or training goal.")).not.toBeInTheDocument();
-    expect(screen.getByText("Bring me the workflow.")).toBeInTheDocument();
+    expect(screen.queryByText("Bring me the messy workflow, bold idea, or half-finished handoff. I can help you map it, search the library, turn it into visuals, or explain the QR referral system.")).not.toBeInTheDocument();
+    expect(screen.getByText("Bring the mess. We'll make it move.")).toBeInTheDocument();
   });
 
   it("falls back to conversation state when the single message is not the seeded hero", () => {
@@ -390,11 +390,11 @@ describe("MessageList", () => {
       />,
     );
 
-      expect(screen.getAllByText("Studio Ordo")).toHaveLength(1);
-    expect(screen.getByText("Strategic AI Advisory")).toBeInTheDocument();
-    expect(screen.getByText("Orchestration Training")).toBeInTheDocument();
-    expect(screen.getByText("Bring me the workflow.")).toBeInTheDocument();
-      expect(screen.getByText(/Paste a workflow, AI plan, or team handoff/i)).toBeInTheDocument();
+    expect(screen.getByText("Conversation-First Workspaces")).toBeInTheDocument();
+    expect(screen.getByText("Trusted Library Search")).toBeInTheDocument();
+    expect(screen.getByText("QR Referrals")).toBeInTheDocument();
+    expect(screen.getByText("Bring the mess. We'll make it move.")).toBeInTheDocument();
+      expect(screen.getByText(/Studio Ordo is a conversation-first workspace for teams working with AI/i)).toBeInTheDocument();
       expect(screen.queryByText("Try asking")).not.toBeInTheDocument();
   });
 
@@ -417,8 +417,8 @@ describe("MessageList", () => {
       />,
     );
 
-    expect(screen.queryByText("Strategic AI Advisory")).not.toBeInTheDocument();
-    expect(screen.queryByText("Teams")).not.toBeInTheDocument();
+    expect(screen.queryByText("Conversation-First Workspaces")).not.toBeInTheDocument();
+    expect(screen.queryByText("Trusted Library Search")).not.toBeInTheDocument();
   });
 
   it("renders MessageActionChips when an assistant message has actions", () => {

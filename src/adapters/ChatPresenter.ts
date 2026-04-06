@@ -20,6 +20,7 @@ const ACTIONS_MARKER = "__actions__:";
 const TOOL_NAMES = {
   SET_THEME: "set_theme",
   NAVIGATE: "navigate",
+  NAVIGATE_TO_PAGE: "navigate_to_page",
   ADJUST_UI: "adjust_ui",
   INSPECT_THEME: "inspect_theme",
   GENERATE_CHART: "generate_chart",
@@ -131,6 +132,13 @@ type InspectThemeResultPayload = {
     available: boolean;
     reason: string;
   };
+};
+
+type NavigateToPageResultPayload = {
+  path: string;
+  label: string | null;
+  description: string | null;
+  __actions__: Array<{ type: "navigate"; path: string }>;
 };
 
 export interface MessageAction {
@@ -342,6 +350,13 @@ function isInspectThemeResultPayload(value: unknown): value is InspectThemeResul
     && Array.isArray((value as { approved_control_axes?: unknown }).approved_control_axes)
     && typeof (value as { active_theme_state?: unknown }).active_theme_state === "object"
     && (value as { active_theme_state?: unknown }).active_theme_state !== null;
+}
+
+function isNavigateToPageResultPayload(value: unknown): value is NavigateToPageResultPayload {
+  return typeof value === "object"
+    && value !== null
+    && typeof (value as { path?: unknown }).path === "string"
+    && Array.isArray((value as { __actions__?: unknown }).__actions__);
 }
 
 function isJobStatusMessagePart(part: MessagePart): part is JobStatusMessagePart {
@@ -841,6 +856,14 @@ export class ChatPresenter {
             type: UI_COMMAND_TYPE.NAVIGATE,
             path: call.args.path as string,
           });
+          break;
+        case TOOL_NAMES.NAVIGATE_TO_PAGE:
+          if (isNavigateToPageResultPayload(call.result)) {
+            commands.push({
+              type: UI_COMMAND_TYPE.NAVIGATE,
+              path: call.result.path,
+            });
+          }
           break;
         case TOOL_NAMES.ADJUST_UI:
           commands.push({

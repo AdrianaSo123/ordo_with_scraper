@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { AdminCard } from "@/components/admin/AdminCard";
 import { AdminSection } from "@/components/admin/AdminSection";
 import { requireAdminPageAccess } from "@/lib/journal/admin-journal";
+import { getDiagnosticsReport } from "@/lib/admin/processes";
 import { loadSystemHealthBlock } from "@/lib/operator/loaders/admin-loaders";
 import { getToolComposition } from "@/lib/chat/tool-composition-root";
 
@@ -25,15 +26,18 @@ function redactValue(key: string, value: string | undefined): string {
 export default async function AdminSystemPage() {
   const user = await requireAdminPageAccess();
   const systemHealth = await loadSystemHealthBlock(user);
+  const diagnostics = getDiagnosticsReport();
   const healthSummary = systemHealth.data.summary;
   const warnings = systemHealth.data.warnings;
   const referralDiagnostics = systemHealth.data.referral;
+  const openAiDiagnostics = diagnostics.integrations.openai;
 
   const envVars: Array<{ key: string; value: string }> = [
     { key: "ANTHROPIC_MODEL", value: redactValue("ANTHROPIC_MODEL", process.env.ANTHROPIC_MODEL) },
     { key: "STUDIO_ORDO_DB_PATH", value: redactValue("STUDIO_ORDO_DB_PATH", process.env.STUDIO_ORDO_DB_PATH) },
     { key: "VAPID_PUBLIC_KEY", value: redactValue("VAPID_PUBLIC_KEY", process.env.VAPID_PUBLIC_KEY) },
     { key: "ANTHROPIC_API_KEY", value: redactValue("ANTHROPIC_API_KEY", process.env.ANTHROPIC_API_KEY) },
+    { key: "OPENAI_API_KEY", value: redactValue("OPENAI_API_KEY", process.env.OPENAI_API_KEY) },
     { key: "JWT_SECRET", value: redactValue("JWT_SECRET", process.env.JWT_SECRET) },
   ];
 
@@ -109,6 +113,20 @@ export default async function AdminSystemPage() {
               <dd>Anthropic</dd>
             </div>
           </dl>
+        </AdminCard>
+
+        <AdminCard
+          title="Feature integrations"
+          description="Visibility into optional runtime features that can fail independently of core chat readiness."
+          status={openAiDiagnostics.status === "ok" ? "ok" : "warning"}
+        >
+          <dl className="grid gap-(--space-2) text-sm text-foreground/62">
+            <div className="flex items-center justify-between gap-(--space-cluster-default)">
+              <dt>OpenAI-backed audio</dt>
+              <dd>{openAiDiagnostics.configured ? "configured" : "missing config"}</dd>
+            </div>
+          </dl>
+          <p className="mt-(--space-3) text-xs text-foreground/50">{openAiDiagnostics.summary}</p>
         </AdminCard>
 
         <AdminCard

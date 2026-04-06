@@ -128,6 +128,7 @@ export function AudioPlayer({ title, text, assetId, autoPlay = true }: AudioPlay
   });
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const pendingAudioLoadRef = useRef<HTMLAudioElement | null>(null);
   const hasStarted = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [offScreenReady, setOffScreenReady] = useState(false);
@@ -140,11 +141,45 @@ export function AudioPlayer({ title, text, assetId, autoPlay = true }: AudioPlay
   // Clean up object URL when unmounted
   useEffect(() => {
     return () => {
+      pendingAudioLoadRef.current = null;
       if (state.audioUrl) {
         URL.revokeObjectURL(state.audioUrl);
       }
     };
   }, [state.audioUrl]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.addEventListener !== "function") {
+      return;
+    }
+
+    const handleSecurityPolicyViolation = (event: Event) => {
+      const violation = event as SecurityPolicyViolationEvent;
+      if (!pendingAudioLoadRef.current) {
+        return;
+      }
+
+      if (violation.effectiveDirective === "media-src" && violation.blockedURI === "blob") {
+        pendingAudioLoadRef.current = null;
+        dispatch({
+          type: "LOAD_ERROR",
+          error: "Audio playback was blocked by the site's security policy.",
+        });
+      }
+    };
+
+    window.addEventListener(
+      "securitypolicyviolation",
+      handleSecurityPolicyViolation as EventListener,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "securitypolicyviolation",
+        handleSecurityPolicyViolation as EventListener,
+      );
+    };
+  }, []);
 
   /* ── core fetch with streaming progress ───────────────────────── */
 
@@ -159,16 +194,41 @@ export function AudioPlayer({ title, text, assetId, autoPlay = true }: AudioPlay
     }
 
     audioRef.current = audio;
+    pendingAudioLoadRef.current = audio;
+
+    let playbackLoadSettled = false;
+    const settlePlaybackLoad = () => {
+      if (playbackLoadSettled) {
+        return false;
+      }
+
+      playbackLoadSettled = true;
+      if (pendingAudioLoadRef.current === audio) {
+        pendingAudioLoadRef.current = null;
+      }
+      return true;
+    };
 
     audio.addEventListener("timeupdate", () =>
       dispatch({ type: "TIME_UPDATE", currentTime: audio.currentTime }),
     );
-    audio.addEventListener("loadedmetadata", () =>
-      dispatch({ type: "DURATION_UPDATE", duration: audio.duration }),
-    );
+    audio.addEventListener("loadedmetadata", () => {
+      settlePlaybackLoad();
+      dispatch({ type: "DURATION_UPDATE", duration: audio.duration });
+    });
     audio.addEventListener("play", () => dispatch({ type: "PLAY" }));
     audio.addEventListener("pause", () => dispatch({ type: "PAUSE" }));
     audio.addEventListener("ended", () => dispatch({ type: "PAUSE" }));
+    audio.addEventListener("error", () => {
+      if (!settlePlaybackLoad()) {
+        return;
+      }
+
+      dispatch({
+        type: "LOAD_ERROR",
+        error: "Audio generated, but the browser could not load it.",
+      });
+    });
 
     if (shouldAutoPlay) {
       // Auto-play — browsers may block without user gesture, so catch silently

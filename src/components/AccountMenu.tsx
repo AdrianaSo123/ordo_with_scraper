@@ -215,9 +215,9 @@ export function AccountMenu({ user: userProp, role }: AccountMenuProps) {
   const headerTitle = isAuth ? user.name : "Account";
   const headerMeta = isAuth
     ? user.email
-    : "Sign in, register, and adjust the shell without leaving the page.";
+    : "Login, register, and keep your workspace, referrals, and shell settings in sync.";
   const guestAccessLinks = [
-    { href: "/login", label: "Sign In" },
+    { href: "/login", label: "Login" },
     { href: "/register", label: "Register" },
   ] as const;
 

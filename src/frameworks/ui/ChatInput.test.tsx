@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { ChatInput } from "@/frameworks/ui/ChatInput";
 
-const CHAT_PLACEHOLDER = "Paste the workflow, brief, or handoff...";
+const CHAT_PLACEHOLDER = "Bring the messy workflow, bold idea, or handoff...";
 const CHAT_HELPER = "Enter to send. Shift+Enter for line break. Attach files if needed.";
 
 describe("ChatInput", () => {

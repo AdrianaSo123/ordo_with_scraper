@@ -132,7 +132,7 @@ describe("AccountMenu RBAC", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /open account menu/i }));
 
-    expect(screen.getByRole("link", { name: "Sign In" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Login" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Register" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Library" })).toBeNull();
   });

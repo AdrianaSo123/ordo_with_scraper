@@ -139,7 +139,7 @@ export function GlobalSearchBar({
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
-  const entityPlaceholder = "Search pages and accessible content...";
+  const entityPlaceholder = "Search pages, library notes, and workspace context...";
   const commandPlaceholder = commandExamples
     ? `Type a command… /${commandExamples}`
     : "Type a command…";
@@ -174,7 +174,7 @@ export function GlobalSearchBar({
               value={query}
               onChange={(event) => handleChange(event.target.value)}
               placeholder={isCommandMode ? commandPlaceholder : entityPlaceholder}
-              aria-label={isCommandMode ? "Navigate to available pages" : "Search pages and accessible content"}
+              aria-label={isCommandMode ? "Navigate to available pages" : "Search pages, library notes, and workspace context"}
               className="min-w-0 flex-1 bg-transparent py-0.5 text-sm text-foreground placeholder:text-foreground/40 focus:outline-none"
             />
             <button
@@ -207,7 +207,7 @@ export function GlobalSearchBar({
             value={query}
             onChange={(event) => handleChange(event.target.value)}
             placeholder={isCommandMode ? commandPlaceholder : entityPlaceholder}
-            aria-label={isCommandMode ? "Navigate to available pages" : "Search pages and accessible content"}
+            aria-label={isCommandMode ? "Navigate to available pages" : "Search pages, library notes, and workspace context"}
             className="w-full rounded-full border border-foreground/12 bg-foreground/2 py-2 pl-9 pr-4 text-sm text-foreground placeholder:text-foreground/40 focus:border-foreground/25 focus:outline-none focus:ring-1 focus:ring-foreground/10"
           />
           {!isCommandMode ? (

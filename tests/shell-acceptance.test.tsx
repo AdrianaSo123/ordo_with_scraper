@@ -144,7 +144,7 @@ describe("shell acceptance", () => {
 
     expect(within(drawer).queryByRole("link", { name: "Home" })).toBeNull();
     expect(within(drawer).getByRole("link", { name: /^Library/i })).toHaveAttribute("href", "/library");
-    expect(within(drawer).getByRole("link", { name: /^Blog/i })).toHaveAttribute("href", "/blog");
+    expect(within(drawer).getByRole("link", { name: /^Journal/i })).toHaveAttribute("href", "/journal");
     expect(within(drawer).getByRole("link", { name: "My Jobs" })).toHaveAttribute("href", "/jobs");
     expect(within(nav).queryByRole("link", { name: "Training" })).toBeNull();
     expect(within(nav).queryByRole("link", { name: "Studio" })).toBeNull();
@@ -158,7 +158,7 @@ describe("shell acceptance", () => {
     const footer = screen.getByRole("contentinfo");
     const footerLinks = getLinkNames(footer);
 
-    expect(footerLinks).toEqual(["Studio Ordo home", "Library", "Blog", "Profile"]);
+    expect(footerLinks).toEqual(["Studio Ordo home", "Library", "Journal", "Profile"]);
     expect(within(footer).getByRole("link", { name: /studio ordo home/i })).toHaveAttribute("href", "/");
     expect(within(footer).getByText("Information")).toBeInTheDocument();
     expect(within(footer).getByText("Workspace")).toBeInTheDocument();
@@ -170,7 +170,7 @@ describe("shell acceptance", () => {
     const footer = screen.getByRole("contentinfo");
     const footerLinks = getLinkNames(footer);
 
-    expect(footerLinks).toEqual(["Studio Ordo home", "Library", "Blog", "Login", "Register"]);
+    expect(footerLinks).toEqual(["Studio Ordo home", "Library", "Journal", "Login", "Register"]);
     expect(within(footer).getByText("Information")).toBeInTheDocument();
     expect(within(footer).getByText("Access")).toBeInTheDocument();
     expect(within(footer).queryByText("Workspace")).toBeNull();

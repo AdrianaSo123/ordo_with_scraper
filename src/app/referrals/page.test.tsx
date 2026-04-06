@@ -87,7 +87,7 @@ describe("/referrals page", () => {
     render(await ReferralsPage());
 
     expect(loadReferralsWorkspaceMock).toHaveBeenCalledWith("usr_1");
-    expect(screen.getByText("Referral workspace")).toBeInTheDocument();
+    expect(screen.getByText("Referral + QR workspace")).toBeInTheDocument();
     expect(screen.getAllByText("Introductions").length).toBeGreaterThan(0);
     expect(screen.getAllByText("1 pending review").length).toBeGreaterThan(0);
   });
@@ -120,6 +120,6 @@ describe("/referrals page", () => {
 
     render(await ReferralsPage());
 
-    expect(screen.getByText("Referral access is not enabled for this account yet")).toBeInTheDocument();
+    expect(screen.getByText("Referral and QR access are not enabled yet")).toBeInTheDocument();
   });
 });

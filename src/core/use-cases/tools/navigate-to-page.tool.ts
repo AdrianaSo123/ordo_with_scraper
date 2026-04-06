@@ -38,7 +38,7 @@ class NavigateToPageCommand implements ToolCommand<NavigateToPageInput, Navigate
 export const navigateToPageTool: ToolDescriptor<NavigateToPageInput, NavigateToPageOutput> = {
   name: "navigate_to_page",
   schema: {
-    description: "Navigate the user to a validated page. Returns a navigation chip the UI renders.",
+    description: "Navigate the user to a validated page. Dispatches the destination to the client UI and returns route metadata.",
     input_schema: {
       type: "object",
       properties: {

@@ -115,7 +115,7 @@ function buildNarrative(summary: {
   creditStatusLabel: string;
 }): string {
   if (summary.introductions === 0) {
-    return "Your referral workspace is ready, but there is no attributed activity yet.";
+    return "Your referral and QR workspace are ready, but no attributed activity has landed yet.";
   }
 
   if (summary.startedChats === 0) {

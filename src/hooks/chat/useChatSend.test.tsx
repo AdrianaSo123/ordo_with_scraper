@@ -49,6 +49,7 @@ function Harness({
 
   const { sendMessage, retryFailedMessage } = useChatSend({
     conversationId,
+    currentPathname: "/",
     refreshConversation,
     dispatch,
     getFailedSend: (retryKey) => failedSends.get(retryKey),

@@ -74,6 +74,7 @@ export function errorJson(
   context: RouteContext,
   message: string,
   status: number,
+  init?: ResponseInit,
 ) {
   const elapsed = durationMs(context.startedAt);
   const errorCode = getErrorCode(message, status);
@@ -91,7 +92,10 @@ export function errorJson(
 
   return NextResponse.json(
     { error: message, errorCode, requestId: context.requestId },
-    { status },
+    {
+      ...init,
+      status,
+    },
   );
 }
 

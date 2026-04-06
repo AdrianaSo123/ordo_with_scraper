@@ -33,11 +33,19 @@ describe("useChatStreamRuntime", () => {
     const setConversationId = vi.fn();
     const { result } = renderHook(() => useChatStreamRuntime({
       conversationId: "conv_1",
+      currentPathname: "/register",
       dispatch,
       setConversationId,
     }));
 
     await result.current([], 2, []);
+
+    expect(fetchStreamMock).toHaveBeenCalledWith([], {
+      conversationId: "conv_1",
+      currentPathname: "/register",
+      attachments: [],
+      taskOriginHandoff: undefined,
+    });
 
     expect(dispatch).toHaveBeenNthCalledWith(1, {
       type: "APPEND_TEXT",
@@ -68,6 +76,7 @@ describe("useChatStreamRuntime", () => {
     const setConversationId = vi.fn();
     const { result } = renderHook(() => useChatStreamRuntime({
       conversationId: null,
+      currentPathname: "/library",
       dispatch,
       setConversationId,
     }));

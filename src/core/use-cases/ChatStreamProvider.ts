@@ -14,6 +14,7 @@ export interface ChatStream {
 
 export interface FetchChatStreamOptions {
   conversationId?: string;
+  currentPathname?: string;
   attachments?: Array<{
     assetId: string;
     fileName: string;

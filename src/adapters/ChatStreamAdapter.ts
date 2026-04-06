@@ -44,6 +44,7 @@ export class ChatStreamAdapter implements ChatStreamProvider {
       body: JSON.stringify({
         messages,
         conversationId: options?.conversationId,
+        currentPathname: options?.currentPathname,
         attachments: options?.attachments,
         taskOriginHandoff: options?.taskOriginHandoff,
       }),

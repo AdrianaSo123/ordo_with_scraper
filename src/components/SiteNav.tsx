@@ -34,9 +34,7 @@ export function SiteNav({ user, searchAction }: SiteNavProps) {
     return window.matchMedia("(min-width: 56rem)").matches;
   });
   const isJournalRoute = pathname === "/journal"
-    || pathname.startsWith("/journal/")
-    || pathname === "/blog"
-    || pathname.startsWith("/blog/");
+    || pathname.startsWith("/journal/");
   const navTone = isJournalRoute ? "quiet" : "default";
   const homeHref = resolveShellHomeHref();
 

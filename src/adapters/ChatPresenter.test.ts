@@ -546,6 +546,39 @@ describe("ChatPresenter", () => {
     ]);
   });
 
+  it("maps validated navigate_to_page results into navigate UI commands", () => {
+    const presenter = new ChatPresenter(mockMarkdownParser, mockCommandParser);
+    const message: ChatMessage = {
+      id: "msg-8b",
+      role: "assistant",
+      content: "Opening the library.",
+      timestamp: new Date("2023-01-01T12:00:00Z"),
+      parts: [
+        {
+          type: "tool_call",
+          name: "navigate_to_page",
+          args: { path: "/library" },
+        },
+        {
+          type: "tool_result",
+          name: "navigate_to_page",
+          result: {
+            path: "/library",
+            label: "Library",
+            description: "Browse the library and structured reference material.",
+            __actions__: [{ type: "navigate", path: "/library" }],
+          },
+        },
+      ],
+    };
+
+    const presented = presenter.present(message);
+
+    expect(presented.commands).toEqual([
+      { type: "navigate", path: "/library" },
+    ]);
+  });
+
   it("drops unsupported theme values from structured UI tool calls", () => {
     const presenter = new ChatPresenter(mockMarkdownParser, mockCommandParser);
     const message: ChatMessage = {

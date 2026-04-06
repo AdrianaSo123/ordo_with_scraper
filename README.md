@@ -179,7 +179,7 @@ Recommended resilience defaults:
 
 Optional for additional features:
 
-- `OPENAI_API_KEY` for admin web search and related OpenAI-backed operations
+- `OPENAI_API_KEY` for audio generation, admin web search, and related OpenAI-backed operations
 
 Optional for browser push notifications on deferred jobs:
 

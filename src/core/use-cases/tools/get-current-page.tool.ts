@@ -8,7 +8,6 @@ interface GetCurrentPageInput {
 
 interface GetCurrentPageOutput {
   pathname: string;
-  routeId: string | null;
   label: string | null;
   description: string | null;
 }
@@ -24,7 +23,6 @@ class GetCurrentPageCommand implements ToolCommand<GetCurrentPageInput, GetCurre
 
     return {
       pathname,
-      routeId: match?.id ?? null,
       label: match?.label ?? null,
       description: match?.description ?? null,
     };

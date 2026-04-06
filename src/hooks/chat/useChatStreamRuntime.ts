@@ -15,12 +15,14 @@ const streamProcessor = createChatStreamProcessor();
 
 interface UseChatStreamRuntimeOptions {
   conversationId: string | null;
+  currentPathname: string;
   dispatch: Dispatch<ChatAction>;
   setConversationId: (conversationId: string | null) => void;
 }
 
 export function useChatStreamRuntime({
   conversationId,
+  currentPathname,
   dispatch,
   setConversationId,
 }: UseChatStreamRuntimeOptions) {
@@ -33,6 +35,7 @@ export function useChatStreamRuntime({
     ): Promise<string | null> => {
       const stream = await streamAdapter.fetchStream(historyForBackend, {
         conversationId: conversationId || undefined,
+        currentPathname,
         attachments,
         taskOriginHandoff,
       });
@@ -51,6 +54,6 @@ export function useChatStreamRuntime({
         assistantIndex,
       });
     },
-    [conversationId, dispatch, setConversationId],
+    [conversationId, currentPathname, dispatch, setConversationId],
   );
 }

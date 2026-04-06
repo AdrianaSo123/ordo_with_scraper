@@ -10,7 +10,7 @@ export default defineConfig({
   fullyParallel: false,
   reporter: [["list"]],
   webServer: {
-    command: `npm run build && ./node_modules/.bin/next start --hostname 127.0.0.1 --port ${playwrightPort}`,
+    command: `npm run build && DATA_DIR=.playwright-data HOSTNAME=127.0.0.1 PORT=${playwrightPort} DISABLE_DEFERRED_JOB_WORKER=1 node scripts/start-server.mjs`,
     url: playwrightBaseUrl,
     reuseExistingServer: false,
     stdout: "pipe",

@@ -52,6 +52,11 @@ describe("SystemPromptBuilder", () => {
     expect(builder.build()).toBe("ABC");
   });
 
+  it("P3a: base prompt forbids exposing internal navigation metadata", () => {
+    const base = buildCorpusBasePrompt();
+    expect(base).toContain("Never expose internal route IDs");
+  });
+
   it("P4: withConversationSummary appends summary block", () => {
     const builder = new SystemPromptBuilder()
       .withConversationSummary("test summary");

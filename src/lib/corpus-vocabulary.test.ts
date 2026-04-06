@@ -58,6 +58,10 @@ describe("buildCorpusBasePrompt", () => {
     expect(prompt).toContain("Do NOT duplicate the same action as both an inline link AND a chip");
   });
 
+  it("contains direct navigation tool guidance", () => {
+    expect(prompt).toContain("Do not rely only on route action links");
+  });
+
   it("contains max 3 actions per message rule", () => {
     expect(prompt).toContain("Max 3 actions per message");
   });

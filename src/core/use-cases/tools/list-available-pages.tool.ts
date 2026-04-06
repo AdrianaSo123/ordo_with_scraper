@@ -4,7 +4,7 @@ import type { ToolExecutionContext } from "@/core/tool-registry/ToolExecutionCon
 import { SHELL_ROUTES, type ShellRouteDefinition } from "@/lib/shell/shell-navigation";
 
 interface ListAvailablePagesOutput {
-  routes: Array<{ id: string; label: string; href: string; description: string | undefined }>;
+  routes: Array<{ label: string; href: string; description: string | undefined }>;
 }
 
 function isVisibleToRole(route: ShellRouteDefinition, role: string): boolean {
@@ -18,7 +18,7 @@ class ListAvailablePagesCommand implements ToolCommand<Record<string, never>, Li
     const role = context?.role ?? "ANONYMOUS";
     const routes = SHELL_ROUTES
       .filter((r) => r.kind === "internal" && isVisibleToRole(r, role))
-      .map((r) => ({ id: r.id, label: r.label, href: r.href, description: r.description }));
+      .map((r) => ({ label: r.label, href: r.href, description: r.description }));
     return { routes };
   }
 }

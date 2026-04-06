@@ -3,6 +3,20 @@
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  createPublicFormMetadata,
+  PUBLIC_FORM_HONEYPOT_FIELD_NAME,
+  PUBLIC_FORM_STARTED_AT_FIELD_NAME,
+} from "@/lib/security/public-form-protection";
+
+const HONEYPOT_STYLE = {
+  position: "absolute",
+  left: "-10000px",
+  top: "auto",
+  width: "1px",
+  height: "1px",
+  overflow: "hidden",
+} as const;
 
 interface FieldErrors {
   email?: string;
@@ -15,6 +29,8 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [{ honeypotValue, startedAt }] = useState(() => createPublicFormMetadata());
+  const [honeypotInput, setHoneypotInput] = useState(honeypotValue);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [generalError, setGeneralError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -53,7 +69,13 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify({
+          email,
+          password,
+          name,
+          [PUBLIC_FORM_HONEYPOT_FIELD_NAME]: honeypotInput,
+          [PUBLIC_FORM_STARTED_AT_FIELD_NAME]: startedAt,
+        }),
       });
 
       if (!res.ok) {
@@ -78,18 +100,37 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex-1 flex items-center justify-center p-[var(--container-padding)]">
+    <div className="flex-1 flex items-center justify-center p-(--container-padding)">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold tracking-tight">Create Account</h1>
           <p className="text-sm opacity-50">
-            Sign up to get full access
+            Save conversations, unlock richer tools, and get QR referral tools when affiliate access is enabled.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div role="alert" aria-live="assertive" className="alert-error" style={generalError ? undefined : { display: "none" }}>
             {generalError}
+          </div>
+
+          <div aria-hidden="true" style={HONEYPOT_STYLE}>
+            <label htmlFor={PUBLIC_FORM_HONEYPOT_FIELD_NAME}>Website</label>
+            <input
+              id={PUBLIC_FORM_HONEYPOT_FIELD_NAME}
+              name={PUBLIC_FORM_HONEYPOT_FIELD_NAME}
+              type="text"
+              value={honeypotInput}
+              onChange={(e) => setHoneypotInput(e.target.value)}
+              autoComplete="off"
+              tabIndex={-1}
+            />
+            <input
+              type="hidden"
+              name={PUBLIC_FORM_STARTED_AT_FIELD_NAME}
+              value={startedAt}
+              readOnly
+            />
           </div>
 
           <div className="space-y-1.5">
@@ -168,7 +209,7 @@ export default function RegisterPage() {
         </form>
 
         <p className="text-center text-xs opacity-50">
-          Already have an account?{" "}
+          Already have a workspace?{" "}
           <Link href="/login" className="font-bold opacity-100 text-accent-interactive hover:underline">
             Sign In
           </Link>

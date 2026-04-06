@@ -57,7 +57,7 @@ const ROLE_CONFIG: Record<
 };
 
 const GUEST_ACCESS_LINKS = [
-  { href: "/login", label: "Sign In" },
+  { href: "/login", label: "Login" },
   { href: "/register", label: "Register" },
 ] as const;
 
@@ -381,7 +381,7 @@ export function ShellWorkspaceMenu({ user, tone = "default" }: ShellWorkspaceMen
                 <div className="grid gap-1 px-(--space-1)">
                   <h2 className="shell-section-heading text-foreground/42">Access</h2>
                   <p className="shell-supporting-text text-foreground/58">
-                    Sign in or register to save your workspace context.
+                    Login or register to save conversations, unlock richer tools, and track referrals.
                   </p>
                 </div>
 

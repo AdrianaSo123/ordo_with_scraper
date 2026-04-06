@@ -3,8 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createConversationRoutingSnapshot } from "@/core/entities/conversation-routing";
 import { useState } from "react";
 
-const { fetchStreamMock } = vi.hoisted(() => ({
+const { fetchStreamMock, usePathnameMock } = vi.hoisted(() => ({
   fetchStreamMock: vi.fn(),
+  usePathnameMock: vi.fn(),
 }));
 
 class MockEventSource {
@@ -27,6 +28,10 @@ vi.mock("@/adapters/StreamProviderFactory", () => ({
   getChatStreamProvider: () => ({
     fetchStream: fetchStreamMock,
   }),
+}));
+
+vi.mock("next/navigation", () => ({
+  usePathname: usePathnameMock,
 }));
 
 import { ChatProvider, useGlobalChat } from "./useGlobalChat";
@@ -99,6 +104,7 @@ describe("ChatProvider active conversation restore", () => {
     vi.stubGlobal("EventSource", MockEventSource as unknown as typeof EventSource);
     fetchMock.mockReset();
     fetchStreamMock.mockReset();
+    usePathnameMock.mockImplementation(() => window.location.pathname);
     MockEventSource.instances = [];
     warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -132,7 +138,7 @@ describe("ChatProvider active conversation restore", () => {
 
     render(<RoleSwitcher />);
 
-    expect(screen.getByTestId("first-message")).toHaveTextContent("Describe the workflow problem");
+    expect(screen.getByTestId("first-message")).toHaveTextContent("Bring me the messy workflow");
 
     fireEvent.click(screen.getByRole("button", { name: "switch-role" }));
 
@@ -904,6 +910,175 @@ describe("ChatProvider active conversation restore", () => {
     expect(screen.getByTestId("conversation-lane")).toHaveTextContent("individual");
   });
 
+  it("forwards the current pathname when sending from the register page", async () => {
+    window.history.replaceState({}, "", "/register");
+
+    fetchMock
+      .mockResolvedValueOnce({
+        status: 404,
+        ok: false,
+        json: async () => ({ error: "No active conversation" }),
+      })
+      .mockResolvedValueOnce(createNoReferralVisitResponse())
+      .mockResolvedValueOnce({
+        status: 200,
+        ok: true,
+        json: async () => ({
+          conversation: {
+            id: "conv_register",
+            userId: "anon_123",
+            title: "Send this",
+            status: "active",
+            createdAt: "2026-03-18T10:00:00.000Z",
+            updatedAt: "2026-03-18T10:00:01.000Z",
+            convertedFrom: null,
+            messageCount: 2,
+            firstMessageAt: "2026-03-18T10:00:00.000Z",
+            lastToolUsed: null,
+            sessionSource: "anonymous_cookie",
+            promptVersion: null,
+            routingSnapshot: createConversationRoutingSnapshot({ lane: "individual", confidence: 0.78 }),
+          },
+          messages: [
+            {
+              id: "msg_1",
+              role: "user",
+              content: "Send this",
+              parts: [{ type: "text", text: "Send this" }],
+              createdAt: "2026-03-18T10:00:00.000Z",
+            },
+            {
+              id: "msg_2",
+              role: "assistant",
+              content: "Register reply",
+              parts: [{ type: "text", text: "Register reply" }],
+              createdAt: "2026-03-18T10:00:01.000Z",
+            },
+          ],
+        }),
+      });
+    fetchStreamMock.mockResolvedValue({
+      events: async function* () {
+        yield { type: "conversation_id", id: "conv_register" };
+        yield { type: "text", delta: "Register reply" };
+      },
+    });
+
+    renderChatProvider();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("loading-state")).toHaveTextContent("false");
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "send" }));
+
+    await waitFor(() => {
+      expect(fetchStreamMock).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ role: "user", content: "Send this" }),
+        ]),
+        expect.objectContaining({
+          attachments: [],
+          currentPathname: "/register",
+        }),
+      );
+    });
+  });
+
+  it("updates the forwarded pathname after the route changes", async () => {
+    let pathname = "/library";
+    usePathnameMock.mockImplementation(() => pathname);
+
+    fetchMock
+      .mockResolvedValueOnce({
+        status: 404,
+        ok: false,
+        json: async () => ({ error: "No active conversation" }),
+      })
+      .mockResolvedValueOnce(createNoReferralVisitResponse())
+      .mockResolvedValueOnce({
+        status: 200,
+        ok: true,
+        json: async () => ({
+          conversation: {
+            id: "conv_route_change",
+            userId: "anon_123",
+            title: "Send this",
+            status: "active",
+            createdAt: "2026-03-18T10:00:00.000Z",
+            updatedAt: "2026-03-18T10:00:01.000Z",
+            convertedFrom: null,
+            messageCount: 2,
+            firstMessageAt: "2026-03-18T10:00:00.000Z",
+            lastToolUsed: null,
+            sessionSource: "anonymous_cookie",
+            promptVersion: null,
+            routingSnapshot: createConversationRoutingSnapshot({ lane: "individual", confidence: 0.78 }),
+          },
+          messages: [
+            {
+              id: "msg_1",
+              role: "user",
+              content: "Send this",
+              parts: [{ type: "text", text: "Send this" }],
+              createdAt: "2026-03-18T10:00:00.000Z",
+            },
+            {
+              id: "msg_2",
+              role: "assistant",
+              content: "Route-aware reply",
+              parts: [{ type: "text", text: "Route-aware reply" }],
+              createdAt: "2026-03-18T10:00:01.000Z",
+            },
+          ],
+        }),
+      });
+    fetchStreamMock.mockResolvedValue({
+      events: async function* () {
+        yield { type: "conversation_id", id: "conv_route_change" };
+        yield { type: "text", delta: "Route-aware reply" };
+      },
+    });
+
+    function PathnameRerenderHarness() {
+      const [tick, setTick] = useState(0);
+
+      return (
+        <>
+          <button type="button" onClick={() => setTick((value) => value + 1)}>
+            rerender-pathname
+          </button>
+          <div data-testid="pathname-rerender-count">{tick}</div>
+          <ChatProvider>
+            <ChatProbe />
+          </ChatProvider>
+        </>
+      );
+    }
+
+    render(<PathnameRerenderHarness />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("loading-state")).toHaveTextContent("false");
+    });
+
+    pathname = "/register";
+    fireEvent.click(screen.getByRole("button", { name: "rerender-pathname" }));
+    fireEvent.click(screen.getByRole("button", { name: "send" }));
+
+    await waitFor(() => {
+      expect(fetchStreamMock).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ role: "user", content: "Send this" }),
+        ]),
+        expect.objectContaining({
+          attachments: [],
+          currentPathname: "/register",
+        }),
+      );
+    });
+  });
+
   it("forwards task-origin handoff metadata through the public sendMessage API", async () => {
     fetchMock
       .mockResolvedValueOnce({
@@ -971,6 +1146,7 @@ describe("ChatProvider active conversation restore", () => {
         ]),
         expect.objectContaining({
           attachments: [],
+          currentPathname: "/",
           taskOriginHandoff: {
             sourceBlockId: "lead_queue",
             sourceContextId: "lead-queue:header",
@@ -1033,8 +1209,9 @@ describe("ChatProvider active conversation restore", () => {
             content: "",
           }),
         ]),
-        {
+        expect.objectContaining({
           conversationId: undefined,
+          currentPathname: "/",
           attachments: [
             {
               type: "attachment",
@@ -1044,7 +1221,7 @@ describe("ChatProvider active conversation restore", () => {
               fileSize: 5,
             },
           ],
-        },
+        }),
       );
     });
   });

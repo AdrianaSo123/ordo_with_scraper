@@ -75,12 +75,23 @@ import { POST as loginRoute } from "@/app/api/auth/login/route";
 import { GET as meRoute } from "@/app/api/auth/me/route";
 import { POST as logoutRoute } from "@/app/api/auth/logout/route";
 import { getSessionUser } from "@/lib/auth";
+import {
+  createPublicFormMetadata,
+  PUBLIC_FORM_HONEYPOT_FIELD_NAME,
+  PUBLIC_FORM_STARTED_AT_FIELD_NAME,
+  resetPublicFormProtectionState,
+} from "@/lib/security/public-form-protection";
 
-function jsonRequest(body: Record<string, unknown>): Request {
+function jsonRequest(body: Record<string, unknown>, headers?: HeadersInit): Request {
+  const publicFormMetadata = createPublicFormMetadata(Date.now() - 5_000);
   return new Request("http://localhost:3000/api/auth/test", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    headers: { "Content-Type": "application/json", ...headers },
+    body: JSON.stringify({
+      [PUBLIC_FORM_HONEYPOT_FIELD_NAME]: publicFormMetadata.honeypotValue,
+      [PUBLIC_FORM_STARTED_AT_FIELD_NAME]: publicFormMetadata.startedAt,
+      ...body,
+    }),
   });
 }
 
@@ -91,6 +102,7 @@ describe("Auth API routes — full lifecycle", () => {
     authTestState.cookieJar = new Map();
     authTestState.failReferralLinkCount = 0;
     repairConversationOwnershipIndex.mockClear();
+    resetPublicFormProtectionState();
   });
 
   function getTestDb() {
@@ -260,6 +272,125 @@ describe("Auth API routes — full lifecycle", () => {
       jsonRequest({ email: "nobody@test.com", password: "password123" }),
     );
     expect(res.status).toBe(401);
+
+    authTestState.testDb?.close();
+  });
+
+  it("rejects login honeypot submissions", async () => {
+    await registerRoute(
+      jsonRequest({ email: "honeypot-login@test.com", password: "password123", name: "Honey Pot" }),
+    );
+    authTestState.cookieJar.clear();
+
+    const res = await loginRoute(
+      jsonRequest({
+        email: "honeypot-login@test.com",
+        password: "password123",
+        [PUBLIC_FORM_HONEYPOT_FIELD_NAME]: "https://spam.invalid",
+      }, { "x-forwarded-for": "203.0.113.20" }),
+    );
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error).toBe("Unable to process request.");
+    expect(authTestState.cookieJar.has("lms_session_token")).toBe(false);
+
+    authTestState.testDb?.close();
+  });
+
+  it("rate limits repeated login attempts from the same client", async () => {
+    await registerRoute(
+      jsonRequest({ email: "ratelimit-login@test.com", password: "password123", name: "Rate Limit" }),
+    );
+    authTestState.cookieJar.clear();
+
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const res = await loginRoute(
+        jsonRequest(
+          { email: "ratelimit-login@test.com", password: "wrong-password" },
+          { "x-forwarded-for": "203.0.113.21" },
+        ),
+      );
+      expect(res.status).toBe(401);
+    }
+
+    const limitedRes = await loginRoute(
+      jsonRequest(
+        { email: "ratelimit-login@test.com", password: "wrong-password" },
+        { "x-forwarded-for": "203.0.113.21" },
+      ),
+    );
+    const limitedBody = await limitedRes.json();
+
+    expect(limitedRes.status).toBe(429);
+    expect(limitedBody.error).toBe("Too many attempts. Please wait a moment and try again.");
+    expect(limitedRes.headers.get("Retry-After")).toMatch(/^\d+$/);
+
+    authTestState.testDb?.close();
+  });
+
+  it("rejects registration honeypot submissions", async () => {
+    const res = await registerRoute(
+      jsonRequest({
+        email: "honeypot-register@test.com",
+        password: "password123",
+        name: "Honey Pot",
+        [PUBLIC_FORM_HONEYPOT_FIELD_NAME]: "https://spam.invalid",
+      }, { "x-forwarded-for": "203.0.113.22" }),
+    );
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error).toBe("Unable to process request.");
+
+    const userCount = getTestDb()
+      .prepare(`SELECT COUNT(*) as count FROM users WHERE email = 'honeypot-register@test.com'`)
+      .get() as { count: number };
+    expect(userCount.count).toBe(0);
+
+    authTestState.testDb?.close();
+  });
+
+  it("requires a realistic dwell time for registration submissions", async () => {
+    const res = await registerRoute(
+      jsonRequest({
+        email: "fast-register@test.com",
+        password: "password123",
+        name: "Fast Register",
+        [PUBLIC_FORM_STARTED_AT_FIELD_NAME]: String(Date.now()),
+      }, { "x-forwarded-for": "203.0.113.23" }),
+    );
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error).toBe("Please wait a moment and try again.");
+
+    authTestState.testDb?.close();
+  });
+
+  it("rate limits repeated registration attempts from the same client", async () => {
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      const res = await registerRoute(
+        jsonRequest(
+          { email: "ratelimit-register@test.com", password: "password123", name: "Rate Limit" },
+          { "x-forwarded-for": "203.0.113.24" },
+        ),
+      );
+
+      expect([201, 409]).toContain(res.status);
+    }
+
+    const limitedRes = await registerRoute(
+      jsonRequest(
+        { email: "ratelimit-register@test.com", password: "password123", name: "Rate Limit" },
+        { "x-forwarded-for": "203.0.113.24" },
+      ),
+    );
+    const limitedBody = await limitedRes.json();
+
+    expect(limitedRes.status).toBe(429);
+    expect(limitedBody.error).toBe("Too many attempts. Please wait a moment and try again.");
+    expect(limitedRes.headers.get("Retry-After")).toMatch(/^\d+$/);
 
     authTestState.testDb?.close();
   });

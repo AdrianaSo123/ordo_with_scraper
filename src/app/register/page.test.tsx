@@ -21,21 +21,21 @@ vi.mock("next/navigation", async () => {
   };
 });
 
-import LoginPage from "./page";
+import RegisterPage from "./page";
 
-describe("/login page", () => {
+describe("/register page", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal("fetch", vi.fn());
   });
 
-  it("redirects successful logins to the chat homepage", async () => {
+  it("includes anti-bot fields and redirects successful registrations", async () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
-      json: async () => ({ user: { id: "usr_auth" } }),
+      json: async () => ({ user: { id: "usr_new" } }),
     } as Response);
 
-    render(<LoginPage />);
+    render(<RegisterPage />);
 
     const honeypotField = document.querySelector(
       `input[name="${PUBLIC_FORM_HONEYPOT_FIELD_NAME}"]`,
@@ -47,13 +47,16 @@ describe("/login page", () => {
     expect(honeypotField).not.toBeNull();
     expect(startedAtField?.value).toMatch(/^\d+$/);
 
+    fireEvent.change(screen.getByLabelText("Name"), {
+      target: { value: "Casey Rivera" },
+    });
     fireEvent.change(screen.getByLabelText("Email"), {
-      target: { value: "auth@example.com" },
+      target: { value: "casey@example.com" },
     });
     fireEvent.change(screen.getByLabelText("Password"), {
       target: { value: "password123" },
     });
-    fireEvent.submit(screen.getByRole("button", { name: "Sign In" }).closest("form") as HTMLFormElement);
+    fireEvent.submit(screen.getByRole("button", { name: "Create Account" }).closest("form") as HTMLFormElement);
 
     await waitFor(() => {
       expect(pushMock).toHaveBeenCalledWith("/");
@@ -65,7 +68,8 @@ describe("/login page", () => {
     ) as Record<string, string>;
 
     expect(fetchPayload).toMatchObject({
-      email: "auth@example.com",
+      name: "Casey Rivera",
+      email: "casey@example.com",
       password: "password123",
       [PUBLIC_FORM_HONEYPOT_FIELD_NAME]: "",
     });
