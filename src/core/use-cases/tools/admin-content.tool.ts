@@ -1,6 +1,7 @@
 import type { ToolDescriptor } from "@/core/tool-registry/ToolDescriptor";
 import type { ToolCommand } from "@/core/tool-registry/ToolCommand";
 import type { ToolExecutionContext } from "@/core/tool-registry/ToolExecutionContext";
+import type { BlogAssetRepository } from "@/core/use-cases/BlogAssetRepository";
 import type { BlogPostRepository } from "@/core/use-cases/BlogPostRepository";
 import { hasStructuredMarkdown } from "@/lib/blog/normalize-markdown";
 import { extractDescription } from "@/lib/seo/extract-description";
@@ -56,18 +57,65 @@ function assertStructuredMarkdown(text: string): void {
 
 // ── draft_content tool ─────────────────────────────────────────────────
 
-interface DraftContentInput {
+export interface DraftContentInput {
   title: string;
   content: string;
 }
 
-interface DraftContentOutput {
+export interface DraftContentOutput {
   id: string;
   slug: string;
   status: "draft";
   title: string;
   description: string;
   createdAt: string;
+}
+
+export async function executeDraftContent(
+  blogRepo: BlogPostRepository,
+  input: DraftContentInput,
+  context?: ToolExecutionContext,
+): Promise<DraftContentOutput> {
+  if (!input.title || input.title.trim().length === 0) {
+    throw new Error("Title is required.");
+  }
+  if (!input.content || input.content.trim().length === 0) {
+    throw new Error("Content is required.");
+  }
+
+  assertContentSafety(`${input.title} ${input.content}`);
+  assertStructuredMarkdown(input.content);
+
+  const slug = generateSlug(input.title);
+  const description = extractDescription(input.content);
+
+  const post = await blogRepo.create({
+    slug,
+    title: input.title.trim(),
+    description,
+    content: input.content,
+    createdByUserId: context?.userId ?? "unknown",
+  });
+
+  return {
+    id: post.id,
+    slug: post.slug,
+    status: "draft",
+    title: post.title,
+    description: post.description,
+    createdAt: post.createdAt,
+  };
+}
+
+export function parseDraftContentInput(value: Record<string, unknown>): DraftContentInput {
+  if (typeof value.title !== "string" || typeof value.content !== "string") {
+    throw new Error("Draft content job payload is invalid.");
+  }
+
+  return {
+    title: value.title,
+    content: value.content,
+  };
 }
 
 class DraftContentCommand implements ToolCommand<DraftContentInput, DraftContentOutput> {
@@ -77,35 +125,7 @@ class DraftContentCommand implements ToolCommand<DraftContentInput, DraftContent
     input: DraftContentInput,
     context?: ToolExecutionContext,
   ): Promise<DraftContentOutput> {
-    if (!input.title || input.title.trim().length === 0) {
-      throw new Error("Title is required.");
-    }
-    if (!input.content || input.content.trim().length === 0) {
-      throw new Error("Content is required.");
-    }
-
-    assertContentSafety(`${input.title} ${input.content}`);
-    assertStructuredMarkdown(input.content);
-
-    const slug = generateSlug(input.title);
-    const description = extractDescription(input.content);
-
-    const post = await this.blogRepo.create({
-      slug,
-      title: input.title.trim(),
-      description,
-      content: input.content,
-      createdByUserId: context?.userId ?? "unknown",
-    });
-
-    return {
-      id: post.id,
-      slug: post.slug,
-      status: "draft",
-      title: post.title,
-      description: post.description,
-      createdAt: post.createdAt,
-    };
+    return executeDraftContent(this.blogRepo, input, context);
   }
 }
 
@@ -116,14 +136,14 @@ export function createDraftContentTool(
     name: "draft_content",
     schema: {
       description:
-        "Draft a blog post as structured markdown. Use markdown headings, lists, links, quotes, tables, or fenced code blocks as appropriate. Do not repeat the title inside the content body. The post is saved as a draft that must be explicitly published by an admin.",
+        "Draft a journal article as structured markdown. Use markdown headings, lists, links, quotes, tables, or fenced code blocks as appropriate. Do not repeat the title inside the content body. The article is saved as a draft that must be explicitly published by an admin.",
       input_schema: {
         type: "object",
         properties: {
-          title: { type: "string", description: "Blog post title" },
+          title: { type: "string", description: "Journal article title" },
           content: {
             type: "string",
-            description: "Blog post body in structured markdown format with headings and other markdown elements, excluding the page title",
+            description: "Journal article body in structured markdown format with headings and other markdown elements, excluding the page title",
           },
         },
         required: ["title", "content"],
@@ -132,16 +152,23 @@ export function createDraftContentTool(
     command: new DraftContentCommand(blogRepo),
     roles: ["ADMIN"],
     category: "content",
+    executionMode: "deferred",
+    deferred: {
+      dedupeStrategy: "per-conversation-payload",
+      retryable: true,
+      notificationPolicy: "completion-and-failure",
+    },
   };
 }
 
 // ── publish_content tool ───────────────────────────────────────────────
 
 interface PublishContentInput {
-  post_id: string;
+  post_id?: string;
+  slug?: string;
 }
 
-interface PublishContentOutput {
+export interface PublishContentOutput {
   id: string;
   slug: string;
   status: "published";
@@ -149,53 +176,98 @@ interface PublishContentOutput {
   publishedAt: string | null;
 }
 
+export async function executePublishContent(
+  blogRepo: BlogPostRepository,
+  input: PublishContentInput,
+  context?: ToolExecutionContext,
+  assetRepo?: BlogAssetRepository,
+): Promise<PublishContentOutput> {
+  let postId = input.post_id?.trim();
+
+  if (!postId && input.slug?.trim()) {
+    const found = await blogRepo.findBySlug(input.slug.trim());
+    if (!found) throw new Error(`No journal post found with slug "${input.slug.trim()}".`);
+    postId = found.id;
+  }
+
+  if (!postId) {
+    throw new Error("Either post_id or slug is required.");
+  }
+
+  const post = await blogRepo.publishById(
+    postId,
+    context?.userId ?? "unknown",
+  );
+
+  if (assetRepo && post.heroImageAssetId) {
+    await assetRepo.setVisibility(post.heroImageAssetId, "published");
+  }
+
+  return {
+    id: post.id,
+    slug: post.slug,
+    status: "published",
+    title: post.title,
+    publishedAt: post.publishedAt,
+  };
+}
+
+export function parsePublishContentInput(value: Record<string, unknown>): PublishContentInput {
+  const post_id = typeof value.post_id === "string" && value.post_id.trim() ? value.post_id.trim() : undefined;
+  const slug = typeof value.slug === "string" && value.slug.trim() ? value.slug.trim() : undefined;
+
+  if (!post_id && !slug) {
+    throw new Error("Either post_id or slug is required.");
+  }
+
+  return { ...(post_id ? { post_id } : {}), ...(slug ? { slug } : {}) };
+}
+
 class PublishContentCommand implements ToolCommand<PublishContentInput, PublishContentOutput> {
-  constructor(private readonly blogRepo: BlogPostRepository) {}
+  constructor(
+    private readonly blogRepo: BlogPostRepository,
+    private readonly assetRepo?: BlogAssetRepository,
+  ) {}
 
   async execute(
     input: PublishContentInput,
     context?: ToolExecutionContext,
   ): Promise<PublishContentOutput> {
-    if (!input.post_id || input.post_id.trim().length === 0) {
-      throw new Error("Post ID is required.");
-    }
-
-    const post = await this.blogRepo.publishById(
-      input.post_id,
-      context?.userId ?? "unknown",
-    );
-
-    return {
-      id: post.id,
-      slug: post.slug,
-      status: "published",
-      title: post.title,
-      publishedAt: post.publishedAt,
-    };
+    return executePublishContent(this.blogRepo, input, context, this.assetRepo);
   }
 }
 
 export function createPublishContentTool(
   blogRepo: BlogPostRepository,
+  assetRepo?: BlogAssetRepository,
 ): ToolDescriptor<PublishContentInput, PublishContentOutput> {
   return {
     name: "publish_content",
     schema: {
       description:
-        "Publish a draft blog post, making it publicly visible on the blog. Requires the post ID returned by draft_content.",
+        "Publish a draft journal article, making it publicly visible in the journal. Accepts either the post ID or the article slug.",
       input_schema: {
         type: "object",
         properties: {
           post_id: {
             type: "string",
-            description: "The ID of the draft blog post to publish",
+            description: "The ID of the draft journal article to publish",
+          },
+          slug: {
+            type: "string",
+            description: "The slug of the draft journal article to publish (alternative to post_id)",
           },
         },
-        required: ["post_id"],
       },
     },
-    command: new PublishContentCommand(blogRepo),
+    command: new PublishContentCommand(blogRepo, assetRepo),
     roles: ["ADMIN"],
     category: "content",
+    executionMode: "deferred",
+    deferred: {
+      dedupeStrategy: "per-conversation-payload",
+      retryable: true,
+      notificationPolicy: "completion-and-failure",
+    },
   };
 }

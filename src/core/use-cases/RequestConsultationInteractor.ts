@@ -2,12 +2,15 @@ import type { ConsultationRequest } from "../entities/consultation-request";
 import type { ConsultationRequestRepository } from "./ConsultationRequestRepository";
 import type { ConversationRepository } from "./ConversationRepository";
 import type { ConversationEventRecorder } from "./ConversationEventRecorder";
+import type { ReferralLifecycleRecorder } from "./ReferralLifecycleRecorder";
+import { ValidationError, ConflictError } from "../common/errors";
 
 export class RequestConsultationInteractor {
   constructor(
     private readonly consultationRequestRepo: ConsultationRequestRepository,
     private readonly conversationRepo: ConversationRepository,
     private readonly eventRecorder?: ConversationEventRecorder,
+    private readonly referralRecorder?: ReferralLifecycleRecorder,
   ) {}
 
   async requestConsultation(
@@ -41,21 +44,17 @@ export class RequestConsultationInteractor {
       consultationRequestId: request.id,
       lane,
     });
+    await this.referralRecorder?.recordConsultationRequested({
+      conversationId,
+      consultationRequestId: request.id,
+      lane,
+    });
 
     return request;
   }
 }
 
-export class ConsultationRequestError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "ConsultationRequestError";
-  }
-}
+export class ConsultationRequestError extends ValidationError {}
 
-export class DuplicateConsultationRequestError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "DuplicateConsultationRequestError";
-  }
-}
+export class DuplicateConsultationRequestError extends ConflictError {}
+

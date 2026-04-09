@@ -10,12 +10,20 @@ import {
   supportsIntersectionObserver,
   supportsReadableStreamReader,
 } from "@/lib/ui/browserSupport";
+import {
+  estimateAudioDurationSeconds,
+  estimateAudioGenerationSeconds,
+} from "@/lib/audio/audio-estimates";
 
 interface AudioPlayerProps {
   title: string;
   text: string;
   /** If set, audio is already cached — skip TTS generation and serve from cache */
   assetId?: string;
+  provider?: string;
+  generationStatus?: string;
+  estimatedDurationSeconds?: number;
+  estimatedGenerationSeconds?: number;
   /** When true (e.g. restored from conversation history), don't auto-play */
   autoPlay?: boolean;
 }
@@ -27,16 +35,6 @@ function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-}
-
-function estimateAudioDuration(text: string) {
-  const words = text.split(/\s+/).filter(Boolean).length;
-  return Math.max(2, Math.ceil(words / 2.5)); // ~2.5 words/sec for tts-1
-}
-
-function estimateGenTime(text: string) {
-  const words = text.split(/\s+/).filter(Boolean).length;
-  return Math.max(3, Math.ceil(words / 30));
 }
 
 /* ── loading-stage hook ──────────────────────────────────────────── */
@@ -116,7 +114,16 @@ function audioReducer(state: AudioState, action: AudioAction): AudioState {
 
 /* ── component ───────────────────────────────────────────────────── */
 
-export function AudioPlayer({ title, text, assetId, autoPlay = true }: AudioPlayerProps) {
+export function AudioPlayer({
+  title,
+  text,
+  assetId,
+  provider,
+  generationStatus,
+  estimatedDurationSeconds,
+  estimatedGenerationSeconds,
+  autoPlay = true,
+}: AudioPlayerProps) {
   const [state, dispatch] = useReducer(audioReducer, {
     isPlaying: false,
     isLoading: false,
@@ -128,23 +135,59 @@ export function AudioPlayer({ title, text, assetId, autoPlay = true }: AudioPlay
   });
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const pendingAudioLoadRef = useRef<HTMLAudioElement | null>(null);
   const hasStarted = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [offScreenReady, setOffScreenReady] = useState(false);
 
   const loadingStage = useLoadingStage(state.isLoading);
 
-  const estDuration = estimateAudioDuration(text);
-  const estGenTime = estimateGenTime(text);
+  const estDuration = estimatedDurationSeconds ?? estimateAudioDurationSeconds(text);
+  const estGenTime = estimatedGenerationSeconds ?? estimateAudioGenerationSeconds(text);
+  const providerLabel = provider ?? (assetId ? "Cached audio" : "OpenAI Speech");
 
   // Clean up object URL when unmounted
   useEffect(() => {
     return () => {
+      pendingAudioLoadRef.current = null;
       if (state.audioUrl) {
         URL.revokeObjectURL(state.audioUrl);
       }
     };
   }, [state.audioUrl]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.addEventListener !== "function") {
+      return;
+    }
+
+    const handleSecurityPolicyViolation = (event: Event) => {
+      const violation = event as SecurityPolicyViolationEvent;
+      if (!pendingAudioLoadRef.current) {
+        return;
+      }
+
+      if (violation.effectiveDirective === "media-src" && violation.blockedURI === "blob") {
+        pendingAudioLoadRef.current = null;
+        dispatch({
+          type: "LOAD_ERROR",
+          error: "Audio playback was blocked by the site's security policy.",
+        });
+      }
+    };
+
+    window.addEventListener(
+      "securitypolicyviolation",
+      handleSecurityPolicyViolation as EventListener,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "securitypolicyviolation",
+        handleSecurityPolicyViolation as EventListener,
+      );
+    };
+  }, []);
 
   /* ── core fetch with streaming progress ───────────────────────── */
 
@@ -159,16 +202,41 @@ export function AudioPlayer({ title, text, assetId, autoPlay = true }: AudioPlay
     }
 
     audioRef.current = audio;
+    pendingAudioLoadRef.current = audio;
+
+    let playbackLoadSettled = false;
+    const settlePlaybackLoad = () => {
+      if (playbackLoadSettled) {
+        return false;
+      }
+
+      playbackLoadSettled = true;
+      if (pendingAudioLoadRef.current === audio) {
+        pendingAudioLoadRef.current = null;
+      }
+      return true;
+    };
 
     audio.addEventListener("timeupdate", () =>
       dispatch({ type: "TIME_UPDATE", currentTime: audio.currentTime }),
     );
-    audio.addEventListener("loadedmetadata", () =>
-      dispatch({ type: "DURATION_UPDATE", duration: audio.duration }),
-    );
+    audio.addEventListener("loadedmetadata", () => {
+      settlePlaybackLoad();
+      dispatch({ type: "DURATION_UPDATE", duration: audio.duration });
+    });
     audio.addEventListener("play", () => dispatch({ type: "PLAY" }));
     audio.addEventListener("pause", () => dispatch({ type: "PAUSE" }));
     audio.addEventListener("ended", () => dispatch({ type: "PAUSE" }));
+    audio.addEventListener("error", () => {
+      if (!settlePlaybackLoad()) {
+        return;
+      }
+
+      dispatch({
+        type: "LOAD_ERROR",
+        error: "Audio generated, but the browser could not load it.",
+      });
+    });
 
     if (shouldAutoPlay) {
       // Auto-play — browsers may block without user gesture, so catch silently
@@ -369,10 +437,12 @@ export function AudioPlayer({ title, text, assetId, autoPlay = true }: AudioPlay
     </span>
   ) : state.audioUrl ? (
     <span>
-      OpenAI Speech · {formatTime(state.duration)}
+      {providerLabel} · {formatTime(state.duration)}
     </span>
   ) : (
-    <span className="opacity-70">Click play to load · ~{estDuration}s audio</span>
+    <span className="opacity-70">
+      {generationStatus === "cached_asset" ? "Cached audio ready" : "Click play to load"} · ~{estDuration}s audio
+    </span>
   );
 
   /* ── render ────────────────────────────────────────────────────── */
@@ -403,7 +473,7 @@ export function AudioPlayer({ title, text, assetId, autoPlay = true }: AudioPlay
             </svg>
           }
         >
-          <div className="flex flex-col gap-2 px-3 py-2.5 w-full">
+          <div className="flex w-full flex-col gap-(--space-cluster-tight) px-(--space-inset-compact) py-(--space-inset-compact)">
             {/* ── Progress bar (during loading) ──────────────────────── */}
             {state.isLoading && (
               <div className="w-full h-1 rounded-full bg-border overflow-hidden">
@@ -415,11 +485,11 @@ export function AudioPlayer({ title, text, assetId, autoPlay = true }: AudioPlay
             )}
 
             {/* ── Control Row ────────────────────────────────────────── */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-(--space-3)">
               <button
                 onClick={handlePlayToggle}
                 disabled={state.isLoading || !!state.error}
-                className="w-9 h-9 shrink-0 flex items-center justify-center rounded-full bg-accent text-accent-foreground hover:bg-accent-theme/90 transition-all disabled:opacity-50 active:scale-95 shadow-sm"
+                className="w-9 h-9 shrink-0 flex items-center justify-center rounded-full bg-accent-interactive text-accent-foreground hover:bg-accent-interactive/90 transition-all disabled:opacity-50 active:scale-95 shadow-sm"
               >
                 {state.isLoading ? (
                   <svg
@@ -438,14 +508,14 @@ export function AudioPlayer({ title, text, assetId, autoPlay = true }: AudioPlay
                     <rect x="14" y="4" width="4" height="16" />
                   </svg>
                 ) : (
-                  <svg className="w-4 h-4 fill-current ml-0.5" viewBox="0 0 24 24">
+                  <svg className="ml-px h-4 w-4 fill-current" viewBox="0 0 24 24">
                     <polygon points="5 3 19 12 5 21 5 3" />
                   </svg>
                 )}
               </button>
 
               {/* Shuttle & Timestamps */}
-              <div className="flex flex-col flex-1 gap-1 min-w-0">
+              <div className="flex flex-col flex-1 gap-(--space-1) min-w-0">
                 <input
                   type="range"
                   min={0}
@@ -453,10 +523,10 @@ export function AudioPlayer({ title, text, assetId, autoPlay = true }: AudioPlay
                   value={state.currentTime}
                   onChange={handleSeek}
                   disabled={!state.audioUrl}
-                  className="w-full h-1.5 bg-border rounded-lg appearance-none cursor-pointer accent-accent"
+                  className="w-full h-1.5 bg-border rounded-lg appearance-none cursor-pointer accent-accent-interactive"
                   style={{
                     background: state.audioUrl
-                      ? `linear-gradient(to right, var(--accent) ${(state.currentTime / state.duration) * 100}%, var(--border) ${(state.currentTime / state.duration) * 100}%)`
+                      ? `linear-gradient(to right, var(--accent-interactive) ${(state.currentTime / state.duration) * 100}%, var(--border) ${(state.currentTime / state.duration) * 100}%)`
                       : undefined,
                   }}
                 />
@@ -477,11 +547,11 @@ export function AudioPlayer({ title, text, assetId, autoPlay = true }: AudioPlay
 
       {/* ── #5: Off-screen toast ──────────────────────────────────── */}
       {offScreenReady && (
-        <div className="fixed bottom-6 left-1/2 z-9999 -translate-x-1/2 animate-in slide-in-from-bottom-4 fade-in duration-300">
+        <div className="fixed bottom-(--space-6) left-1/2 z-9999 -translate-x-1/2 animate-in slide-in-from-bottom-4 fade-in duration-300">
           <button
             type="button"
             onClick={scrollToPlayer}
-            className="flex items-center gap-2 rounded-full accent-fill px-4 py-2 text-xs font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] active:scale-95"
+            className="flex items-center gap-(--space-2) rounded-full accent-fill px-(--space-4) py-(--space-2) text-xs font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] active:scale-95"
           >
             <span>🎧</span>
             <span>Audio ready — {title}</span>

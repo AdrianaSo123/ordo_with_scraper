@@ -65,5 +65,6 @@ data/
 lint_results.txt
 
 # Playwright artifacts
+/\.playwright-data/
 /playwright-report/
 /test-results/

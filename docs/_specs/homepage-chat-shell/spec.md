@@ -54,7 +54,7 @@ The solution must separate these responsibilities structurally, not cosmetically
 3. **Composer isolation.** The composer must live in its own non-scrolling row so message growth can never displace it. `[HCS-032]`
 4. **Message-first scroll.** The message viewport must be the default scroll owner inside the homepage stage. `[HCS-033]`
 5. **Intentional outer scroll.** Reaching the footer must require an intentional outer-page scroll gesture outside the message region. `[HCS-034]`
-6. **Minimal nav contract.** The homepage nav must remain one line with only brand on the left and auth/user controls on the right. `[HCS-035]`
+6. **Minimal nav contract.** The homepage nav must remain visually compact with brand on the left, shared search available on wider viewports, and a compact utility cluster on the right. That cluster may collapse browse and account actions into a single workspace menu trigger and may include notifications when product requirements call for them. `[HCS-035]`
 7. **Reliable browser behavior.** The solution must survive Safari/mobile scroll chaining and dynamic viewport behavior more reliably than a pure CSS-only flex stack. `[HCS-036]`
 
 ---
@@ -160,8 +160,10 @@ This requirement rules out home-only substitutes such as drawers, buttons, or si
 Homepage navigation must remain intentionally sparse:
 
 1. Brand identity on the left
-2. User menu or login/register controls on the right
-3. No status pill, extra center rail, or second visual row in the homepage header
+2. Shared search may occupy the center rail on wider viewports
+3. A compact utility cluster on the right that may include notifications and one shared workspace/auth menu trigger
+4. No separate left-side nav drawer or duplicate header surfaces in the homepage shell
+5. Public wayfinding and account actions exposed from the homepage header must collapse into that single workspace menu rather than separate header surfaces
 
 Any additional state indicator must live elsewhere in the chat experience, not in the primary nav line. `[HCS-045]`
 
@@ -207,7 +209,7 @@ It should not depend on incidental flex growth from the global shell. `[HCS-051]
 Additional guardrail:
 
 1. The home route may create a dedicated stage wrapper component if that makes the height budget explicit and testable. `[HCS-051A]`
-2. The home route must not contain site-link drawers, fallback footer panels, or alternative navigation surfaces. `[HCS-051B]`
+2. The home route must not contain competing site-link drawers, fallback footer panels, or split navigation surfaces. Homepage wayfinding may only enter through the single workspace menu in the shared utility cluster. `[HCS-051B]`
 
 ### 4.3 Chat Container
 
@@ -300,7 +302,7 @@ Add or update tests proving:
 
 1. The embedded chat container renders a dedicated composer row separate from the message viewport. `[HCS-070]`
 2. The footer is not part of the default home stage rendering surface. `[HCS-071]`
-3. The homepage nav stays single-line in structure and does not render optional center-stage content. `[HCS-072]`
+3. The homepage nav stays single-line in structure, keeps browse and account actions inside one shared workspace trigger, and does not render optional center-stage content. `[HCS-072]`
 
 ### 7.2 Interaction Tests
 
@@ -363,7 +365,7 @@ Required properties:
 3. The composer remains pinned at the bottom of the chat stage regardless of message count. `[HCS-082]`
 4. Message scrolling is the default interaction inside the homepage chat. `[HCS-083]`
 5. The outer page only scrolls to the footer when the user intentionally scrolls outside the message region. `[HCS-084]`
-6. The homepage nav remains one line with only company branding and auth/user controls. `[HCS-085]`
+6. The homepage nav remains one line with company branding on the left and the compact notification-plus-workspace utility cluster on the right. `[HCS-085]`
 7. No home-route-specific footer substitutes remain. `[HCS-086]`
 8. Keyboard-open behavior on mobile keeps the composer visible and the stage usable. `[HCS-087]`
 9. Scroll-boundary logic, if implemented, preserves accessibility and does not block normal focus/navigation flows. `[HCS-088]`

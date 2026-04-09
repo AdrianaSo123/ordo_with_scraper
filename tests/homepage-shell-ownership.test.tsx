@@ -11,7 +11,7 @@ let mockMessages = [
     id: "hero-1",
     role: "assistant" as const,
     content:
-      "Describe the workflow problem, orchestration gap, or training goal.\n\n__suggestions__:[\"Audit this workflow\",\"Stress-test this AI plan\",\"Train my team\",\"Show me the weak point\"]",
+      "Bring me the messy workflow, bold idea, or half-finished handoff. I can help you map it, search the library, turn it into visuals, or explain the QR referral system.\n\n__suggestions__:[\"Audit this workflow\",\"Search the library\",\"Show me something visual\",\"Explain the QR referral system\"]",
     timestamp: new Date("2026-03-18T10:00:00.000Z"),
     parts: [{ type: "text" as const, text: "hero" }],
   },
@@ -31,6 +31,18 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/components/AccountMenu", () => ({
   AccountMenu: () => <div data-testid="account-menu" />,
+}));
+
+vi.mock("@/components/ShellWorkspaceMenu", () => ({
+  ShellWorkspaceMenu: () => <div data-testid="workspace-menu" />,
+}));
+
+vi.mock("@/components/NotificationFeed", () => ({
+  NotificationFeed: () => <div data-testid="notification-feed" />,
+}));
+
+vi.mock("@/components/GlobalSearchBar", () => ({
+  GlobalSearchBar: () => <div data-testid="global-search" />,
 }));
 
 vi.mock("@/components/ThemeProvider", () => ({
@@ -56,6 +68,7 @@ vi.mock("@/hooks/useChatScroll", () => ({
     isAtBottom: true,
     scrollToBottom: vi.fn(),
     handleScroll: vi.fn(),
+    resetPin: vi.fn(),
   }),
 }));
 
@@ -99,7 +112,7 @@ describe("homepage shell ownership", () => {
         id: "hero-1",
         role: "assistant",
         content:
-          "Describe the workflow problem, orchestration gap, or training goal.\n\n__suggestions__:[\"Audit this workflow\",\"Stress-test this AI plan\",\"Train my team\",\"Show me the weak point\"]",
+          "Bring me the messy workflow, bold idea, or half-finished handoff. I can help you map it, search the library, turn it into visuals, or explain the QR referral system.\n\n__suggestions__:[\"Audit this workflow\",\"Search the library\",\"Show me something visual\",\"Explain the QR referral system\"]",
         timestamp: new Date("2026-03-18T10:00:00.000Z"),
         parts: [{ type: "text", text: "hero" }],
       },
@@ -153,7 +166,7 @@ describe("homepage shell ownership", () => {
     expect(viewportStage).not.toContainElement(footer);
   });
 
-  it("renders the canonical homepage nav contract", () => {
+  it("renders the canonical homepage nav contract with shared search intact", () => {
     render(
       <AppShell user={baseUser}>
         <div>Homepage Stage</div>
@@ -162,12 +175,37 @@ describe("homepage shell ownership", () => {
 
     const nav = screen.getByRole("navigation", { name: "Primary" });
     expect(within(nav).getByRole("link", { name: /studio ordo home/i })).toBeInTheDocument();
+    expect(nav.querySelector('[data-shell-nav-region="primary-links"]')).toBeNull();
+    expect(nav.querySelector('[data-shell-nav-region="search"]')).not.toBeNull();
     expect(within(nav).queryByRole("link", { name: "Library" })).toBeNull();
     expect(within(nav).queryByRole("link", { name: "Home" })).toBeNull();
     expect(within(nav).queryByRole("link", { name: "Dashboard" })).toBeNull();
-    expect(within(nav).getByTestId("account-menu")).toBeInTheDocument();
-    expect(nav.querySelector('[data-shell-nav-region="primary-links"]')).toBeNull();
-    expect(within(nav).queryByText(/site links/i)).not.toBeInTheDocument();
+    expect(within(nav).queryByTestId("account-menu")).toBeNull();
+    expect(within(nav).getByTestId("global-search")).toBeInTheDocument();
+    expect(within(nav).getByTestId("notification-feed")).toBeInTheDocument();
+    expect(within(nav).getByTestId("workspace-menu")).toBeInTheDocument();
+  });
+
+  it("shows login and register links instead of notifications for anonymous users", () => {
+    const anonymousUser: User = {
+      id: "usr_anon",
+      email: "anonymous@example.com",
+      name: "Anonymous User",
+      roles: ["ANONYMOUS"],
+    };
+
+    render(
+      <AppShell user={anonymousUser}>
+        <div>Homepage Stage</div>
+      </AppShell>,
+    );
+
+    const nav = screen.getByRole("navigation", { name: "Primary" });
+
+    expect(within(nav).queryByTestId("notification-feed")).toBeNull();
+    expect(within(nav).getByRole("link", { name: "Login" })).toHaveAttribute("href", "/login");
+    expect(within(nav).getByRole("link", { name: "Register" })).toHaveAttribute("href", "/register");
+    expect(within(nav).getByTestId("workspace-menu")).toBeInTheDocument();
   });
 
   it("does not render a footer substitute inside the embedded chat container", () => {

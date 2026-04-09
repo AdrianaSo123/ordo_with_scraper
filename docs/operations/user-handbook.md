@@ -1,6 +1,6 @@
 # User Handbook
 
-This handbook explains how to use Studio Ordo as an end user, contributor, or operator. It covers the main product features, the role system, setup instructions, and the complete MCP tool catalog shipped with the repository.
+This handbook explains how to use Studio Ordo as an end user, contributor, or operator. It covers the main product features, the role system, setup instructions, the internal chat tools, and the standalone MCP servers shipped with the repository.
 
 ## 1. Who This Is For
 
@@ -138,6 +138,7 @@ These tools are exposed to the chat model through the internal `ToolRegistry`.
 | `search_corpus` | searches the corpus/library |
 | `get_corpus_summary` | returns corpus-wide summary information |
 | `set_theme` | changes the site theme |
+| `inspect_theme` | reports the manifest-backed theme profiles and approved control axes without mutating state |
 | `adjust_ui` | adjusts density or UI preferences |
 | `navigate` | navigates the user to a route |
 
@@ -169,7 +170,9 @@ Use `generate_chart` for Mermaid diagrams such as workflows, flowcharts, or mind
 
 ## 7. MCP Tool Catalog
 
-The repo ships two MCP servers.
+The repo ships two standalone MCP servers.
+
+Other modules under `mcp/`, including analytics and prompt helpers, are also imported directly inside the app through local `@mcp/*` path aliases. Those modules are part of the application runtime and are not separate remote MCP endpoints in the current deployment model.
 
 ### Calculator MCP server
 

@@ -48,10 +48,12 @@ export function createRouteRequest(
   url: string,
   method: "GET" | "POST" | "PATCH" = "GET",
   body?: unknown,
+  headers?: HeadersInit,
 ) {
   const parsed = url.startsWith("http") ? new URL(url) : new URL(url, "http://localhost:3000");
   return new NextRequest(parsed, {
     method,
+    headers,
     body: body === undefined ? undefined : JSON.stringify(body),
   });
 }

@@ -3,8 +3,11 @@ import {
   emitObservabilityEvent,
   subscribeObservability,
 } from "@/lib/observability/events";
+import { createRawPinoInstance } from "@/adapters/PinoLogger";
 
-export type LogLevel = "info" | "error";
+export type LogLevel = "info" | "warn" | "error";
+
+const pinoInstance = createRawPinoInstance();
 
 let loggerObserverRegistered = false;
 
@@ -18,18 +21,10 @@ function ensureLoggerObserverRegistered() {
       return;
     }
 
-    const output = JSON.stringify({
-      timestamp: event.payload.timestamp,
-      level: event.payload.level,
-      event: event.payload.event,
-      ...event.payload.context,
-    });
+    const { level, event: eventName, context, timestamp } = event.payload;
+    const merged = { timestamp, event: eventName, ...context };
 
-    if (event.payload.level === "error") {
-      console.error(output);
-    } else {
-      console.info(output);
-    }
+    pinoInstance[level](merged, eventName);
   });
 
   loggerObserverRegistered = true;
@@ -57,6 +52,7 @@ export function logEvent(
   });
 }
 
+/** @deprecated Use `mapErrorToResponse` from `@/core/common/errors` instead. Remove after 2025-10-01. */
 export function getErrorCode(message: string, status?: number) {
   if (status === 404) {
     return "NOT_FOUND";
@@ -78,4 +74,41 @@ export function getErrorCode(message: string, status?: number) {
   }
 
   return "INTERNAL_ERROR";
+}
+
+function serializeError(err: unknown): Record<string, string> | undefined {
+  if (!(err instanceof Error)) {
+    return undefined;
+  }
+  return {
+    name: err.name,
+    message: err.message,
+    ...(err.stack ? { stack: err.stack } : {}),
+  };
+}
+
+export function logDegradation(
+  code: string,
+  message: string,
+  context?: Record<string, unknown>,
+  err?: unknown,
+): void {
+  logEvent("warn", code, {
+    message,
+    ...context,
+    ...(serializeError(err) ? { error: serializeError(err) } : {}),
+  });
+}
+
+export function logFailure(
+  code: string,
+  message: string,
+  context?: Record<string, unknown>,
+  err?: unknown,
+): void {
+  logEvent("error", code, {
+    message,
+    ...context,
+    ...(serializeError(err) ? { error: serializeError(err) } : {}),
+  });
 }

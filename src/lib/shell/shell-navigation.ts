@@ -10,6 +10,7 @@ export interface ShellRouteDefinition {
   label: string;
   href: string;
   kind: ShellRouteKind;
+  description?: string;
   isLegacy?: boolean;
   showInCommands?: boolean;
   headerVisibility?: ShellVisibility;
@@ -22,6 +23,21 @@ export interface ShellFooterGroup {
   label: string;
   routeIds: string[];
   visibility: ShellVisibility;
+}
+
+export interface ShellNavDrawerGroup {
+  id: string;
+  label: string;
+  description?: string;
+  routeIds: string[];
+  visibility: ShellVisibility;
+}
+
+export interface ResolvedShellNavDrawerGroup {
+  id: string;
+  label: string;
+  description?: string;
+  routes: ShellRouteDefinition[];
 }
 
 export interface ShellBrandMetadata {
@@ -40,7 +56,7 @@ export const SHELL_BRAND: ShellBrandMetadata = {
   markText: DEFAULT_IDENTITY.markText,
 };
 
-const SIGNED_IN_ROLES = ["AUTHENTICATED", "STAFF", "ADMIN"] as const;
+const SIGNED_IN_ROLES = ["AUTHENTICATED", "APPRENTICE", "STAFF", "ADMIN"] as const;
 
 export const SHELL_ROUTES: readonly ShellRouteDefinition[] = [
   {
@@ -48,32 +64,133 @@ export const SHELL_ROUTES: readonly ShellRouteDefinition[] = [
     label: "Home",
     href: "/",
     kind: "internal",
-    headerVisibility: "all",
+    description: "Return to the main homepage and chat entry point.",
+    footerVisibility: "all",
   },
   {
     id: "corpus",
     label: "Library",
     href: "/library",
     kind: "internal",
-    headerVisibility: "all",
+    description: "Browse the library and structured reference material.",
     footerVisibility: "all",
     showInCommands: true,
   },
   {
-    id: "blog",
-    label: "Blog",
-    href: "/blog",
+    id: "journal",
+    label: "Journal",
+    href: "/journal",
     kind: "internal",
-    headerVisibility: "all",
+    description: "Read published journal content.",
     footerVisibility: "all",
     showInCommands: true,
   },
+  {
+    id: "admin-dashboard",
+    label: "Admin",
+    href: "/admin",
+    kind: "internal",
+    description: "Open the admin dashboard overview.",
+    accountVisibility: ["ADMIN"],
+    footerVisibility: ["ADMIN"],
+    showInCommands: true,
+  },
 
+  {
+    id: "jobs",
+    label: "Jobs",
+    href: "/jobs",
+    kind: "internal",
+    description: "Review current and recent deferred jobs.",
+    footerVisibility: SIGNED_IN_ROLES,
+    accountVisibility: SIGNED_IN_ROLES,
+  },
+  {
+    id: "journal-admin",
+    label: "Journal",
+    href: "/admin/journal",
+    kind: "internal",
+    description: "Manage journal inventory, workflow, and preview states.",
+    accountVisibility: ["STAFF", "ADMIN"],
+    footerVisibility: ["ADMIN"],
+    showInCommands: true,
+  },
+  {
+    id: "admin-users",
+    label: "Users",
+    href: "/admin/users",
+    kind: "internal",
+    description: "Review people, roles, and account context.",
+    accountVisibility: ["ADMIN"],
+    footerVisibility: ["ADMIN"],
+    showInCommands: true,
+  },
+  {
+    id: "admin-system",
+    label: "System",
+    href: "/admin/system",
+    kind: "internal",
+    description: "Inspect feature flags, model policy, and runtime status.",
+    accountVisibility: ["ADMIN"],
+    footerVisibility: ["ADMIN"],
+    showInCommands: true,
+  },
+  {
+    id: "admin-leads",
+    label: "Leads",
+    href: "/admin/leads",
+    kind: "internal",
+    description: "Review operator lead queue and next actions.",
+    accountVisibility: ["ADMIN"],
+    footerVisibility: ["ADMIN"],
+    showInCommands: true,
+  },
+  {
+    id: "admin-affiliates",
+    label: "Affiliates",
+    href: "/admin/affiliates",
+    kind: "internal",
+    description: "Review affiliate performance, exception backlog, and credit-ready referrals.",
+    accountVisibility: ["ADMIN"],
+    footerVisibility: ["ADMIN"],
+    showInCommands: true,
+  },
+  {
+    id: "admin-prompts",
+    label: "Prompts",
+    href: "/admin/prompts",
+    kind: "internal",
+    description: "Configure system prompts and prompt templates.",
+    accountVisibility: ["ADMIN"],
+    footerVisibility: ["ADMIN"],
+    showInCommands: true,
+  },
+  {
+    id: "admin-conversations",
+    label: "Conversations",
+    href: "/admin/conversations",
+    kind: "internal",
+    description: "Browse and inspect conversation transcripts.",
+    accountVisibility: ["ADMIN"],
+    footerVisibility: ["ADMIN"],
+    showInCommands: true,
+  },
+  {
+    id: "admin-jobs",
+    label: "Jobs",
+    href: "/admin/jobs",
+    kind: "internal",
+    description: "Monitor deferred jobs, queue health, and execution logs.",
+    accountVisibility: ["ADMIN"],
+    footerVisibility: ["ADMIN"],
+    showInCommands: true,
+  },
   {
     id: "profile",
     label: "Profile",
     href: "/profile",
     kind: "internal",
+    description: "View profile, referral, and personal settings.",
     footerVisibility: SIGNED_IN_ROLES,
     accountVisibility: SIGNED_IN_ROLES,
   },
@@ -127,10 +244,24 @@ function matchesVisibility(
   return roles.some((role) => visibility.includes(role));
 }
 
+function resolveRouteSet(
+  routeIds: readonly string[],
+  user: Pick<SessionUser, "roles"> | null | undefined,
+  visibilityResolver: (route: ShellRouteDefinition) => ShellVisibility | undefined,
+): ShellRouteDefinition[] {
+  return routeIds
+    .map(getShellRouteById)
+    .filter((route) => matchesVisibility(visibilityResolver(route), user));
+}
+
 export function resolvePrimaryNavRoutes(
   user?: Pick<SessionUser, "roles"> | null,
 ): ShellRouteDefinition[] {
-  return SHELL_ROUTES.filter((route) => matchesVisibility(route.headerVisibility, user));
+  return resolveRouteSet(
+    PRIMARY_NAV_ROUTE_IDS,
+    user,
+    (route) => route.footerVisibility ?? route.headerVisibility ?? route.accountVisibility ?? "all",
+  );
 }
 
 export function resolveCommandRoutes(
@@ -146,13 +277,11 @@ export function resolveCommandRoutes(
   );
 }
 
-export const PRIMARY_NAV_ITEMS: readonly ShellRouteDefinition[] = resolvePrimaryNavRoutes();
-
 export const SHELL_FOOTER_GROUPS: readonly ShellFooterGroup[] = [
   {
     id: "information",
     label: "Information",
-    routeIds: ["corpus", "blog"],
+    routeIds: ["corpus", "journal"],
     visibility: "all",
   },
   {
@@ -169,7 +298,26 @@ export const SHELL_FOOTER_GROUPS: readonly ShellFooterGroup[] = [
   },
 ] as const;
 
-export const ACCOUNT_MENU_ROUTE_IDS = ["profile"] as const;
+export const PRIMARY_NAV_ROUTE_IDS = ["corpus", "journal"] as const;
+export const ACCOUNT_MENU_ROUTE_IDS = ["jobs", "profile"] as const;
+export const RAIL_MENU_ROUTE_IDS = ["corpus", "journal"] as const;
+
+export const SHELL_NAV_DRAWER_GROUPS: readonly ShellNavDrawerGroup[] = [
+  {
+    id: "explore",
+    label: "Explore",
+    description: "Browse the public library and published journal surfaces.",
+    routeIds: ["corpus", "journal"],
+    visibility: "all",
+  },
+  {
+    id: "workspace",
+    label: "Workspace",
+    description: "Open signed-in work surfaces and personal context.",
+    routeIds: ["jobs", "profile"],
+    visibility: SIGNED_IN_ROLES,
+  },
+] as const;
 
 export const SHELL_ROUTE_BY_ID = new Map(
   SHELL_ROUTES.map((route) => [route.id, route] as const),
@@ -183,6 +331,8 @@ export function getShellRouteById(routeId: string): ShellRouteDefinition {
 
   return route;
 }
+
+export const PRIMARY_NAV_ITEMS: readonly ShellRouteDefinition[] = resolvePrimaryNavRoutes();
 
 export function resolveFooterGroups(
   user?: Pick<SessionUser, "roles"> | null,
@@ -206,9 +356,35 @@ export function resolveFooterGroupRoutes(
 export function resolveAccountMenuRoutes(
   user?: Pick<SessionUser, "roles"> | null,
 ): ShellRouteDefinition[] {
-  return ACCOUNT_MENU_ROUTE_IDS
-    .map(getShellRouteById)
-    .filter((route) => matchesVisibility(route.accountVisibility, user));
+  return resolveRouteSet(ACCOUNT_MENU_ROUTE_IDS, user, (route) => route.accountVisibility);
+}
+
+export function resolveRailMenuRoutes(
+  user?: Pick<SessionUser, "roles"> | null,
+): ShellRouteDefinition[] {
+  return resolveRouteSet(
+    RAIL_MENU_ROUTE_IDS,
+    user,
+    (route) => route.footerVisibility ?? route.headerVisibility ?? route.accountVisibility ?? "all",
+  );
+}
+
+export function resolveShellNavDrawerGroups(
+  user?: Pick<SessionUser, "roles"> | null,
+): ResolvedShellNavDrawerGroup[] {
+  return SHELL_NAV_DRAWER_GROUPS
+    .filter((group) => matchesVisibility(group.visibility, user))
+    .map((group) => ({
+      id: group.id,
+      label: group.label,
+      description: group.description,
+      routes: resolveRouteSet(
+        group.routeIds,
+        user,
+        (route) => route.footerVisibility ?? route.accountVisibility ?? route.headerVisibility ?? "all",
+      ),
+    }))
+    .filter((group) => group.routes.length > 0);
 }
 
 export function resolveShellHomeHref(): string {

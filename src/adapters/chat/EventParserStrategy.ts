@@ -48,10 +48,150 @@ export class ConversationIdParser implements EventParserStrategy {
   }
 }
 
+export class StreamIdParser implements EventParserStrategy {
+  canParse(data: RawSSEData) { return !!data.stream_id; }
+  parse(data: RawSSEData): StreamEvent {
+    return { type: "stream_id", id: data.stream_id as string };
+  }
+}
+
 export class ErrorParser implements EventParserStrategy {
   canParse(data: RawSSEData) { return typeof data.error === "string"; }
   parse(data: RawSSEData): StreamEvent {
     return { type: "error", message: data.error as string };
+  }
+}
+
+class TypedEventParser implements EventParserStrategy {
+  constructor(private readonly eventType: StreamEvent["type"]) {}
+
+  canParse(data: RawSSEData) {
+    return data.type === this.eventType;
+  }
+
+  parse(data: RawSSEData): StreamEvent {
+    switch (this.eventType) {
+      case "generation_stopped":
+      case "generation_interrupted":
+        return {
+          type: this.eventType,
+          actor: data.actor === "user" ? "user" : "system",
+          reason: typeof data.reason === "string" ? data.reason : "stream_interrupted",
+          partialContentRetained: Boolean(data.partialContentRetained),
+          recordedAt: typeof data.recordedAt === "string" ? data.recordedAt : undefined,
+        };
+      case "job_queued":
+      case "job_started":
+        return {
+          type: this.eventType,
+          jobId: data.jobId as string,
+          conversationId: data.conversationId as string,
+          sequence: data.sequence as number,
+          toolName: data.toolName as string,
+          label: data.label as string,
+          messageId: typeof data.messageId === "string" ? data.messageId : undefined,
+          updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : undefined,
+        };
+      case "job_progress":
+        return {
+          type: "job_progress",
+          jobId: data.jobId as string,
+          conversationId: data.conversationId as string,
+          sequence: data.sequence as number,
+          toolName: data.toolName as string,
+          label: data.label as string,
+          messageId: typeof data.messageId === "string" ? data.messageId : undefined,
+          progressPercent: typeof data.progressPercent === "number" ? data.progressPercent : undefined,
+          progressLabel: typeof data.progressLabel === "string" ? data.progressLabel : undefined,
+          updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : undefined,
+        };
+      case "job_completed":
+        return {
+          type: "job_completed",
+          jobId: data.jobId as string,
+          conversationId: data.conversationId as string,
+          sequence: data.sequence as number,
+          toolName: data.toolName as string,
+          label: data.label as string,
+          messageId: typeof data.messageId === "string" ? data.messageId : undefined,
+          summary: typeof data.summary === "string" ? data.summary : undefined,
+          resultPayload: data.resultPayload,
+          updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : undefined,
+        };
+      case "job_failed":
+        return {
+          type: "job_failed",
+          jobId: data.jobId as string,
+          conversationId: data.conversationId as string,
+          sequence: data.sequence as number,
+          toolName: data.toolName as string,
+          label: data.label as string,
+          messageId: typeof data.messageId === "string" ? data.messageId : undefined,
+          error: data.error as string,
+          updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : undefined,
+        };
+      case "job_canceled":
+        return {
+          type: "job_canceled",
+          jobId: data.jobId as string,
+          conversationId: data.conversationId as string,
+          sequence: data.sequence as number,
+          toolName: data.toolName as string,
+          label: data.label as string,
+          messageId: typeof data.messageId === "string" ? data.messageId : undefined,
+          updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : undefined,
+        };
+      default:
+        throw new Error(`Unsupported typed SSE event: ${String(this.eventType)}`);
+    }
+  }
+}
+
+export class JobQueuedParser extends TypedEventParser {
+  constructor() {
+    super("job_queued");
+  }
+}
+
+export class GenerationStoppedParser extends TypedEventParser {
+  constructor() {
+    super("generation_stopped");
+  }
+}
+
+export class GenerationInterruptedParser extends TypedEventParser {
+  constructor() {
+    super("generation_interrupted");
+  }
+}
+
+export class JobStartedParser extends TypedEventParser {
+  constructor() {
+    super("job_started");
+  }
+}
+
+export class JobProgressParser extends TypedEventParser {
+  constructor() {
+    super("job_progress");
+  }
+}
+
+export class JobCompletedParser extends TypedEventParser {
+  constructor() {
+    super("job_completed");
+  }
+}
+
+export class JobFailedParser extends TypedEventParser {
+  constructor() {
+    super("job_failed");
+  }
+}
+
+export class JobCanceledParser extends TypedEventParser {
+  constructor() {
+    super("job_canceled");
   }
 }
 

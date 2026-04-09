@@ -52,6 +52,11 @@ describe("SystemPromptBuilder", () => {
     expect(builder.build()).toBe("ABC");
   });
 
+  it("P3a: base prompt forbids exposing internal navigation metadata", () => {
+    const base = buildCorpusBasePrompt();
+    expect(base).toContain("Never expose internal route IDs");
+  });
+
   it("P4: withConversationSummary appends summary block", () => {
     const builder = new SystemPromptBuilder()
       .withConversationSummary("test summary");
@@ -340,7 +345,7 @@ describe("Output parity — builder vs ChatPolicyInteractor", () => {
       .build();
 
     // The seeded DB prompt comes from ensureSchema, so it should be the corpus prompt
-    expect(output).toContain("strategic workflow, implementation, and training advisor");
+    expect(output).toContain(buildCorpusBasePrompt());
   });
 
   it("I4: streaming route builder output matches manual concatenation", () => {

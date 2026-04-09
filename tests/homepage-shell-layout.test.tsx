@@ -15,7 +15,7 @@ let mockMessages = [
     id: "hero-1",
     role: "assistant" as const,
     content:
-      "Describe the workflow problem, orchestration gap, or training goal.\n\n__suggestions__:[\"Audit this workflow\",\"Stress-test this AI plan\",\"Train my team\",\"Show me the weak point\"]",
+      "Bring me the messy workflow, bold idea, or half-finished handoff. I can help you map it, search the library, turn it into visuals, or explain the QR referral system.\n\n__suggestions__:[\"Audit this workflow\",\"Search the library\",\"Show me something visual\",\"Explain the QR referral system\"]",
     timestamp: new Date("2026-03-18T10:00:00.000Z"),
     parts: [{ type: "text" as const, text: "hero" }],
   },
@@ -35,6 +35,18 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/components/AccountMenu", () => ({
   AccountMenu: () => <div data-testid="account-menu" />,
+}));
+
+vi.mock("@/components/ShellWorkspaceMenu", () => ({
+  ShellWorkspaceMenu: () => <div data-testid="workspace-menu" />,
+}));
+
+vi.mock("@/components/NotificationFeed", () => ({
+  NotificationFeed: () => <div data-testid="notification-feed" />,
+}));
+
+vi.mock("@/components/GlobalSearchBar", () => ({
+  GlobalSearchBar: () => <div data-testid="global-search" />,
 }));
 
 vi.mock("@/components/ThemeProvider", () => ({
@@ -64,6 +76,7 @@ vi.mock("@/hooks/useChatScroll", () => ({
     isAtBottom: true,
     scrollToBottom: vi.fn(),
     handleScroll: vi.fn(),
+    resetPin: vi.fn(),
   }),
 }));
 
@@ -115,7 +128,7 @@ describe("homepage shell layout", () => {
         id: "hero-1",
         role: "assistant",
         content:
-          "Describe the workflow problem, orchestration gap, or training goal.\n\n__suggestions__:[\"Audit this workflow\",\"Stress-test this AI plan\",\"Train my team\",\"Show me the weak point\"]",
+          "Bring me the messy workflow, bold idea, or half-finished handoff. I can help you map it, search the library, turn it into visuals, or explain the QR referral system.\n\n__suggestions__:[\"Audit this workflow\",\"Search the library\",\"Show me something visual\",\"Explain the QR referral system\"]",
         timestamp: new Date("2026-03-18T10:00:00.000Z"),
         parts: [{ type: "text", text: "hero" }],
       },

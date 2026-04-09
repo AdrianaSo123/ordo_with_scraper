@@ -1,5 +1,9 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  PUBLIC_FORM_HONEYPOT_FIELD_NAME,
+  PUBLIC_FORM_STARTED_AT_FIELD_NAME,
+} from "@/lib/security/public-form-protection";
 
 const { pushMock, refreshMock } = vi.hoisted(() => ({
   pushMock: vi.fn(),
@@ -33,6 +37,16 @@ describe("/login page", () => {
 
     render(<LoginPage />);
 
+    const honeypotField = document.querySelector(
+      `input[name="${PUBLIC_FORM_HONEYPOT_FIELD_NAME}"]`,
+    ) as HTMLInputElement | null;
+    const startedAtField = document.querySelector(
+      `input[name="${PUBLIC_FORM_STARTED_AT_FIELD_NAME}"]`,
+    ) as HTMLInputElement | null;
+
+    expect(honeypotField).not.toBeNull();
+    expect(startedAtField?.value).toMatch(/^\d+$/);
+
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "auth@example.com" },
     });
@@ -45,5 +59,16 @@ describe("/login page", () => {
       expect(pushMock).toHaveBeenCalledWith("/");
       expect(refreshMock).toHaveBeenCalledTimes(1);
     });
+
+    const fetchPayload = JSON.parse(
+      ((vi.mocked(fetch).mock.calls[0]?.[1] as RequestInit | undefined)?.body as string) ?? "{}",
+    ) as Record<string, string>;
+
+    expect(fetchPayload).toMatchObject({
+      email: "auth@example.com",
+      password: "password123",
+      [PUBLIC_FORM_HONEYPOT_FIELD_NAME]: "",
+    });
+    expect(fetchPayload[PUBLIC_FORM_STARTED_AT_FIELD_NAME]).toBe(startedAtField?.value);
   });
 });

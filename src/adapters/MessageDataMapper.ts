@@ -6,7 +6,7 @@ import type { MessagePart } from "@/core/entities/message-parts";
 export class MessageDataMapper implements MessageRepository {
   constructor(private db: Database.Database) {}
 
-  async create(msg: NewMessage & { tokenEstimate?: number }): Promise<Message> {
+  async create(msg: NewMessage & { tokenEstimate?: number; createdAt?: string }): Promise<Message> {
     const record = createMessageRecord(msg);
 
     this.db
@@ -35,8 +35,20 @@ export class MessageDataMapper implements MessageRepository {
     };
   }
 
+  async findById(id: string): Promise<Message | null> {
+    const row = this.db
+      .prepare(
+        `SELECT id, conversation_id, role, content, parts, created_at, token_estimate
+         FROM messages
+         WHERE id = ?`,
+      )
+      .get(id) as MessageRow | undefined;
+
+    return row ? mapRow(row) : null;
+  }
+
   async createWithinConversationLimit(
-    msg: NewMessage & { tokenEstimate?: number },
+    msg: NewMessage & { tokenEstimate?: number; createdAt?: string },
     maxMessages: number,
   ): Promise<Message | null> {
     const record = createMessageRecord(msg);
@@ -108,6 +120,31 @@ export class MessageDataMapper implements MessageRepository {
 
     return row.count;
   }
+
+  async update(id: string, update: { content: string; parts: NewMessage["parts"] }): Promise<Message> {
+    this.db
+      .prepare(
+        `UPDATE messages
+         SET content = ?,
+             parts = ?
+         WHERE id = ?`,
+      )
+      .run(update.content, JSON.stringify(update.parts), id);
+
+    const row = this.db
+      .prepare(
+        `SELECT id, conversation_id, role, content, parts, created_at, token_estimate
+         FROM messages
+         WHERE id = ?`,
+      )
+      .get(id) as MessageRow | undefined;
+
+    if (!row) {
+      throw new Error(`Message not found after update: ${id}`);
+    }
+
+    return mapRow(row);
+  }
 }
 
 type MessageRow = {
@@ -120,7 +157,7 @@ type MessageRow = {
   token_estimate: number;
 };
 
-function createMessageRecord(msg: NewMessage & { tokenEstimate?: number }): {
+function createMessageRecord(msg: NewMessage & { tokenEstimate?: number; createdAt?: string }): {
   id: string;
   createdAt: string;
   partsJson: string;
@@ -128,7 +165,7 @@ function createMessageRecord(msg: NewMessage & { tokenEstimate?: number }): {
 } {
   return {
     id: `msg_${crypto.randomUUID()}`,
-    createdAt: new Date().toISOString(),
+    createdAt: msg.createdAt ?? new Date().toISOString(),
     partsJson: JSON.stringify(msg.parts),
     tokenEstimate: msg.tokenEstimate ?? Math.ceil(msg.content.length / 4),
   };

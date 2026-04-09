@@ -16,7 +16,16 @@ export interface Conversation {
   sessionSource: string;
   promptVersion: number | null;
   routingSnapshot: ConversationRoutingSnapshot;
+  referralId?: string | null;
   referralSource: string | null;
+  deletedAt?: string | null;
+  deletedByUserId?: string | null;
+  deleteReason?: "user_removed" | "admin_removed" | "privacy_request" | "retention_policy" | null;
+  purgeAfter?: string | null;
+  restoredAt?: string | null;
+  importedAt?: string | null;
+  importSourceConversationId?: string | null;
+  importedFromExportedAt?: string | null;
 }
 
 export interface ConversationSummary {
@@ -24,6 +33,9 @@ export interface ConversationSummary {
   title: string;
   updatedAt: string;
   messageCount: number;
+  status?: "active" | "archived";
+  deletedAt?: string | null;
+  purgeAfter?: string | null;
 }
 
 export interface Message {

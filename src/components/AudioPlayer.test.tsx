@@ -1,15 +1,19 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { AudioPlayer } from "./AudioPlayer";
 import React from "react";
 
 describe("AudioPlayer", () => {
   let mockPlay: Mock;
+  let audioInstances: Array<{
+    emit: (event: string) => void;
+  }>;
 
   beforeEach(() => {
     vi.restoreAllMocks();
+    audioInstances = [];
 
     mockPlay = vi.fn().mockResolvedValue(undefined);
     // Mock Audio
@@ -18,8 +22,31 @@ describe("AudioPlayer", () => {
       pause = vi.fn();
       currentTime = 0;
       duration = 100;
-      addEventListener = vi.fn();
-      removeEventListener = vi.fn();
+      private listeners = new Map<string, Array<() => void>>();
+
+      constructor() {
+        audioInstances.push(this);
+      }
+
+      addEventListener = vi.fn((event: string, handler: () => void) => {
+        const handlers = this.listeners.get(event) ?? [];
+        handlers.push(handler);
+        this.listeners.set(event, handlers);
+      });
+
+      removeEventListener = vi.fn((event: string, handler: () => void) => {
+        const handlers = this.listeners.get(event) ?? [];
+        this.listeners.set(
+          event,
+          handlers.filter((candidate) => candidate !== handler),
+        );
+      });
+
+      emit(event: string) {
+        for (const handler of this.listeners.get(event) ?? []) {
+          handler();
+        }
+      }
     }
     vi.stubGlobal("Audio", MockAudio);
 
@@ -225,6 +252,44 @@ describe("AudioPlayer", () => {
 
     await waitFor(() => {
       expect(mockPlay).toHaveBeenCalled();
+    });
+  });
+
+  it("surfaces playback failures after audio generation", async () => {
+    const mockReader = {
+      read: vi
+        .fn()
+        .mockResolvedValueOnce({
+          done: false,
+          value: new Uint8Array([1, 2, 3]),
+        })
+        .mockResolvedValueOnce({ done: true, value: undefined }),
+    };
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        headers: new Headers({ "Content-Length": "3" }),
+        body: { getReader: () => mockReader },
+      }),
+    );
+
+    render(<AudioPlayer title="Blocked Audio" text="Hello world" />);
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith("/api/tts", expect.any(Object));
+      expect(audioInstances).toHaveLength(1);
+    });
+
+    await act(async () => {
+      audioInstances[0]?.emit("error");
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Audio generated, but the browser could not load it/i),
+      ).toBeInTheDocument();
     });
   });
 });

@@ -3,7 +3,13 @@ import MentionsMenu from "@/components/MentionsMenu";
 import type { MentionItem } from "@/core/entities/mentions";
 
 interface ChatInputProps {
+  helperTextId: string;
+  helperMode?: "always" | "focus";
+  canStopStream?: boolean;
   inputRef?: React.RefObject<HTMLTextAreaElement | null>;
+  maxTextareaHeight?: number;
+  onStopStream?: () => void | Promise<unknown>;
+  placeholderText?: string;
   value: string;
   onChange: (val: string, selectionStart: number) => void;
   onSend: () => void;
@@ -25,7 +31,13 @@ interface ChatInputProps {
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
+  helperTextId,
+  helperMode = "always",
+  canStopStream = false,
   inputRef,
+  maxTextareaHeight = 224,
+  onStopStream,
+  placeholderText = "Ask Studio Ordo...",
   value,
   onChange,
   onSend,
@@ -41,11 +53,20 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   onFileSelect,
   onFileRemove,
 }) => {
+  const helperText = "Enter to send. Shift+Enter for line breaks.";
   const internalTextareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = inputRef ?? internalTextareaRef;
   const hasInput = value.trim().length > 0;
-  const helperTextId = React.useId();
+  const showStopButton = canStopStream && typeof onStopStream === "function";
+  const sendButtonClassName = [
+    "ui-chat-send-button focus-ring flex min-h-11 shrink-0 items-center justify-center gap-(--space-2) self-center rounded-(--fva-shell-radius-control) px-(--chat-composer-button-padding-inline) py-(--chat-composer-button-padding-block) text-sm font-semibold transition-all duration-300 active:scale-95",
+    hasInput ? "ui-chat-send-ready" : "ui-chat-send-idle",
+    !canSend && hasInput ? "ui-chat-send-disabled" : "",
+  ].join(" ");
+  const stopButtonClassName = [
+    "ui-chat-stop-button focus-ring flex min-h-11 shrink-0 items-center justify-center gap-(--space-2) self-center rounded-(--fva-shell-radius-control) border border-[color:color-mix(in_srgb,var(--danger,#b42318)_26%,transparent)] bg-[color:color-mix(in_srgb,var(--danger,#b42318)_10%,var(--surface))] px-(--chat-composer-button-padding-inline) py-(--chat-composer-button-padding-block) text-sm font-semibold text-[color:var(--danger,#b42318)] transition-all duration-300 hover:bg-[color:color-mix(in_srgb,var(--danger,#b42318)_14%,var(--surface))] active:scale-95",
+  ].join(" ");
 
   useEffect(() => {
     const element = textareaRef.current;
@@ -54,10 +75,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
 
     element.style.height = "0px";
-    const nextHeight = Math.min(element.scrollHeight, 224);
+    const nextHeight = Math.min(element.scrollHeight, maxTextareaHeight);
     element.style.height = `${Math.max(nextHeight, 44)}px`;
-    element.style.overflowY = element.scrollHeight > 224 ? "auto" : "hidden";
-  }, [textareaRef, value]);
+    element.style.overflowY = element.scrollHeight > maxTextareaHeight ? "auto" : "hidden";
+  }, [maxTextareaHeight, textareaRef, value]);
 
   const handleMentionsNavigation = (e: React.KeyboardEvent): boolean => {
     if (!activeTrigger || suggestions.length === 0) return false;
@@ -116,17 +137,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     <div className="mx-auto max-w-3xl">
       {/* File Previews */}
       {pendingFiles.length > 0 && (
-        <div className="mb-3 flex flex-wrap gap-2">
+        <div className="mb-(--space-3) flex flex-wrap gap-(--space-2)">
           {pendingFiles.map((file, i) => (
             <div
               key={i}
-              className="flex items-center gap-2 rounded-full border border-foreground/8 bg-background/82 px-3 py-1.5 text-[11px] font-medium text-foreground/72 shadow-[0_8px_16px_-18px_color-mix(in_srgb,var(--shadow-base)_18%,transparent)]"
+              className="ui-chat-file-pill flex items-center gap-(--space-2) rounded-full px-(--space-3) py-(--space-2) text-[11px] font-medium"
             >
               <span className="max-w-30 truncate">{file.name}</span>
               <button
                 type="button"
                 onClick={() => onFileRemove(i)}
-                className="focus-ring rounded-full p-0.5 text-foreground/44 transition-colors hover:text-red-500"
+                className="focus-ring rounded-full p-(--space-1) text-foreground/56 transition-colors hover:text-red-500"
                 aria-label={`Remove ${file.name}`}
               >
                 ✕
@@ -141,8 +162,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           e.preventDefault();
           onSend();
         }}
-        className="relative flex min-h-(--chat-composer-min-height) items-stretch gap-(--phi-1) overflow-hidden rounded-(--chat-composer-radius) border border-foreground/8 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--background)_80%,transparent)_0%,color-mix(in_oklab,var(--background)_94%,transparent)_100%)] shadow-[0_22px_48px_-38px_color-mix(in_srgb,var(--shadow-base)_18%,transparent)] backdrop-blur-[14px] transition-all duration-300 focus-within:border-foreground/12 focus-within:shadow-[0_24px_52px_-38px_color-mix(in_srgb,var(--shadow-base)_24%,transparent)] hover:border-foreground/10"
-        style={{ padding: 'var(--input-padding)' }}
+        className="ui-chat-composer-frame ui-chat-composer-frame-hover relative flex min-h-(--chat-composer-min-height) items-stretch gap-(--space-2) overflow-hidden rounded-(--chat-composer-radius) transition-all duration-300 hover:border-foreground/10 focus-within:ui-chat-composer-frame-focus"
         data-chat-composer-form="true"
         data-chat-composer-state={hasInput ? "ready" : "idle"}
       >
@@ -164,8 +184,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-            disabled={isSending}
-              className="focus-ring min-h-11 min-w-11 shrink-0 self-center rounded-full bg-transparent p-(--phi-2) text-foreground/28 transition-all hover:bg-background/80 hover:text-foreground/48 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={isSending}
+          className="ui-chat-attach-button ui-chat-attach-button-surface focus-ring min-h-11 min-w-11 shrink-0 self-center rounded-(--fva-shell-radius-control) p-(--space-2) active:scale-95 disabled:cursor-not-allowed"
           aria-label="Attach file"
         >
           <svg
@@ -175,52 +195,67 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           </svg>
         </button>
 
-        <div className="relative flex min-h-11 flex-1 items-center self-stretch rounded-[calc(var(--chat-composer-radius)-var(--phi-1))] bg-[color-mix(in_oklab,var(--surface)_72%,transparent)] px-(--phi-1) transition-shadow duration-300" data-chat-composer-field="true">
+        <div className="ui-chat-composer-field relative flex min-h-11 flex-1 items-center self-stretch rounded-(--fva-shell-radius-composer-field) px-(--space-1) transition-shadow duration-300" data-chat-composer-field="true">
           <textarea
             ref={textareaRef}
             value={value}
             onChange={(e) => onChange(e.target.value, e.target.selectionStart ?? 0)}
             onKeyDown={handleKeyDown}
-            placeholder="Paste the workflow, use case, or handoff you want to test..."
+            placeholder={placeholderText}
             aria-describedby={helperTextId}
             rows={1}
-                  className="theme-body max-h-56 min-h-11 flex-1 resize-none overflow-y-auto bg-transparent px-(--hero-composer-field-padding-inline) py-(--hero-composer-field-padding-block) text-[1rem] font-normal leading-normal text-foreground outline-none placeholder:text-foreground/34"
+            className="theme-body max-h-56 min-h-11 flex-1 resize-none overflow-y-auto bg-transparent px-(--chat-composer-field-padding-inline) py-(--chat-composer-field-padding-block) text-[1rem] font-normal leading-normal text-foreground outline-none placeholder:text-foreground/52"
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={!canSend}
-          data-chat-send-state={hasInput ? "ready" : "idle"}
-          className={[
-            "focus-ring theme-label tier-micro flex min-h-10 shrink-0 items-center gap-2 rounded-full px-(--chat-composer-button-padding-inline) py-(--chat-composer-button-padding-block) font-semibold transition-all duration-300 hover:-translate-y-px active:translate-y-0 active:scale-95",
-            hasInput
-              ? "bg-foreground text-background shadow-[0_12px_20px_-16px_color-mix(in_srgb,var(--shadow-base)_24%,transparent)] hover:bg-foreground/92 hover:shadow-[0_14px_22px_-16px_color-mix(in_srgb,var(--shadow-base)_28%,transparent)]"
-              : "bg-transparent text-foreground/20 shadow-none hover:text-foreground/32",
-            !canSend && !hasInput ? "opacity-100" : "",
-            !canSend && hasInput ? "disabled:bg-[color-mix(in_oklab,var(--surface-muted)_92%,var(--background))] disabled:text-foreground/42 disabled:shadow-none" : "",
-          ].join(" ")}
-          aria-label={isSending ? "Sending message" : "Send"}
-        >
-          {isSending ? (
-            <span className="flex gap-1">
-              <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce [animation-delay:-0.3s]" />
-              <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce [animation-delay:-0.15s]" />
-              <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" />
-            </span>
-          ) : (
-            "Send"
-          )}
-        </button>
+        {showStopButton ? (
+          <button
+            type="button"
+            onClick={() => {
+              void onStopStream?.();
+            }}
+            className={stopButtonClassName}
+            aria-label="Stop generation"
+            data-chat-stop-state="active"
+          >
+            <span data-chat-stop-label="true">Stop</span>
+          </button>
+        ) : (
+          <button
+            type="submit"
+            disabled={!canSend}
+            data-chat-send-state={hasInput ? "ready" : "idle"}
+            className={sendButtonClassName}
+            aria-label={isSending ? "Sending message" : "Send"}
+          >
+            {isSending ? (
+              <span className="flex gap-(--space-1)">
+                <span className="w-(--space-2) h-(--space-2) bg-current rounded-full animate-bounce [animation-delay:-0.3s]" />
+                <span className="w-(--space-2) h-(--space-2) bg-current rounded-full animate-bounce [animation-delay:-0.15s]" />
+                <span className="w-(--space-2) h-(--space-2) bg-current rounded-full animate-bounce" />
+              </span>
+            ) : (
+              <>
+                <span data-chat-send-label="true">Send</span>
+                <span data-chat-send-icon="true" aria-hidden="true" className="hidden">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h13" />
+                    <path d="m12 5 7 7-7 7" />
+                  </svg>
+                </span>
+              </>
+            )}
+          </button>
+        )}
       </form>
 
       <div
         id={helperTextId}
-        className="mt-2 flex items-center justify-between gap-3 px-1 text-(length:--chat-composer-helper-font-size) leading-(--chat-composer-helper-line-height) text-foreground/34"
+        className="ui-chat-helper-copy mt-(--space-1) flex flex-wrap items-center justify-start gap-x-(--space-2) gap-y-(--space-1) px-(--space-1) text-(length:--chat-composer-helper-font-size) leading-(--chat-composer-helper-line-height)"
         data-chat-composer-helper="true"
+        data-chat-helper-mode={helperMode}
       >
-        <span>Enter to send. Shift+Enter for a line break.</span>
-        <span className="text-right">Attach notes, screenshots, or briefs when context matters.</span>
+        <span>{helperText}</span>
       </div>
     </div>
   );

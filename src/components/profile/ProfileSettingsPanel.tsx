@@ -1,9 +1,15 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import Link from "next/link";
+import { useState, useSyncExternalStore, useTransition } from "react";
 
 import type { UserProfileViewModel } from "@/lib/profile/types";
-import { downloadFileFromUrl } from "@/lib/download-browser";
+import {
+  disablePushNotifications,
+  enablePushNotifications,
+  getPushNotificationsRenderUnavailableReason,
+  getPushNotificationsUnavailableReason,
+} from "@/lib/push/browser-push";
 
 interface ProfileSettingsPanelProps {
   initialProfile: UserProfileViewModel;
@@ -14,13 +20,26 @@ type SaveState =
   | { kind: "success"; message: string }
   | { kind: "error"; message: string };
 
+function getProfileNoticeClassName(kind: SaveState["kind"]): string {
+  return kind === "error" ? "alert-error" : "profile-success-notice px-(--space-inset-default) py-(--space-inset-compact) text-sm";
+}
+
 export function ProfileSettingsPanel({ initialProfile }: ProfileSettingsPanelProps) {
   const [profile, setProfile] = useState(initialProfile);
   const [name, setName] = useState(initialProfile.name);
   const [email, setEmail] = useState(initialProfile.email);
   const [credential, setCredential] = useState(initialProfile.credential);
   const [saveState, setSaveState] = useState<SaveState>({ kind: "idle" });
+  const [pushState, setPushState] = useState<SaveState>({ kind: "idle" });
+  const pushUnavailableReason = useSyncExternalStore(
+    () => () => undefined,
+    getPushNotificationsUnavailableReason,
+    getPushNotificationsRenderUnavailableReason,
+  );
   const [isPending, startTransition] = useTransition();
+  const [isPushPending, startPushTransition] = useTransition();
+  const referralCode = profile.referralCode;
+  const referralUrl = profile.referralUrl;
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -52,27 +71,48 @@ export function ProfileSettingsPanel({ initialProfile }: ProfileSettingsPanelPro
     });
   };
 
-  const handleCopy = async (value: string, label: string) => {
-    try {
-      await navigator.clipboard.writeText(value);
-      setSaveState({ kind: "success", message: `${label} copied.` });
-    } catch {
-      setSaveState({ kind: "error", message: `Unable to copy ${label.toLowerCase()}.` });
-    }
-  };
+  const handlePushNotificationsToggle = () => {
+    setPushState({ kind: "idle" });
 
-  const handleDownloadQr = () => {
-    if (!profile.qrCodeUrl || !profile.referralCode) {
-      return;
-    }
+    startPushTransition(async () => {
+      try {
+        if (profile.pushNotificationsEnabled) {
+          await disablePushNotifications();
+          setProfile((current) => ({
+            ...current,
+            pushNotificationsEnabled: false,
+          }));
+          setPushState({
+            kind: "success",
+            message: "Push notifications disabled for your account.",
+          });
+          return;
+        }
 
-    downloadFileFromUrl(profile.qrCodeUrl, `referral-${profile.referralCode}.png`);
-    setSaveState({ kind: "success", message: "Referral QR download started." });
+        await enablePushNotifications();
+        setProfile((current) => ({
+          ...current,
+          pushNotificationsEnabled: true,
+        }));
+        setPushState({
+          kind: "success",
+          message: "Push notifications enabled for deferred job updates.",
+        });
+      } catch (error) {
+        setPushState({
+          kind: "error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Unable to update push notification settings right now.",
+        });
+      }
+    });
   };
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-(--container-padding) py-10 sm:py-14">
-      <header className="flex flex-col gap-3">
+    <div className="profile-page-shell mx-auto flex w-full max-w-5xl flex-col gap-(--space-6) px-(--space-frame-default) py-(--space-section-loose) sm:py-(--space-frame-wide)" data-profile-page="true">
+      <header className="profile-route-header flex flex-col gap-(--space-3)" data-profile-header="true">
         <p className="theme-label tier-micro uppercase text-foreground/42">Account</p>
         <h1 className="theme-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
           Profile
@@ -82,20 +122,20 @@ export function ProfileSettingsPanel({ initialProfile }: ProfileSettingsPanelPro
         </p>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)]">
-        <section className="rounded-[1.75rem] border border-border/70 bg-surface/80 p-6 shadow-[0_24px_60px_-42px_color-mix(in_srgb,var(--shadow-base)_18%,transparent)] backdrop-blur-sm">
-          <div className="mb-5 flex items-center justify-between gap-3">
+      <div className="profile-workspace-grid grid gap-(--space-6) lg:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)]" data-profile-workspace-grid="true">
+        <section className="profile-panel-surface profile-primary-panel p-(--space-inset-default) sm:p-(--space-inset-panel)" data-profile-surface="details-panel" data-profile-primary-surface="true">
+          <div className="profile-panel-header mb-(--space-4) flex items-center justify-between gap-(--space-3) sm:mb-(--space-6)">
             <div>
               <h2 className="theme-display text-xl font-semibold tracking-tight">Profile details</h2>
-              <p className="mt-1 text-sm text-foreground/52">
+              <p className="mt-(--space-1) text-sm text-foreground/52">
                 These values are used by your account surface and by the profile MCP tools.
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="profile-role-list flex flex-wrap gap-(--space-2)">
               {profile.roles.map((role) => (
                 <span
                   key={role}
-                  className="rounded-full border border-border/70 bg-background/80 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-foreground/48"
+                  className="profile-role-pill rounded-full px-(--space-inset-compact) py-(--space-1) text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-foreground/48"
                 >
                   {role}
                 </span>
@@ -103,8 +143,8 @@ export function ProfileSettingsPanel({ initialProfile }: ProfileSettingsPanelPro
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1.5">
+          <form onSubmit={handleSubmit} className="profile-form-grid space-y-(--space-4)" data-profile-form="true">
+            <div className="space-y-(--space-2)">
               <label htmlFor="profile-name" className="form-label">Name</label>
               <input
                 id="profile-name"
@@ -116,7 +156,7 @@ export function ProfileSettingsPanel({ initialProfile }: ProfileSettingsPanelPro
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-(--space-2)">
               <label htmlFor="profile-email" className="form-label">Email</label>
               <input
                 id="profile-email"
@@ -129,7 +169,7 @@ export function ProfileSettingsPanel({ initialProfile }: ProfileSettingsPanelPro
               />
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-(--space-2)">
               <label htmlFor="profile-credential" className="form-label">Credential</label>
               <input
                 id="profile-credential"
@@ -137,19 +177,18 @@ export function ProfileSettingsPanel({ initialProfile }: ProfileSettingsPanelPro
                 onChange={(event) => setCredential(event.target.value)}
                 className="input-field"
                 placeholder="Enterprise AI practitioner"
+                aria-describedby="credential-description"
               />
-              <p className="text-xs leading-5 text-foreground/45">
+              <p id="credential-description" className="text-xs leading-5 text-foreground/45">
                 This appears in referral-aware greetings when your referral code is enabled.
               </p>
             </div>
 
-            {saveState.kind !== "idle" ? (
-              <div className={saveState.kind === "error" ? "alert-error" : "rounded-theme border border-emerald-500/25 bg-emerald-500/8 px-4 py-3 text-sm text-emerald-200"}>
-                {saveState.message}
-              </div>
-            ) : null}
+            <div role="status" aria-live="polite" className={saveState.kind !== "idle" ? getProfileNoticeClassName(saveState.kind) : ""} data-profile-notice={saveState.kind !== "idle" ? saveState.kind : undefined}>
+              {saveState.kind !== "idle" ? saveState.message : ""}
+            </div>
 
-            <div className="flex items-center justify-between gap-3 pt-2">
+            <div className="profile-form-actions flex items-center justify-between gap-(--space-3) pt-(--space-2)">
               <p className="text-xs text-foreground/42">Changes save to the same backend used by the chat tools.</p>
               <button type="submit" className="btn-primary" disabled={isPending}>
                 {isPending ? "Saving..." : "Save profile"}
@@ -158,86 +197,110 @@ export function ProfileSettingsPanel({ initialProfile }: ProfileSettingsPanelPro
           </form>
         </section>
 
-        <aside className="rounded-[1.75rem] border border-border/70 bg-[linear-gradient(180deg,color-mix(in_oklab,var(--surface)_88%,var(--background))_0%,color-mix(in_oklab,var(--surface-muted)_72%,transparent)_100%)] p-6 shadow-[0_24px_60px_-42px_color-mix(in_srgb,var(--shadow-base)_18%,transparent)]">
-          <div className="flex flex-col gap-2">
-            <p className="theme-label tier-micro uppercase text-foreground/42">Referral QR</p>
-            <h2 className="theme-display text-xl font-semibold tracking-tight">Your share link</h2>
-            <p className="text-sm leading-6 text-foreground/56">
-              If admin has enabled referrals for your account, your QR code and landing link appear here.
-            </p>
-          </div>
+        <div className="profile-secondary-column flex flex-col gap-(--space-6)">
+          <aside className="profile-feature-surface p-(--space-inset-default) sm:p-(--space-inset-panel)" data-profile-surface="referral-panel">
+            <div className="flex flex-col gap-(--space-2)">
+              <p className="theme-label tier-micro uppercase text-foreground/42">Affiliate workspace</p>
+              <h2 className="theme-display text-xl font-semibold tracking-tight">Referral performance</h2>
+              <p className="text-sm leading-6 text-foreground/56">
+                Share assets, charts, and recent milestone visibility now live in the dedicated referrals workspace.
+              </p>
+            </div>
 
-          {profile.affiliateEnabled && profile.referralCode && profile.qrCodeUrl && profile.referralUrl ? (
-            <div className="mt-5 flex flex-col gap-4">
-              <div className="overflow-hidden rounded-[1.5rem] border border-border/70 bg-background/90 p-4">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={profile.qrCodeUrl}
-                  alt={`Referral QR code for ${profile.name}`}
-                  className="mx-auto h-auto w-full max-w-56"
-                />
-              </div>
-
-              <div className="space-y-3">
-                <div>
+            {profile.affiliateEnabled && referralCode && referralUrl ? (
+              <div className="mt-(--space-6) flex flex-col gap-(--space-4)">
+                <div className="rounded-3xl border border-foreground/10 bg-background/70 p-(--space-inset-default)" data-profile-surface="referral-summary-card">
                   <p className="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-foreground/38">Referral code</p>
-                  <div className="mt-1 flex items-center gap-2">
-                    <code className="rounded-md bg-background/80 px-3 py-2 text-sm text-foreground/78">
-                      {profile.referralCode}
+                  <div className="mt-(--space-2) flex flex-wrap items-center gap-(--space-2)">
+                    <code className="rounded-md bg-background/80 px-(--space-inset-compact) py-(--space-inset-tight) text-sm text-foreground/78">
+                      {referralCode}
                     </code>
-                    <button
-                      type="button"
-                      className="focus-ring rounded-full border border-border/70 px-3 py-2 text-xs font-semibold text-foreground/62 transition-colors hover:text-foreground"
-                      onClick={() => handleCopy(profile.referralCode!, "Referral code")}
-                    >
-                      Copy
-                    </button>
+                    <span className="rounded-full border border-border/70 bg-background/80 px-(--space-inset-compact) py-(--space-1) text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-foreground/48">
+                      Active
+                    </span>
+                  </div>
+                  <p className="mt-(--space-3) text-sm leading-6 text-foreground/58">
+                    Your public referral link is ready. Open the workspace to copy assets, download the QR code, and review performance.
+                  </p>
+                </div>
+
+                <div className="space-y-(--space-3)">
+                  <div>
+                    <p className="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-foreground/38">Public link</p>
+                    <p className="mt-(--space-1) break-all text-sm leading-6 text-foreground/58">{referralUrl}</p>
                   </div>
                 </div>
 
-                <div>
-                  <p className="text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-foreground/38">Referral link</p>
-                  <div className="mt-1 flex flex-col gap-2 sm:flex-row">
-                    <input readOnly value={profile.referralUrl} className="input-field flex-1" />
-                    <button
-                      type="button"
-                      className="focus-ring rounded-full border border-border/70 px-4 py-2 text-xs font-semibold text-foreground/62 transition-colors hover:text-foreground"
-                      onClick={() => handleCopy(profile.referralUrl!, "Referral link")}
-                    >
-                      Copy link
-                    </button>
-                  </div>
+                <div className="flex flex-wrap gap-(--space-2)">
+                  <Link href="/referrals" className="btn-primary">
+                    Open referrals workspace
+                  </Link>
+                  <a
+                    href={referralUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="profile-inline-action focus-ring inline-flex min-h-11 items-center justify-center rounded-full px-(--space-inset-default) py-(--space-inset-tight) text-sm font-semibold transition-colors"
+                  >
+                    Open link
+                  </a>
                 </div>
               </div>
+            ) : (
+              <div className="profile-empty-state mt-(--space-6) p-(--space-inset-panel) text-sm leading-6 text-foreground/52" data-profile-surface="empty-state">
+                Referral and QR access are not enabled yet. Once an administrator enables affiliate status, the referrals workspace will show your link, QR code, share copy, and performance summary automatically.
+              </div>
+            )}
+          </aside>
 
-              <div className="flex flex-wrap gap-2">
-                <button type="button" className="btn-primary" onClick={handleDownloadQr}>
-                  Download QR
+          <section className="profile-panel-surface p-(--space-inset-default) sm:p-(--space-inset-panel)" data-profile-surface="notifications-panel">
+            <div className="flex items-start justify-between gap-(--space-4)">
+              <div>
+                <p className="theme-label tier-micro uppercase text-foreground/42">Notifications</p>
+                <h2 className="theme-display text-xl font-semibold tracking-tight">Deferred job alerts</h2>
+                <p className="mt-(--space-1) text-sm leading-6 text-foreground/56">
+                  Receive browser push alerts when queued tools like draft and publish finish after you leave the chat tab.
+                </p>
+              </div>
+              <span className="rounded-full border border-border/70 bg-background/80 px-(--space-inset-compact) py-(--space-1) text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-foreground/48">
+                {profile.pushNotificationsEnabled ? "Enabled" : "Disabled"}
+              </span>
+            </div>
+
+            <div className="mt-(--space-6) space-y-(--space-4)">
+              {pushUnavailableReason ? (
+                <div className="profile-empty-state p-(--space-inset-default) text-sm leading-6 text-foreground/52" data-profile-surface="push-unavailable">
+                  {pushUnavailableReason}
+                </div>
+              ) : null}
+
+              {pushState.kind !== "idle" ? (
+                <div className={getProfileNoticeClassName(pushState.kind)} data-profile-notice={pushState.kind}>
+                  {pushState.message}
+                </div>
+              ) : null}
+
+              <div className="flex items-center justify-between gap-(--space-3)">
+                <p className="text-xs leading-5 text-foreground/45">
+                  This account-level setting controls whether background job completion alerts are delivered.
+                </p>
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={handlePushNotificationsToggle}
+                  disabled={isPushPending || Boolean(pushUnavailableReason)}
+                >
+                  {isPushPending
+                    ? profile.pushNotificationsEnabled
+                      ? "Disabling..."
+                      : "Enabling..."
+                    : profile.pushNotificationsEnabled
+                      ? "Disable notifications"
+                      : "Enable notifications"}
                 </button>
-                <a
-                  href={profile.qrCodeUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="focus-ring inline-flex min-h-11 items-center justify-center rounded-full border border-border/70 px-4 py-2 text-sm font-semibold text-foreground/72 transition-colors hover:text-foreground"
-                >
-                  Open QR
-                </a>
-                <a
-                  href={profile.referralUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="focus-ring inline-flex min-h-11 items-center justify-center rounded-full border border-border/70 px-4 py-2 text-sm font-semibold text-foreground/72 transition-colors hover:text-foreground"
-                >
-                  Open link
-                </a>
               </div>
             </div>
-          ) : (
-            <div className="mt-5 rounded-[1.25rem] border border-dashed border-border/70 bg-background/48 p-5 text-sm leading-6 text-foreground/52">
-              Referral access is not enabled for this account yet. Once an administrator enables affiliate status, your QR code will appear here automatically.
-            </div>
-          )}
-        </aside>
+          </section>
+        </div>
       </div>
     </div>
   );

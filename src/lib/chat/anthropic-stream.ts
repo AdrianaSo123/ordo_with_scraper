@@ -6,6 +6,7 @@ import {
   getModelFallbacks,
 } from "@/lib/config/env";
 import { createAbortTimeout } from "@/lib/chat/disposability";
+import { CHAT_CONFIG } from "@/lib/chat/chat-config";
 
 export interface StreamCallbacks {
   onDelta?: (text: string) => void;
@@ -64,11 +65,16 @@ function isTransientProviderError(error: unknown): boolean {
   );
 }
 
+function isTimeoutError(error: unknown): boolean {
+  const message = toErrorMessage(error).toLowerCase();
+  return message.includes("timed out") || message.includes("timeout");
+}
+
 export async function runClaudeAgentLoopStream({
   apiKey,
   messages,
   callbacks,
-  maxToolRounds = 4,
+  maxToolRounds = CHAT_CONFIG.maxToolRounds,
   signal,
   systemPrompt,
   tools,
@@ -116,6 +122,7 @@ export async function runClaudeAgentLoopStream({
     let assistantText = "";
     let stopReason: string | null = null;
     let round = 0;
+    let completedRounds = 0;
 
     for (let attempt = 1; attempt <= retryAttempts; attempt += 1) {
       try {
@@ -153,6 +160,7 @@ export async function runClaudeAgentLoopStream({
             stopReason = response.stop_reason;
 
             if (response.stop_reason !== "tool_use") {
+              completedRounds++;
               timeout.clear();
               break;
             }
@@ -207,6 +215,7 @@ export async function runClaudeAgentLoopStream({
             }
 
             conversation.push({ role: "user", content: toolResultContents });
+            completedRounds++;
             timeout.clear();
           } catch (error) {
             timeout.clear();
@@ -235,6 +244,13 @@ export async function runClaudeAgentLoopStream({
         if (isModelNotFoundError(error)) {
           lastError = error;
           break;
+        }
+
+        const isTimeout = isTimeoutError(error);
+        if (isTimeout && completedRounds > 0) {
+          // Timeout after a successful round means the payload grew too
+          // large — retrying the same context will time out again.
+          throw error;
         }
 
         if (isTransientProviderError(error) && attempt < retryAttempts) {

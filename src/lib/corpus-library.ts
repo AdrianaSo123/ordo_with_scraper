@@ -3,6 +3,8 @@
  */
 
 import type { Document } from "../core/entities/corpus";
+import { ContentAccessDeniedError } from "../core/entities/errors";
+import type { RoleName } from "../core/entities/user";
 import { getCorpusRepository } from "../adapters/RepositoryFactory";
 import { LibrarySearchInteractor } from "../core/use-cases/LibrarySearchInteractor";
 import { PractitionerInteractor } from "../core/use-cases/PractitionerInteractor";
@@ -15,6 +17,9 @@ import { GetChapterInteractor } from "../core/use-cases/GetChapterInteractor";
 import { ConsoleLogger } from "../adapters/ConsoleLogger";
 import { ErrorHandler } from "../core/services/ErrorHandler";
 import { LoggingDecorator } from "../core/common/LoggingDecorator";
+import { resolveCorpusRole, type CorpusAccessOptions } from "./corpus-access";
+import { buildCanonicalCorpusReference } from "./corpus-reference";
+import { stripLeadingMarkdownTitle } from "./markdown/strip-leading-markdown-title";
 
 const logger = new ConsoleLogger();
 const errorHandler = new ErrorHandler(logger);
@@ -56,16 +61,39 @@ function withErrorFallback<TArgs extends unknown[], TReturn>(
     try {
       return await fn(...args);
     } catch (error) {
+      if (error instanceof ContentAccessDeniedError) {
+        throw error;
+      }
+
       errorHandler.handle(error, { method });
       return fallback;
     }
   };
 }
 
+function getCacheKey(role?: RoleName): string {
+  return role ?? "__raw";
+}
+
+async function getVisibleDocumentSlugs(role: RoleName): Promise<Set<string>> {
+  const summaries = await summaryInteractor.execute({ role });
+  return new Set(summaries.map((summary) => summary.slug));
+}
+
 export type { CorpusIndexEntry as ChapterIndex };
 
 export const getDocuments = withErrorFallback(
-  () => corpusRepository.getAllDocuments(),
+  async (options?: CorpusAccessOptions) => {
+    const role = resolveCorpusRole(options);
+    const documents = await corpusRepository.getAllDocuments();
+
+    if (!role) {
+      return documents;
+    }
+
+    const visibleDocumentSlugs = await getVisibleDocumentSlugs(role);
+    return documents.filter((document) => visibleDocumentSlugs.has(document.slug));
+  },
   [] as Document[],
   "getDocuments",
 );
@@ -83,50 +111,81 @@ export interface SearchResult {
   chapter: string;
   chapterSlug: string;
   bookSlug: string;
+  canonicalPath: string;
+  resolverPath: string;
 }
 
 let cachedIndex: CorpusIndexEntry[] | null = null;
+const cachedIndexByRole = new Map<string, CorpusIndexEntry[]>();
 
 export const getCorpusIndex = withErrorFallback(
-  async () => {
-    if (cachedIndex) return cachedIndex;
-    cachedIndex = await indexInteractor.execute(undefined);
-    return cachedIndex;
+  async (options?: CorpusAccessOptions) => {
+    const role = resolveCorpusRole(options);
+
+    if (!role) {
+      if (cachedIndex) return cachedIndex;
+      cachedIndex = await indexInteractor.execute(undefined);
+      return cachedIndex;
+    }
+
+    const key = getCacheKey(role);
+    const cached = cachedIndexByRole.get(key);
+    if (cached) {
+      return cached;
+    }
+
+    const result = await indexInteractor.execute({ role });
+    cachedIndexByRole.set(key, result);
+    return result;
   },
   [] as CorpusIndexEntry[],
   "getCorpusIndex",
 );
 
 export const searchCorpus = withErrorFallback(
-  async (query: string, maxResults: number = 10) => {
-    const results = await searchInteractor.execute({ query, maxResults });
+  async (query: string, maxResults: number = 10, options?: CorpusAccessOptions) => {
+    const role = resolveCorpusRole(options);
+    const results = await searchInteractor.execute({ query, maxResults, role });
 
-    return results.map((result) => ({
-      document: `${result.documentId ?? result.bookNumber ?? ""}. ${result.documentTitle ?? result.bookTitle ?? ""}`.trim(),
-      documentId: result.documentId ?? result.bookNumber ?? "",
-      section: result.sectionTitle ?? result.chapterTitle ?? "",
-      sectionSlug: result.sectionSlug ?? result.chapterSlug ?? "",
-      documentSlug: result.documentSlug ?? result.bookSlug ?? "",
-      matchContext: result.matchContext,
-      relevance: result.relevance,
-      book: `${result.bookNumber ?? result.documentId ?? ""}. ${result.bookTitle ?? result.documentTitle ?? ""}`.trim(),
-      bookNumber: result.bookNumber ?? result.documentId ?? "",
-      chapter: result.chapterTitle ?? result.sectionTitle ?? "",
-      chapterSlug: result.chapterSlug ?? result.sectionSlug ?? "",
-      bookSlug: result.bookSlug ?? result.documentSlug ?? "",
-    }));
+    return results.map((result) => {
+      const documentSlug = result.documentSlug ?? result.bookSlug ?? "";
+      const sectionSlug = result.sectionSlug ?? result.chapterSlug ?? "";
+      const reference = buildCanonicalCorpusReference(documentSlug, sectionSlug);
+
+      return {
+        document: `${result.documentId ?? result.bookNumber ?? ""}. ${result.documentTitle ?? result.bookTitle ?? ""}`.trim(),
+        documentId: result.documentId ?? result.bookNumber ?? "",
+        section: result.sectionTitle ?? result.chapterTitle ?? "",
+        sectionSlug,
+        documentSlug,
+        matchContext: result.matchContext,
+        relevance: result.relevance,
+        book: `${result.bookNumber ?? result.documentId ?? ""}. ${result.bookTitle ?? result.documentTitle ?? ""}`.trim(),
+        bookNumber: result.bookNumber ?? result.documentId ?? "",
+        chapter: result.chapterTitle ?? result.sectionTitle ?? "",
+        chapterSlug: sectionSlug,
+        bookSlug: documentSlug,
+        canonicalPath: reference.canonicalPath,
+        resolverPath: reference.resolverPath,
+      };
+    });
   },
   [] as SearchResult[],
   "searchCorpus",
 );
 
 export const getSectionFull = withErrorFallback(
-  async (documentSlug: string, sectionSlug: string) => {
-    const result = await sectionInteractor.execute({ bookSlug: documentSlug, chapterSlug: sectionSlug });
+  async (documentSlug: string, sectionSlug: string, options?: CorpusAccessOptions) => {
+    const role = resolveCorpusRole(options);
+    const result = await sectionInteractor.execute({
+      bookSlug: documentSlug,
+      chapterSlug: sectionSlug,
+      role,
+    });
     if (!result) return null;
     return {
       title: result.title,
-      content: result.content,
+      content: stripLeadingMarkdownTitle(result.title, result.content),
       document: result.bookTitle,
       book: result.bookTitle,
     };
@@ -136,8 +195,9 @@ export const getSectionFull = withErrorFallback(
 );
 
 export const getChecklists = withErrorFallback(
-  async (documentSlug?: string) => {
-    const results = await checklistInteractor.execute({ bookSlug: documentSlug });
+  async (documentSlug?: string, options?: CorpusAccessOptions) => {
+    const role = resolveCorpusRole(options);
+    const results = await checklistInteractor.execute({ bookSlug: documentSlug, role });
     return results.map((result) => ({
       document: result.bookTitle,
       section: result.chapterTitle,
@@ -151,8 +211,9 @@ export const getChecklists = withErrorFallback(
 );
 
 export const getPractitioners = withErrorFallback(
-  async (query?: string) => {
-    const results = await practitionerInteractor.execute({ query });
+  async (query?: string, options?: CorpusAccessOptions) => {
+    const role = resolveCorpusRole(options);
+    const results = await practitionerInteractor.execute({ query, role });
     return results.map((result) => ({
       name: result.name,
       documents: result.books.map((book) => `${book.number}. ${book.title}`),
@@ -166,7 +227,10 @@ export const getPractitioners = withErrorFallback(
 );
 
 export const getCorpusSummaries = withErrorFallback(
-  () => summaryInteractor.execute(undefined),
+  async (options?: CorpusAccessOptions) => {
+    const role = resolveCorpusRole(options);
+    return summaryInteractor.execute(role ? { role } : undefined);
+  },
   [] as Awaited<ReturnType<typeof summaryInteractor.execute>>,
   "getCorpusSummaries",
 );

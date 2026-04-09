@@ -5,11 +5,15 @@ import type { RoleName } from "@/core/entities/user";
 export function useMockAuth() {
   const switchRole = async (targetRole: RoleName) => {
     try {
-      await fetch("/api/auth/switch", {
+      const response = await fetch("/api/auth/switch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role: targetRole }),
       });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error ?? `Role switch failed (${response.status})`);
+      }
       window.location.reload();
     } catch (err) {
       console.error("Error switching role:", err);

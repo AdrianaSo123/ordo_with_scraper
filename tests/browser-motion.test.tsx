@@ -48,6 +48,7 @@ function installMatchMedia(reducedMotion: boolean) {
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/dashboard",
+  useSearchParams: () => new URLSearchParams(),
   useRouter: () => ({ push: vi.fn() }),
 }));
 
@@ -74,6 +75,7 @@ vi.mock("@/hooks/useChatScroll", () => ({
     isAtBottom: true,
     scrollToBottom: vi.fn(),
     handleScroll: vi.fn(),
+    resetPin: vi.fn(),
   }),
 }));
 
@@ -188,13 +190,13 @@ describe("browser motion hardening", () => {
     });
   });
 
-  it("keeps nav layering classes that do not depend on backdrop blur", () => {
+  it("keeps nav layering semantics through the extracted shell rail class", () => {
     installMatchMedia(false);
 
     render(<SiteNav user={baseUser} />);
 
     const nav = screen.getByRole("navigation", { name: "Primary" });
-    expect(nav.className).toContain("glass-surface");
-    expect(nav.className).toContain("shadow-[0_8px_20px_color-mix(in_srgb,var(--shadow-base)_4%,transparent)]");
+    expect(nav.className).toContain("ui-shell-rail");
+    expect(nav).toHaveAttribute("data-shell-nav-rail", "true");
   });
 });

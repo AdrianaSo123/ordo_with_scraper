@@ -41,6 +41,7 @@ export function createTables(db: Database.Database): void {
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL,
       title TEXT NOT NULL DEFAULT '',
+      referral_id TEXT DEFAULT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now')),
       FOREIGN KEY (user_id) REFERENCES users(id)
@@ -73,6 +74,20 @@ export function createTables(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_conv_events_conv ON conversation_events(conversation_id);
     CREATE INDEX IF NOT EXISTS idx_conv_events_type ON conversation_events(event_type);
     CREATE INDEX IF NOT EXISTS idx_conv_events_created ON conversation_events(created_at);
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS conversation_purge_audits (
+      id TEXT PRIMARY KEY,
+      conversation_id TEXT NOT NULL,
+      actor_user_id TEXT NOT NULL,
+      actor_role TEXT NOT NULL,
+      purge_reason TEXT NOT NULL,
+      metadata_json TEXT NOT NULL DEFAULT '{}',
+      purged_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_conv_purge_audits_purged_at ON conversation_purge_audits(purged_at);
+    CREATE INDEX IF NOT EXISTS idx_conv_purge_audits_reason ON conversation_purge_audits(purge_reason);
   `);
 
   db.exec(`
@@ -247,18 +262,44 @@ export function createTables(db: Database.Database): void {
     CREATE TABLE IF NOT EXISTS referrals (
       id TEXT PRIMARY KEY,
       referrer_user_id TEXT NOT NULL,
+      referred_user_id TEXT DEFAULT NULL,
       conversation_id TEXT,
       referral_code TEXT NOT NULL,
+      visit_id TEXT DEFAULT NULL,
+      status TEXT NOT NULL DEFAULT 'visited',
+      credit_status TEXT NOT NULL DEFAULT 'tracked',
       scanned_at TEXT,
       converted_at TEXT,
+      last_validated_at TEXT DEFAULT NULL,
+      last_event_at TEXT DEFAULT NULL,
       outcome TEXT DEFAULT NULL,
+      metadata_json TEXT NOT NULL DEFAULT '{}',
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       FOREIGN KEY (referrer_user_id) REFERENCES users(id),
+      FOREIGN KEY (referred_user_id) REFERENCES users(id),
       FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE SET NULL
     );
     CREATE INDEX IF NOT EXISTS idx_referrals_code ON referrals(referral_code);
     CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals(referrer_user_id);
     CREATE INDEX IF NOT EXISTS idx_referrals_conversation ON referrals(conversation_id);
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS referral_events (
+      id TEXT PRIMARY KEY,
+      referral_id TEXT NOT NULL,
+      conversation_id TEXT DEFAULT NULL,
+      event_type TEXT NOT NULL,
+      idempotency_key TEXT NOT NULL,
+      payload_json TEXT NOT NULL DEFAULT '{}',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (referral_id) REFERENCES referrals(id) ON DELETE CASCADE,
+      FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE SET NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_referral_events_referral ON referral_events(referral_id);
+    CREATE INDEX IF NOT EXISTS idx_referral_events_type ON referral_events(event_type);
+    CREATE INDEX IF NOT EXISTS idx_referral_events_conversation ON referral_events(conversation_id);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_referral_events_dedupe ON referral_events(referral_id, idempotency_key);
   `);
 
   db.exec(`
@@ -297,17 +338,158 @@ export function createTables(db: Database.Database): void {
       title TEXT NOT NULL,
       description TEXT NOT NULL DEFAULT '',
       content TEXT NOT NULL,
+      standfirst TEXT DEFAULT NULL,
+      section TEXT DEFAULT NULL,
+      hero_image_asset_id TEXT,
       status TEXT NOT NULL DEFAULT 'draft',
       published_at TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now')),
       created_by_user_id TEXT NOT NULL,
       published_by_user_id TEXT,
+      FOREIGN KEY (hero_image_asset_id) REFERENCES blog_assets(id) ON DELETE SET NULL,
       FOREIGN KEY (created_by_user_id) REFERENCES users(id),
       FOREIGN KEY (published_by_user_id) REFERENCES users(id)
     );
 
     CREATE INDEX IF NOT EXISTS idx_blog_posts_slug ON blog_posts(slug);
     CREATE INDEX IF NOT EXISTS idx_blog_posts_status ON blog_posts(status);
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS blog_assets (
+      id TEXT PRIMARY KEY,
+      post_id TEXT,
+      kind TEXT NOT NULL,
+      storage_path TEXT NOT NULL,
+      mime_type TEXT NOT NULL,
+      width INTEGER,
+      height INTEGER,
+      alt_text TEXT NOT NULL DEFAULT '',
+      source_prompt TEXT,
+      provider TEXT,
+      provider_model TEXT,
+      visibility TEXT NOT NULL DEFAULT 'draft',
+      selection_state TEXT NOT NULL DEFAULT 'candidate',
+      variation_group_id TEXT DEFAULT NULL,
+      created_by_user_id TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (post_id) REFERENCES blog_posts(id) ON DELETE SET NULL,
+      FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_blog_assets_post ON blog_assets(post_id);
+    CREATE INDEX IF NOT EXISTS idx_blog_assets_visibility ON blog_assets(visibility);
+    CREATE INDEX IF NOT EXISTS idx_blog_assets_created_by ON blog_assets(created_by_user_id);
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS blog_post_artifacts (
+      id TEXT PRIMARY KEY,
+      post_id TEXT NOT NULL,
+      artifact_type TEXT NOT NULL,
+      payload_json TEXT NOT NULL,
+      created_by_user_id TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (post_id) REFERENCES blog_posts(id) ON DELETE CASCADE,
+      FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_blog_post_artifacts_post ON blog_post_artifacts(post_id);
+    CREATE INDEX IF NOT EXISTS idx_blog_post_artifacts_type ON blog_post_artifacts(artifact_type);
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS blog_post_revisions (
+      id TEXT PRIMARY KEY,
+      post_id TEXT NOT NULL,
+      snapshot_json TEXT NOT NULL,
+      change_note TEXT DEFAULT NULL,
+      created_by_user_id TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (post_id) REFERENCES blog_posts(id) ON DELETE CASCADE,
+      FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_blog_post_revisions_post ON blog_post_revisions(post_id);
+    CREATE INDEX IF NOT EXISTS idx_blog_post_revisions_created_at ON blog_post_revisions(created_at);
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS job_requests (
+      id TEXT PRIMARY KEY,
+      conversation_id TEXT NOT NULL,
+      user_id TEXT DEFAULT NULL,
+      tool_name TEXT NOT NULL,
+      status TEXT NOT NULL,
+      priority INTEGER NOT NULL DEFAULT 100,
+      dedupe_key TEXT DEFAULT NULL,
+      initiator_type TEXT NOT NULL DEFAULT 'user',
+      request_payload_json TEXT NOT NULL,
+      result_payload_json TEXT DEFAULT NULL,
+      error_message TEXT DEFAULT NULL,
+      progress_percent REAL DEFAULT NULL,
+      progress_label TEXT DEFAULT NULL,
+      attempt_count INTEGER NOT NULL DEFAULT 0,
+      lease_expires_at TEXT DEFAULT NULL,
+      claimed_by TEXT DEFAULT NULL,
+      failure_class TEXT DEFAULT NULL,
+      next_retry_at TEXT DEFAULT NULL,
+      recovery_mode TEXT DEFAULT NULL,
+      last_checkpoint_id TEXT DEFAULT NULL,
+      replayed_from_job_id TEXT DEFAULT NULL,
+      superseded_by_job_id TEXT DEFAULT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      started_at TEXT DEFAULT NULL,
+      completed_at TEXT DEFAULT NULL,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      FOREIGN KEY (replayed_from_job_id) REFERENCES job_requests(id) ON DELETE SET NULL,
+      FOREIGN KEY (superseded_by_job_id) REFERENCES job_requests(id) ON DELETE SET NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_job_requests_conversation ON job_requests(conversation_id);
+    CREATE INDEX IF NOT EXISTS idx_job_requests_user_status ON job_requests(user_id, status);
+    CREATE INDEX IF NOT EXISTS idx_job_requests_status_priority_created ON job_requests(status, priority, created_at);
+    CREATE INDEX IF NOT EXISTS idx_job_requests_dedupe_conversation ON job_requests(conversation_id, dedupe_key);
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS job_events (
+      id TEXT PRIMARY KEY,
+      job_id TEXT NOT NULL,
+      conversation_id TEXT NOT NULL,
+      sequence INTEGER NOT NULL,
+      event_type TEXT NOT NULL,
+      event_payload_json TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (job_id) REFERENCES job_requests(id) ON DELETE CASCADE,
+      FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
+    );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_job_events_conversation_sequence_unique ON job_events(conversation_id, sequence);
+    CREATE INDEX IF NOT EXISTS idx_job_events_job_created ON job_events(job_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_job_events_job_sequence ON job_events(job_id, sequence);
+    CREATE INDEX IF NOT EXISTS idx_job_events_conversation_sequence ON job_events(conversation_id, sequence);
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS push_subscriptions (
+      endpoint TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      expiration_time INTEGER DEFAULT NULL,
+      p256dh_key TEXT NOT NULL,
+      auth_key TEXT NOT NULL,
+      user_agent TEXT DEFAULT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      last_notified_at TEXT DEFAULT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user ON push_subscriptions(user_id);
+    CREATE INDEX IF NOT EXISTS idx_push_subscriptions_updated ON push_subscriptions(updated_at);
   `);
 }

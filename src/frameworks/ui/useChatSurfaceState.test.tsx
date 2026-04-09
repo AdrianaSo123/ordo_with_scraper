@@ -1,5 +1,5 @@
 import { renderHook, act } from "@testing-library/react";
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 
 import { useChatSurfaceState } from "@/frameworks/ui/useChatSurfaceState";
 
@@ -7,10 +7,12 @@ const { pushMock, openMock, chatState, setComposerTextMock, setConversationIdMoc
   pushMock: vi.fn(),
   openMock: vi.fn(),
   chatState: {
+    activeStreamId: null as string | null,
     messages: [],
     isSending: false,
     retryFailedMessage: vi.fn(),
     sendMessage: vi.fn(),
+    stopStream: vi.fn(),
     conversationId: null as string | null,
     isLoadingMessages: false,
     setConversationId: vi.fn(),
@@ -39,6 +41,7 @@ vi.mock("@/hooks/useChatScroll", () => ({
     isAtBottom: true,
     scrollToBottom: vi.fn(),
     handleScroll: vi.fn(),
+    resetPin: vi.fn(),
   }),
 }));
 
@@ -66,7 +69,7 @@ vi.mock("@/hooks/usePresentedChatMessages", () => ({
   usePresentedChatMessages: () => ({
     presentedMessages: [],
     dynamicSuggestions: [],
-    scrollDependency: "",
+    scrollDependency: 0,
   }),
 }));
 
@@ -95,8 +98,13 @@ describe("handleActionClick", () => {
     setComposerTextMock.mockReset();
     setConversationIdMock.mockReset();
     refreshConversationMock.mockReset();
+    chatState.activeStreamId = null;
     chatState.conversationId = null;
     vi.stubGlobal("open", openMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("dispatches route action via router.push for valid paths", () => {
@@ -143,10 +151,10 @@ describe("handleActionClick", () => {
   it("opens absolute external URLs in a new tab", () => {
     const { result } = renderHook(() => useChatSurfaceState({ isEmbedded: false }));
     act(() => {
-      result.current.handleActionClick("external", "https://studioordo.com/?ref=mentor-42");
+      result.current.handleActionClick("external", "https://studioordo.com/r/mentor-42");
     });
     expect(openMock).toHaveBeenCalledWith(
-      "https://studioordo.com/?ref=mentor-42",
+      "https://studioordo.com/r/mentor-42",
       "_blank",
       "noopener,noreferrer",
     );
@@ -210,6 +218,40 @@ describe("handleActionClick", () => {
     });
     expect(setConversationIdMock).not.toHaveBeenCalled();
     expect(refreshConversationMock).not.toHaveBeenCalled();
+  });
+
+  it("posts job actions and refreshes the conversation", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ job: { conversationId: "conv_jobs" } }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result } = renderHook(() => useChatSurfaceState({ isEmbedded: false }));
+
+    await act(async () => {
+      result.current.handleActionClick("job", "job_123", { operation: "retry" });
+      await Promise.resolve();
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith("/api/chat/jobs/job_123", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ action: "retry" }),
+    });
+    expect(refreshConversationMock).toHaveBeenCalledWith("conv_jobs");
+  });
+
+  it("surfaces stop controls while a stream is active", () => {
+    chatState.activeStreamId = "stream_live_1";
+
+    const { result } = renderHook(() => useChatSurfaceState({ isEmbedded: false }));
+
+    expect(result.current.canStopStream).toBe(true);
+    expect(result.current.contentProps.canStopStream).toBe(true);
+    expect(result.current.contentProps.onStopStream).toBe(chatState.stopStream);
   });
 
   describe("action dispatch security", () => {

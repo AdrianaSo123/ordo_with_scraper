@@ -120,6 +120,14 @@ export interface SystemHealthBlockData {
     mode: string;
     details: string;
   };
+  referral: {
+    publicOrigin: string;
+    originSource: string;
+    localhostFallback: boolean;
+    knownReferrerPromptVerified: boolean;
+    missingReferrerPromptVerified: boolean;
+    warnings: string[];
+  };
   warnings: string[];
   generatedAt: string;
 }
@@ -457,4 +465,14 @@ export interface CustomerContinuityTrainingPathRow {
   customer_summary: string | null;
   status: TrainingPathStatus;
   next_action: string | null;
+}
+
+export interface OverdueFollowUpsBlockData {
+  summary: {
+    overdueLeadCount: number;
+    overdueDealCount: number;
+    totalOverdueCount: number;
+  };
+  oldestOverdueLead: { id: string; name: string; followUpAt: string } | null;
+  oldestOverdueDeal: { id: string; title: string; followUpAt: string } | null;
 }

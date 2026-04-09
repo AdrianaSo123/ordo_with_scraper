@@ -1,9 +1,20 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import type { ReleaseManifestReport } from "@/lib/admin/processes";
-import { getHealthSweepReport, getReleaseManifestReport } from "@/lib/admin/processes";
+import type {
+  ReferralOperationalDiagnostics,
+  ReleaseManifestReport,
+} from "@/lib/admin/processes";
+import {
+  getHealthSweepReport,
+  getReferralOperationalDiagnostics,
+  getReleaseManifestReport,
+} from "@/lib/admin/processes";
 import type { StagingCanarySummary } from "./staging-canary";
+import {
+  readRuntimeIntegrityQaEvidenceFromFile,
+  type RuntimeIntegrityQaEvidence,
+} from "./runtime-integrity-evidence";
 
 export interface ReleaseEvidence {
   version: 1;
@@ -11,6 +22,12 @@ export interface ReleaseEvidence {
   status: "approved" | "conditional" | "blocked";
   manifest: ReleaseManifestReport;
   health: ReturnType<typeof getHealthSweepReport>;
+  referralDiagnostics: ReferralOperationalDiagnostics;
+  runtimeIntegrity: {
+    present: boolean;
+    artifactPath: string;
+    evidence: RuntimeIntegrityQaEvidence | null;
+  };
   canary: {
     present: boolean;
     artifactPath: string;
@@ -26,10 +43,13 @@ export interface ReleaseEvidence {
 interface CreateReleaseEvidenceOptions {
   manifest?: ReleaseManifestReport;
   health?: ReturnType<typeof getHealthSweepReport>;
+  referralDiagnostics?: ReferralOperationalDiagnostics;
+  runtimeIntegrityEvidence?: RuntimeIntegrityQaEvidence | null;
   canarySummary?: StagingCanarySummary | null;
   warnings?: string[];
   manualChecks?: string[];
   now?: Date;
+  runtimeIntegrityArtifactPath?: string;
   canaryArtifactPath?: string;
 }
 
@@ -48,8 +68,10 @@ function uniqueNonEmpty(values: string[] | undefined): string[] {
 export function createReleaseEvidence(options: CreateReleaseEvidenceOptions = {}): ReleaseEvidence {
   const manifest = options.manifest ?? getReleaseManifestReport();
   const health = options.health ?? getHealthSweepReport();
+  const referralDiagnostics = options.referralDiagnostics ?? getReferralOperationalDiagnostics();
+  const runtimeIntegrityEvidence = options.runtimeIntegrityEvidence ?? null;
   const canarySummary = options.canarySummary ?? null;
-  const warnings = uniqueNonEmpty(options.warnings);
+  const warnings = uniqueNonEmpty([...(options.warnings ?? []), ...referralDiagnostics.warnings]);
   const manualChecks = uniqueNonEmpty(options.manualChecks);
   const blockingReasons: string[] = [];
 
@@ -61,10 +83,20 @@ export function createReleaseEvidence(options: CreateReleaseEvidenceOptions = {}
     blockingReasons.push("Health sweep reported an error.");
   }
 
+  if (!runtimeIntegrityEvidence) {
+    blockingReasons.push("Runtime integrity QA evidence is missing.");
+  } else if (runtimeIntegrityEvidence.status !== "passed") {
+    blockingReasons.push("Runtime integrity QA evidence contains blockers.");
+  }
+
   if (!canarySummary) {
     blockingReasons.push("Staging canary summary is missing.");
   } else if (canarySummary.failedScenarioCount > 0 || canarySummary.status !== "passed") {
     blockingReasons.push("One or more staging canary scenarios failed.");
+  }
+
+  if (!referralDiagnostics.knownReferrerPromptVerified || !referralDiagnostics.missingReferrerPromptVerified) {
+    blockingReasons.push("Referral identity verification checks failed.");
   }
 
   const status = blockingReasons.length > 0
@@ -79,6 +111,12 @@ export function createReleaseEvidence(options: CreateReleaseEvidenceOptions = {}
     status,
     manifest,
     health,
+    referralDiagnostics,
+    runtimeIntegrity: {
+      present: runtimeIntegrityEvidence !== null,
+      artifactPath: options.runtimeIntegrityArtifactPath ?? "release/runtime-integrity-evidence.json",
+      evidence: runtimeIntegrityEvidence,
+    },
     canary: {
       present: canarySummary !== null,
       artifactPath: options.canaryArtifactPath ?? "release/canary-summary.json",
@@ -103,6 +141,18 @@ export function validateReleaseEvidence(evidence: ReleaseEvidence): string[] {
     errors.push("Health evidence reported an error.");
   }
 
+  if (!evidence.runtimeIntegrity.present || !evidence.runtimeIntegrity.evidence) {
+    errors.push("Runtime integrity QA evidence is missing.");
+  }
+
+  if (evidence.runtimeIntegrity.evidence && evidence.runtimeIntegrity.evidence.status !== "passed") {
+    errors.push("Runtime integrity QA evidence contains blockers.");
+  }
+
+  if (!evidence.referralDiagnostics.knownReferrerPromptVerified || !evidence.referralDiagnostics.missingReferrerPromptVerified) {
+    errors.push("Referral identity verification evidence failed.");
+  }
+
   if (!evidence.canary.present || !evidence.canary.summary) {
     errors.push("Staging canary evidence is missing.");
   }
@@ -122,22 +172,35 @@ export function readCanarySummaryFromFile(filePath: string): StagingCanarySummar
   return JSON.parse(fs.readFileSync(filePath, "utf8")) as StagingCanarySummary;
 }
 
+export function readRuntimeIntegrityEvidenceFromFile(filePath: string): RuntimeIntegrityQaEvidence | null {
+  return readRuntimeIntegrityQaEvidenceFromFile(filePath);
+}
+
 export function writeReleaseEvidenceArtifacts(options: WriteReleaseEvidenceArtifactsOptions = {}): {
+  runtimeIntegrityPath: string;
   canarySummaryPath: string;
   qaEvidencePath: string;
   evidence: ReleaseEvidence;
 } {
   const releaseDir = options.releaseDir ?? path.join(process.cwd(), "release");
+  const runtimeIntegrityPath = path.join(releaseDir, "runtime-integrity-evidence.json");
   const canarySummaryPath = path.join(releaseDir, "canary-summary.json");
   const qaEvidencePath = path.join(releaseDir, "qa-evidence.json");
+  const runtimeIntegrityEvidence = options.runtimeIntegrityEvidence ?? readRuntimeIntegrityQaEvidenceFromFile(runtimeIntegrityPath);
   const canarySummary = options.canarySummary ?? readCanarySummaryFromFile(canarySummaryPath);
   const evidence = createReleaseEvidence({
     ...options,
+    runtimeIntegrityEvidence,
+    runtimeIntegrityArtifactPath: path.relative(process.cwd(), runtimeIntegrityPath),
     canarySummary,
     canaryArtifactPath: path.relative(process.cwd(), canarySummaryPath),
   });
 
   fs.mkdirSync(releaseDir, { recursive: true });
+
+  if (runtimeIntegrityEvidence) {
+    fs.writeFileSync(runtimeIntegrityPath, serializeJson(runtimeIntegrityEvidence), "utf8");
+  }
 
   if (canarySummary) {
     fs.writeFileSync(canarySummaryPath, serializeJson(canarySummary), "utf8");
@@ -146,6 +209,7 @@ export function writeReleaseEvidenceArtifacts(options: WriteReleaseEvidenceArtif
   fs.writeFileSync(qaEvidencePath, serializeJson(evidence), "utf8");
 
   return {
+    runtimeIntegrityPath,
     canarySummaryPath,
     qaEvidencePath,
     evidence,

@@ -18,8 +18,8 @@ export function ChatSurfaceHeader({
   if (mode === "embedded") return null;
 
   const headerClasses = isFullScreen
-    ? "glass-surface safe-area-pt safe-area-px relative z-10 flex shrink-0 items-start justify-between border-b border-color-theme pb-4 pt-3 transition-colors duration-500"
-    : "glass-surface relative z-10 flex shrink-0 items-start justify-between border-b border-color-theme px-(--container-padding) py-4 transition-colors duration-500";
+    ? "glass-surface safe-area-pt safe-area-px relative z-10 flex shrink-0 items-start justify-between border-b border-color-theme pb-(--space-4) pt-(--space-3) transition-colors duration-500"
+    : "glass-surface relative z-10 flex shrink-0 items-start justify-between border-b border-color-theme px-(--container-padding) py-(--space-4) transition-colors duration-500";
 
   return (
     <div className={headerClasses} data-chat-floating-header="true">
@@ -31,6 +31,7 @@ export function ChatSurfaceHeader({
           onClick={onFullScreenToggle}
           className="icon-btn"
           aria-label={isFullScreen ? "Exit Full Screen" : "Enter Full Screen"}
+          title={isFullScreen ? "Exit Full Screen" : "Enter Full Screen"}
         >
           {isFullScreen ? (
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -47,6 +48,7 @@ export function ChatSurfaceHeader({
           onClick={onMinimize}
           className="icon-btn"
           aria-label="Minimize Chat"
+          title="Minimize Chat"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 6L6 18M6 6l12 12" />

@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AppShell } from "@/components/AppShell";
@@ -10,6 +10,7 @@ let pathname = "/";
 const pushMock = vi.fn();
 const switchRoleMock = vi.fn();
 const logoutMock = vi.fn();
+const fetchMock = vi.fn();
 
 const localStorageMock = {
   getItem: vi.fn(() => null),
@@ -46,6 +47,7 @@ const anonymousUser: User = {
 vi.mock("next/navigation", () => ({
   usePathname: () => pathname,
   useRouter: () => ({ push: pushMock }),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 vi.mock("@/hooks/useMockAuth", () => ({
@@ -60,11 +62,18 @@ beforeEach(() => {
   pushMock.mockReset();
   switchRoleMock.mockReset();
   logoutMock.mockReset();
+  fetchMock.mockReset();
+  fetchMock.mockResolvedValue({
+    ok: true,
+    json: async () => ({ preferences: [] }),
+    status: 200,
+  });
   localStorageMock.getItem.mockReset();
   localStorageMock.getItem.mockReturnValue(null);
   localStorageMock.setItem.mockReset();
   localStorageMock.removeItem.mockReset();
   localStorageMock.clear.mockReset();
+  vi.stubGlobal("fetch", fetchMock);
   vi.stubGlobal("localStorage", localStorageMock);
   vi.stubGlobal("matchMedia", matchMediaMock);
 });
@@ -74,24 +83,38 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function renderShellAcceptance() {
-  return render(
-    <ThemeProvider>
-      <AppShell user={authenticatedUser}>
-        <div>Acceptance Content</div>
-      </AppShell>
-    </ThemeProvider>,
-  );
+async function renderShellAcceptance() {
+  let view: ReturnType<typeof render> | undefined;
+
+  await act(async () => {
+    view = render(
+      <ThemeProvider>
+        <AppShell user={authenticatedUser}>
+          <div>Acceptance Content</div>
+        </AppShell>
+      </ThemeProvider>,
+    );
+    await Promise.resolve();
+  });
+
+  return view as ReturnType<typeof render>;
 }
 
-function renderAnonymousShellAcceptance() {
-  return render(
-    <ThemeProvider>
-      <AppShell user={anonymousUser}>
-        <div>Acceptance Content</div>
-      </AppShell>
-    </ThemeProvider>,
-  );
+async function renderAnonymousShellAcceptance() {
+  let view: ReturnType<typeof render> | undefined;
+
+  await act(async () => {
+    view = render(
+      <ThemeProvider>
+        <AppShell user={anonymousUser}>
+          <div>Acceptance Content</div>
+        </AppShell>
+      </ThemeProvider>,
+    );
+    await Promise.resolve();
+  });
+
+  return view as ReturnType<typeof render>;
 }
 
 function getLinkNames(container: HTMLElement) {
@@ -101,46 +124,53 @@ function getLinkNames(container: HTMLElement) {
 }
 
 describe("shell acceptance", () => {
-  it("renders only the canonical primary navigation contract in the shell header", () => {
-    renderShellAcceptance();
+  it("renders only the canonical primary navigation contract in the shell header", async () => {
+    await renderShellAcceptance();
 
     const nav = screen.getByRole("navigation", { name: "Primary" });
     const navLinks = getLinkNames(nav);
 
-    expect(navLinks).toEqual(["Studio Ordo home", "Home", "Library", "Blog"]);
+    expect(navLinks).toEqual(["Studio Ordo home"]);
     expect(nav).toHaveAttribute("data-shell-nav-rail", "true");
     expect(nav.querySelector('[data-shell-nav-region="brand"]')).not.toBeNull();
-    expect(nav.querySelector('[data-shell-nav-region="primary-links"]')).not.toBeNull();
     expect(nav.querySelector('[data-shell-nav-region="account-access"]')).not.toBeNull();
+    expect(nav.querySelector('[data-shell-nav-region="primary-links"]')).toBeNull();
+    expect(nav.querySelector('[data-shell-nav-region="search"]')).not.toBeNull();
+    expect(nav.querySelector('[data-global-search="true"]')).not.toBeNull();
     expect(within(nav).getByRole("link", { name: /studio ordo home/i })).toHaveAttribute("href", "/");
-    expect(within(nav).getByRole("link", { name: "Home" })).toHaveAttribute("href", "/");
-    expect(within(nav).getByRole("link", { name: "Library" })).toHaveAttribute("href", "/library");
-    expect(within(nav).getByRole("link", { name: "Blog" })).toHaveAttribute("href", "/blog");
+    fireEvent.click(within(nav).getByRole("button", { name: "Open workspace menu" }));
+
+    const drawer = screen.getByRole("dialog", { name: "Workspace menu" });
+
+    expect(within(drawer).queryByRole("link", { name: "Home" })).toBeNull();
+    expect(within(drawer).getByRole("link", { name: /^Library/i })).toHaveAttribute("href", "/library");
+    expect(within(drawer).getByRole("link", { name: /^Journal/i })).toHaveAttribute("href", "/journal");
+    expect(within(drawer).getByRole("link", { name: "My Jobs" })).toHaveAttribute("href", "/jobs");
     expect(within(nav).queryByRole("link", { name: "Training" })).toBeNull();
     expect(within(nav).queryByRole("link", { name: "Studio" })).toBeNull();
   });
 
-  it("renders only canonical grouped footer links and reuses the shared brand primitive", () => {
-    const { container } = renderShellAcceptance();
+  it("renders only canonical grouped footer links and reuses the shared brand primitive", async () => {
+    const { container } = await renderShellAcceptance();
 
     expect(container.querySelectorAll('[data-shell-brand="true"]')).toHaveLength(2);
 
     const footer = screen.getByRole("contentinfo");
     const footerLinks = getLinkNames(footer);
 
-    expect(footerLinks).toEqual(["Studio Ordo home", "Library", "Blog", "Profile"]);
+    expect(footerLinks).toEqual(["Studio Ordo home", "Library", "Journal", "Profile"]);
     expect(within(footer).getByRole("link", { name: /studio ordo home/i })).toHaveAttribute("href", "/");
     expect(within(footer).getByText("Information")).toBeInTheDocument();
     expect(within(footer).getByText("Workspace")).toBeInTheDocument();
   });
 
-  it("renders anonymous footer access links without signed-in workspace destinations", () => {
-    renderAnonymousShellAcceptance();
+  it("renders anonymous footer access links without signed-in workspace destinations", async () => {
+    await renderAnonymousShellAcceptance();
 
     const footer = screen.getByRole("contentinfo");
     const footerLinks = getLinkNames(footer);
 
-    expect(footerLinks).toEqual(["Studio Ordo home", "Library", "Blog", "Login", "Register"]);
+    expect(footerLinks).toEqual(["Studio Ordo home", "Library", "Journal", "Login", "Register"]);
     expect(within(footer).getByText("Information")).toBeInTheDocument();
     expect(within(footer).getByText("Access")).toBeInTheDocument();
     expect(within(footer).queryByText("Workspace")).toBeNull();

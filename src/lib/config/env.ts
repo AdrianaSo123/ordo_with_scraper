@@ -178,3 +178,15 @@ export function validateRequiredRuntimeConfig() {
   getAnthropicApiKey();
   getOpenaiApiKey(); // Openai is required for certain tools
 }
+
+export function getWebPushPublicKey(): string | null {
+  return readEnv("WEB_PUSH_VAPID_PUBLIC_KEY", "NEXT_PUBLIC_WEB_PUSH_VAPID_PUBLIC_KEY") ?? null;
+}
+
+export function getWebPushPrivateKey(): string | null {
+  return readEnv("WEB_PUSH_VAPID_PRIVATE_KEY") ?? null;
+}
+
+export function getWebPushSubject(): string {
+  return readEnv("WEB_PUSH_SUBJECT") ?? "mailto:no-reply@studioordo.local";
+}

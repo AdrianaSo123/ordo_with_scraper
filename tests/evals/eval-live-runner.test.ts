@@ -202,6 +202,278 @@ describe("eval live runtime and runner", () => {
     expect(executeRuntime.mock.calls[0]?.[0]?.systemPrompt).toContain("recommended_next_step=\"Prepare a founder-reviewed estimate-ready next step.\"");
   });
 
+  it("uses runtime inspection for live self-knowledge answers", async () => {
+    const execution = await runLiveEvalScenario("live-runtime-self-knowledge-honesty", {
+      executeRuntime: vi.fn().mockImplementation(async (request) => {
+        const toolExecutor = request.toolExecutor;
+
+        if (!toolExecutor) {
+          throw new Error("Expected a runtime inspection tool executor.");
+        }
+
+        const inspected = await toolExecutor("inspect_runtime_context", { includeTools: true }) as {
+          toolCount: number;
+          currentPathname: string | null;
+        };
+
+        return {
+          model: "claude-sonnet-4-6",
+          assistantText: `Runtime inspection shows ${inspected.toolCount} available capabilities, and the current page is ${inspected.currentPathname}.`,
+          stopReason: "end_turn",
+          toolRoundCount: 1,
+          toolCalls: [
+            { name: "inspect_runtime_context", args: { includeTools: true } },
+          ],
+          toolResults: [
+            { name: "inspect_runtime_context", result: inspected, isError: false },
+          ],
+          systemPrompt: request.systemPrompt ?? "system",
+          toolCount: request.tools?.length ?? 0,
+        };
+      }),
+    });
+
+    expect(execution.checkpointResults).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "runtime-inspection-used", passed: true }),
+        expect.objectContaining({ id: "verified-tools-reported", passed: true }),
+        expect.objectContaining({ id: "page-context-reported", passed: true }),
+      ]),
+    );
+  });
+
+  it("injects authoritative page context for live current-page truthfulness", async () => {
+    const executeRuntime = vi.fn().mockImplementation(async (request) => {
+      const toolExecutor = request.toolExecutor;
+
+      if (!toolExecutor) {
+        throw new Error("Expected a current-page tool executor.");
+      }
+
+      const currentPage = await toolExecutor("get_current_page", {}) as {
+        pathname: string;
+        mainHeading: string | null;
+      };
+
+      return {
+        model: "claude-sonnet-4-6",
+        assistantText: `No. You are on ${currentPage.pathname}, and the current page is ${currentPage.mainHeading}.`,
+        stopReason: "end_turn",
+        toolRoundCount: 1,
+        toolCalls: [
+          { name: "get_current_page", args: {} },
+        ],
+        toolResults: [
+          { name: "get_current_page", result: currentPage, isError: false },
+        ],
+        systemPrompt: request.systemPrompt ?? "system",
+        toolCount: request.tools?.length ?? 0,
+      };
+    });
+
+    const execution = await runLiveEvalScenario("live-current-page-truthfulness", {
+      executeRuntime,
+    });
+
+    expect(execution.checkpointResults).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "authoritative-page-read", passed: true }),
+        expect.objectContaining({ id: "stale-memory-overridden", passed: true }),
+        expect.objectContaining({ id: "page-truthful-answer", passed: true }),
+      ]),
+    );
+    expect(executeRuntime.mock.calls[0]?.[0]?.systemPrompt).toContain("[Authoritative current page snapshot]");
+  });
+
+  it("uses navigate_to_page and avoids legacy navigate in live navigation flows", async () => {
+    const execution = await runLiveEvalScenario("live-duplicate-navigation-avoidance", {
+      executeRuntime: vi.fn().mockImplementation(async (request) => {
+        const toolExecutor = request.toolExecutor;
+
+        if (!toolExecutor) {
+          throw new Error("Expected a navigation tool executor.");
+        }
+
+        const navigationResult = await toolExecutor("navigate_to_page", { path: "/profile" }) as {
+          path: string;
+        };
+
+        return {
+          model: "claude-sonnet-4-6",
+          assistantText: `Navigating to ${navigationResult.path}.`,
+          stopReason: "end_turn",
+          toolRoundCount: 1,
+          toolCalls: [
+            { name: "navigate_to_page", args: { path: "/profile" } },
+          ],
+          toolResults: [
+            { name: "navigate_to_page", result: navigationResult, isError: false },
+          ],
+          systemPrompt: request.systemPrompt ?? "system",
+          toolCount: request.tools?.length ?? 0,
+        };
+      }),
+    });
+
+    expect(execution.checkpointResults).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "canonical-navigation-tool-used", passed: true }),
+        expect.objectContaining({ id: "legacy-navigation-tool-avoided", passed: true }),
+        expect.objectContaining({ id: "validated-route-returned", passed: true }),
+      ]),
+    );
+  });
+
+  it("inspects a completed blog job and publishes the produced draft in the live runner", async () => {
+    const execution = await runLiveEvalScenario("live-blog-job-status-and-publish-handoff", {
+      executeRuntime: vi.fn().mockImplementation(async (request) => {
+        const toolExecutor = request.toolExecutor;
+
+        if (!toolExecutor) {
+          throw new Error("Expected a tool executor for the live blog status scenario.");
+        }
+
+        const listed = await toolExecutor("list_deferred_jobs", { active_only: false, limit: 5 }) as {
+          jobs: Array<{ part: { jobId: string } }>;
+        };
+        const jobId = listed.jobs[0]?.part.jobId;
+
+        if (!jobId) {
+          throw new Error("Expected a seeded deferred job.");
+        }
+
+        const status = await toolExecutor("get_deferred_job_status", { job_id: jobId }) as {
+          job: { part: { resultPayload: { id: string; slug: string } } };
+        };
+        const postId = status.job.part.resultPayload.id;
+        const publish = await toolExecutor("publish_content", { post_id: postId });
+
+        return {
+          model: "claude-sonnet-4-6",
+          assistantText: `Published the completed draft at /blog/${status.job.part.resultPayload.slug}.`,
+          stopReason: "end_turn",
+          toolRoundCount: 3,
+          toolCalls: [
+            { name: "list_deferred_jobs", args: { active_only: false, limit: 5 } },
+            { name: "get_deferred_job_status", args: { job_id: jobId } },
+            { name: "publish_content", args: { post_id: postId } },
+          ],
+          toolResults: [
+            { name: "list_deferred_jobs", result: listed, isError: false },
+            { name: "get_deferred_job_status", result: status, isError: false },
+            { name: "publish_content", result: publish, isError: false },
+          ],
+          systemPrompt: request.systemPrompt ?? "system",
+          toolCount: request.tools?.length ?? 0,
+        };
+      }),
+    });
+
+    expect(execution.checkpointResults).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "job-inspected", passed: true }),
+        expect.objectContaining({ id: "publish-triggered", passed: true }),
+        expect.objectContaining({ id: "publish-complete", passed: true }),
+      ]),
+    );
+  });
+
+  it("reuses an existing running blog job instead of rerunning production in the live runner", async () => {
+    const execution = await runLiveEvalScenario("live-blog-job-reuse-instead-of-rerun", {
+      executeRuntime: vi.fn().mockImplementation(async (request) => {
+        const toolExecutor = request.toolExecutor;
+
+        if (!toolExecutor) {
+          throw new Error("Expected a tool executor for the live blog reuse scenario.");
+        }
+
+        const listed = await toolExecutor("list_deferred_jobs", { active_only: true, limit: 5 }) as {
+          jobs: Array<{ part: { jobId: string; progressLabel?: string } }>;
+        };
+        const jobId = listed.jobs[0]?.part.jobId;
+
+        if (!jobId) {
+          throw new Error("Expected an active deferred job.");
+        }
+
+        const status = await toolExecutor("get_deferred_job_status", { job_id: jobId });
+
+        return {
+          model: "claude-sonnet-4-6",
+          assistantText: "The existing job is still running, so I am reusing it instead of starting over.",
+          stopReason: "end_turn",
+          toolRoundCount: 2,
+          toolCalls: [
+            { name: "list_deferred_jobs", args: { active_only: true, limit: 5 } },
+            { name: "get_deferred_job_status", args: { job_id: jobId } },
+          ],
+          toolResults: [
+            { name: "list_deferred_jobs", result: listed, isError: false },
+            { name: "get_deferred_job_status", result: status, isError: false },
+          ],
+          systemPrompt: request.systemPrompt ?? "system",
+          toolCount: request.tools?.length ?? 0,
+        };
+      }),
+    });
+
+    expect(execution.checkpointResults).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "existing-job-found", passed: true }),
+        expect.objectContaining({ id: "rerun-avoided", passed: true }),
+        expect.objectContaining({ id: "active-status-explained", passed: true }),
+      ]),
+    );
+  });
+
+  it("recovers a completed blog job through the snapshot path in the live runner", async () => {
+    const execution = await runLiveEvalScenario("live-blog-completion-recovery", {
+      executeRuntime: vi.fn().mockImplementation(async (request) => {
+        const toolExecutor = request.toolExecutor;
+
+        if (!toolExecutor) {
+          throw new Error("Expected a tool executor for the live blog recovery scenario.");
+        }
+
+        const listed = await toolExecutor("list_deferred_jobs", { active_only: false, limit: 5 }) as {
+          jobs: Array<{ part: { jobId: string } }>;
+        };
+        const jobId = listed.jobs[0]?.part.jobId;
+
+        if (!jobId) {
+          throw new Error("Expected a completed deferred job.");
+        }
+
+        const status = await toolExecutor("get_deferred_job_status", { job_id: jobId });
+
+        return {
+          model: "claude-sonnet-4-6",
+          assistantText: "I recovered the completed draft from the status snapshot, and it is ready to publish without rerunning production.",
+          stopReason: "end_turn",
+          toolRoundCount: 2,
+          toolCalls: [
+            { name: "list_deferred_jobs", args: { active_only: false, limit: 5 } },
+            { name: "get_deferred_job_status", args: { job_id: jobId } },
+          ],
+          toolResults: [
+            { name: "list_deferred_jobs", result: listed, isError: false },
+            { name: "get_deferred_job_status", result: status, isError: false },
+          ],
+          systemPrompt: request.systemPrompt ?? "system",
+          toolCount: request.tools?.length ?? 0,
+        };
+      }),
+    });
+
+    expect(execution.checkpointResults).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "terminal-job-recovered", passed: true }),
+        expect.objectContaining({ id: "publish-readiness-explained", passed: true }),
+        expect.objectContaining({ id: "completion-visible-without-rerun", passed: true }),
+      ]),
+    );
+  });
+
   it("fails the organization buyer funnel when the live response never reaches deal creation", async () => {
     const execution = await runLiveEvalScenario("organization-buyer-funnel", {
       executeRuntime: vi.fn().mockResolvedValue({

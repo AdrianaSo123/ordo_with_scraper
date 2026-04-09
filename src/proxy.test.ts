@@ -12,6 +12,13 @@ function makeRequest(path: string, cookie?: string): NextRequest {
 }
 
 describe("Edge proxy", () => {
+  it("redirects legacy referral links to the canonical referral route", () => {
+    const res = proxy(makeRequest("/?ref=mentor-42&utm_source=qr"));
+
+    expect(res.status).toBe(307);
+    expect(res.headers.get("location")).toBe("http://localhost:3000/r/mentor-42?utm_source=qr");
+  });
+
   it("passes public auth routes without cookie", () => {
     const res = proxy(makeRequest("/api/auth/register"));
     expect(res.status).toBe(200);
@@ -73,5 +80,24 @@ describe("Edge proxy", () => {
   it("passes page routes without cookie", () => {
     const res = proxy(makeRequest("/login"));
     expect(res.status).toBe(200);
+  });
+
+  it("adds hardening headers to public pages", () => {
+    const res = proxy(makeRequest("/register"));
+
+    expect(res.headers.get("content-security-policy")).toBe("frame-ancestors 'none'");
+    expect(res.headers.get("permissions-policy")).toBe("camera=(), geolocation=(), microphone=()");
+    expect(res.headers.get("referrer-policy")).toBe("strict-origin-when-cross-origin");
+    expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+    expect(res.headers.get("x-frame-options")).toBe("DENY");
+  });
+
+  it("adds hardening headers to rejected api responses", async () => {
+    const res = proxy(makeRequest("/api/auth/me"));
+    const body = await res.json();
+
+    expect(res.status).toBe(401);
+    expect(body.error).toBe("Authentication required");
+    expect(res.headers.get("x-frame-options")).toBe("DENY");
   });
 });

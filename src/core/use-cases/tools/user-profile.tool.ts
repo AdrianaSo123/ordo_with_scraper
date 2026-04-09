@@ -8,6 +8,7 @@ type SerializedProfile = {
   name: string;
   email: string;
   credential: string | null;
+  push_notifications_enabled: boolean;
   affiliate_enabled: boolean;
   referral_code: string | null;
   referral_url: string | null;
@@ -28,13 +29,13 @@ type ReferralQrToolResult =
       referral_code: string;
       referral_url: string;
       qr_code_url: string;
-      manage_route: "/profile";
+      manage_route: "/referrals";
     }
   | {
       action: "get_my_referral_qr";
       error: string;
       affiliate_enabled: false;
-      manage_route: "/profile";
+      manage_route: "/referrals";
     };
 
 interface UserProfileService {
@@ -55,6 +56,7 @@ function serializeProfile(profile: UserProfileViewModel) {
     name: profile.name,
     email: profile.email,
     credential: profile.credential || null,
+    push_notifications_enabled: profile.pushNotificationsEnabled,
     affiliate_enabled: profile.affiliateEnabled,
     referral_code: profile.referralCode,
     referral_url: profile.referralUrl,
@@ -130,7 +132,7 @@ class GetMyReferralQrCommand implements ToolCommand<Record<string, unknown>, Ref
         action: "get_my_referral_qr",
         error: "Referral QR access is not enabled for this account yet.",
         affiliate_enabled: false,
-        manage_route: "/profile",
+        manage_route: "/referrals",
       };
     }
 
@@ -139,7 +141,7 @@ class GetMyReferralQrCommand implements ToolCommand<Record<string, unknown>, Ref
       referral_code: profile.referralCode,
       referral_url: profile.referralUrl,
       qr_code_url: profile.qrCodeUrl,
-      manage_route: "/profile",
+      manage_route: "/referrals",
       message: "Returned the share link and QR code URL for this account's referral code.",
     };
   }

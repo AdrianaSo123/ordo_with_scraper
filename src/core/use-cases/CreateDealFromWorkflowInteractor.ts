@@ -3,9 +3,11 @@ import type { LeadRecord } from "../entities/lead-record";
 import { isDealLane } from "../entities/deal-record";
 import type { ConsultationRequestRepository } from "./ConsultationRequestRepository";
 import type { ConversationRepository } from "./ConversationRepository";
+import { NotFoundError, ValidationError, ConflictError } from "../common/errors";
 import type { DealRecordRepository } from "./DealRecordRepository";
 import type { LeadRecordRepository } from "./LeadRecordRepository";
 import type { ConversationEventRecorder } from "./ConversationEventRecorder";
+import type { ReferralLifecycleRecorder } from "./ReferralLifecycleRecorder";
 
 function deriveLaneServiceType(lane: DealLane): string {
   return lane === "development" ? "delivery" : "advisory";
@@ -33,6 +35,7 @@ export class CreateDealFromWorkflowInteractor {
     private readonly leadRecordRepo: LeadRecordRepository,
     private readonly conversationRepo: ConversationRepository,
     private readonly eventRecorder?: ConversationEventRecorder,
+    private readonly referralRecorder?: ReferralLifecycleRecorder,
   ) {}
 
   async createFromConsultationRequest(
@@ -204,26 +207,18 @@ export class CreateDealFromWorkflowInteractor {
       sourceId,
       sourceStatus,
     });
+    await this.referralRecorder?.recordDealCreated({
+      conversationId: dealRecord.conversationId,
+      dealId: dealRecord.id,
+      lane: dealRecord.lane,
+      sourceType,
+      sourceId,
+    });
   }
 }
 
-export class WorkflowSourceNotFoundError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "WorkflowSourceNotFoundError";
-  }
-}
+export class WorkflowSourceNotFoundError extends NotFoundError {}
 
-export class DealCreationEligibilityError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "DealCreationEligibilityError";
-  }
-}
+export class DealCreationEligibilityError extends ValidationError {}
 
-export class DealAlreadyExistsError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "DealAlreadyExistsError";
-  }
-}
+export class DealAlreadyExistsError extends ConflictError {}

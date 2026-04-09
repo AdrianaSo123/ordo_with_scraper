@@ -4,13 +4,23 @@ import type {
   ChatStreamProvider,
   FetchChatStreamOptions,
 } from "../core/use-cases/ChatStreamProvider";
+import { logDegradation } from "@/lib/observability/logger";
 import { 
+  ConversationIdParser,
   EventParser, 
   ErrorParser,
+  GenerationInterruptedParser,
+  GenerationStoppedParser,
+  JobCanceledParser,
+  JobCompletedParser,
+  JobFailedParser,
+  JobProgressParser,
+  JobQueuedParser,
+  JobStartedParser,
+  StreamIdParser,
   TextDeltaParser, 
   ToolCallParser, 
-  ToolResultParser,
-  ConversationIdParser 
+  ToolResultParser 
 } from "./chat/EventParserStrategy";
 
 export class ChatStreamAdapter implements ChatStreamProvider {
@@ -18,7 +28,16 @@ export class ChatStreamAdapter implements ChatStreamProvider {
     new TextDeltaParser(),
     new ToolCallParser(),
     new ToolResultParser(),
+    new StreamIdParser(),
     new ConversationIdParser(),
+    new GenerationStoppedParser(),
+    new GenerationInterruptedParser(),
+    new JobQueuedParser(),
+    new JobStartedParser(),
+    new JobProgressParser(),
+    new JobCompletedParser(),
+    new JobCanceledParser(),
+    new JobFailedParser(),
     new ErrorParser()
   ]);
 
@@ -32,6 +51,8 @@ export class ChatStreamAdapter implements ChatStreamProvider {
       body: JSON.stringify({
         messages,
         conversationId: options?.conversationId,
+        currentPathname: options?.currentPathname,
+        currentPageSnapshot: options?.currentPageSnapshot,
         attachments: options?.attachments,
         taskOriginHandoff: options?.taskOriginHandoff,
       }),
@@ -74,7 +95,7 @@ export class ChatStreamAdapter implements ChatStreamProvider {
               const event = parser.parse(data);
               if (event) yield event;
             } catch {
-              console.warn("Invalid SSE JSON:", dataStr);
+              logDegradation("SSE_JSON_PARSE_ERROR", "Invalid SSE JSON", { data: dataStr.slice(0, 200) });
             }
           }
         }

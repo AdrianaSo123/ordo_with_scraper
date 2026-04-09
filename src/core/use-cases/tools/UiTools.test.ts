@@ -1,8 +1,67 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { GenerateChartCommand, GenerateGraphCommand } from "./UiTools";
+import { AdjustUICommand, GenerateAudioCommand, GenerateChartCommand, GenerateGraphCommand, SetThemeCommand } from "./UiTools";
 import { resolveGenerateChartPayload } from "./chart-payload";
 import { resolveGenerateGraphPayload } from "./graph-payload";
+
+describe("SetThemeCommand", () => {
+  it("accepts a narrow named-theme request", async () => {
+    const command = new SetThemeCommand();
+
+    await expect(command.execute({ theme: "bauhaus" })).resolves.toContain("bauhaus");
+  });
+});
+
+describe("AdjustUICommand", () => {
+  it("persists theme-related preferences for authenticated users", async () => {
+    const preferencesRepo = {
+      set: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const command = new AdjustUICommand(preferencesRepo as never);
+
+    await expect(command.execute(
+      {
+        theme: "swiss",
+        dark: true,
+        density: "compact",
+        fontSize: "xl",
+        colorBlindMode: "deuteranopia",
+      },
+      {
+        role: "ADMIN",
+        userId: "user-123",
+      },
+    )).resolves.toContain("Success");
+
+    expect(preferencesRepo.set).toHaveBeenCalledWith("user-123", "theme", "swiss");
+    expect(preferencesRepo.set).toHaveBeenCalledWith("user-123", "dark_mode", "true");
+    expect(preferencesRepo.set).toHaveBeenCalledWith("user-123", "font_size", "xl");
+    expect(preferencesRepo.set).toHaveBeenCalledWith("user-123", "density", "compact");
+    expect(preferencesRepo.set).toHaveBeenCalledWith("user-123", "color_blind_mode", "deuteranopia");
+  });
+
+  it("does not persist preferences for anonymous users", async () => {
+    const preferencesRepo = {
+      set: vi.fn().mockResolvedValue(undefined),
+    };
+
+    const command = new AdjustUICommand(preferencesRepo as never);
+
+    await expect(command.execute(
+      {
+        theme: "fluid",
+        density: "relaxed",
+      },
+      {
+        role: "ANONYMOUS",
+        userId: "anonymous",
+      },
+    )).resolves.toContain("Success");
+
+    expect(preferencesRepo.set).not.toHaveBeenCalled();
+  });
+});
 
 describe("GenerateChartCommand", () => {
   it("accepts valid mermaid flowchart definitions", async () => {
@@ -163,6 +222,26 @@ describe("GenerateGraphCommand", () => {
           yField: "leads",
         } as never,
       }),
-    ).rejects.toThrow(/Admin operator loaders require|signed-in user|resolved tool result/i);
+    ).rejects.toThrow(/Admin operator loaders require|signed-in user|resolved tool result|not available to the current viewer/i);
+  });
+});
+
+describe("GenerateAudioCommand", () => {
+  it("returns a structured audio result payload", async () => {
+    const command = new GenerateAudioCommand();
+
+    await expect(
+      command.execute({
+        title: "Founder memo",
+        text: "This is the founder memo for the weekly review.",
+      }),
+    ).resolves.toMatchObject({
+      action: "generate_audio",
+      title: "Founder memo",
+      provider: "openai-speech",
+      generationStatus: "client_fetch_pending",
+      estimatedDurationSeconds: expect.any(Number),
+      estimatedGenerationSeconds: expect.any(Number),
+    });
   });
 });

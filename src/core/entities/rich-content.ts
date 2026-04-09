@@ -6,15 +6,16 @@ export const INLINE_TYPES = {
   ACTION_LINK: "action-link",
 } as const;
 
-export type ActionLinkType = "conversation" | "route" | "send" | "corpus" | "external";
+export type ActionLinkType = "conversation" | "route" | "send" | "corpus" | "external" | "job";
 
-export const VALID_ACTION_TYPES: ReadonlySet<string> = new Set<string>(["conversation", "route", "send", "corpus", "external"]);
+export const VALID_ACTION_TYPES: ReadonlySet<string> = new Set<string>(["conversation", "route", "send", "corpus", "external", "job"]);
 
 export const BLOCK_TYPES = {
   PARAGRAPH: "paragraph",
   HEADING: "heading",
   LIST: "list",
   BLOCKQUOTE: "blockquote",
+  JOB_STATUS: "job-status",
   CODE: "code-block",
   GRAPH: "graph",
   TABLE: "table",
@@ -74,18 +75,44 @@ export type GraphSpec = {
   source?: GraphSourceMeta;
 };
 
+export type TextInlineNode = { type: typeof INLINE_TYPES.TEXT; text: string };
+export type BoldInlineNode = { type: typeof INLINE_TYPES.BOLD; content: InlineNode[] };
+export type CodeInlineNode = { type: typeof INLINE_TYPES.CODE; text: string };
+export type LibraryLinkInlineNode = { type: typeof INLINE_TYPES.LINK; slug: string };
+export type ActionLinkInlineNode = {
+  type: typeof INLINE_TYPES.ACTION_LINK;
+  label: string;
+  actionType: ActionLinkType;
+  value: string;
+  params?: Record<string, string>;
+};
+
 export type InlineNode =
-  | { type: typeof INLINE_TYPES.TEXT; text: string }
-  | { type: typeof INLINE_TYPES.BOLD; text: string }
-  | { type: typeof INLINE_TYPES.CODE; text: string }
-  | { type: typeof INLINE_TYPES.LINK; slug: string }
-  | { type: typeof INLINE_TYPES.ACTION_LINK; label: string; actionType: ActionLinkType; value: string; params?: Record<string, string> };
+  | TextInlineNode
+  | BoldInlineNode
+  | CodeInlineNode
+  | LibraryLinkInlineNode
+  | ActionLinkInlineNode;
 
 export type BlockNode =
   | { type: typeof BLOCK_TYPES.PARAGRAPH; content: InlineNode[] }
   | { type: typeof BLOCK_TYPES.HEADING; level: 1 | 2 | 3; content: InlineNode[] }
   | { type: typeof BLOCK_TYPES.LIST; items: InlineNode[][] }
   | { type: typeof BLOCK_TYPES.BLOCKQUOTE; content: InlineNode[] }
+  | {
+      type: typeof BLOCK_TYPES.JOB_STATUS;
+      jobId: string;
+      label: string;
+      toolName: string;
+      title?: string;
+      subtitle?: string;
+      status: "queued" | "running" | "succeeded" | "failed" | "canceled";
+      progressPercent?: number | null;
+      progressLabel?: string | null;
+      summary?: string;
+      error?: string;
+      actions?: InlineNode[];
+    }
   | {
       type: typeof BLOCK_TYPES.CODE;
       code: string;
@@ -107,7 +134,16 @@ export type BlockNode =
   | { type: typeof BLOCK_TYPES.TABLE; header?: InlineNode[][]; rows: InlineNode[][][] }
   | { type: typeof BLOCK_TYPES.DIVIDER }
   | { type: typeof BLOCK_TYPES.OPERATOR_BRIEF; sections: OperatorBriefSection[] }
-  | { type: typeof BLOCK_TYPES.AUDIO; text: string; title: string; assetId?: string }
+  | {
+      type: typeof BLOCK_TYPES.AUDIO;
+      text: string;
+      title: string;
+      assetId?: string;
+      provider?: string;
+      generationStatus?: string;
+      estimatedDurationSeconds?: number;
+      estimatedGenerationSeconds?: number;
+    }
   | { type: typeof BLOCK_TYPES.WEB_SEARCH; query: string; allowed_domains?: string[]; model?: string };
 
 export interface RichContent {

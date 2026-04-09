@@ -13,6 +13,12 @@ type SeriesPoint = {
   seriesKey: string;
 };
 
+function isSeriesPoint(
+  point: SeriesPoint | null,
+): point is SeriesPoint {
+  return point !== null;
+}
+
 function toFileStem(value: string): string {
   return (
     value
@@ -89,10 +95,11 @@ function getColumns(graph: GraphSpec): string[] {
 
 function getSeriesKeys(graph: GraphSpec): string[] {
   if (!graph.series) return ["Series 1"];
+  const seriesField = graph.series.field;
   const keys = Array.from(
     new Set(
       graph.data
-        .map((row) => row[graph.series!.field])
+        .map((row) => row[seriesField])
         .filter((value): value is GraphValue => value !== undefined)
         .map((value) => String(value ?? "Unspecified")),
     ),
@@ -195,11 +202,13 @@ function getGraphValidationIssue(graph: GraphSpec): string | undefined {
 
 function buildSeriesPoints(graph: GraphSpec): SeriesPoint[] {
   if (!graph.x || !graph.y) return [];
+  const xField = graph.x.field;
+  const yField = graph.y.field;
 
   return graph.data
-    .map((row) => {
-      const xValue = row[graph.x!.field];
-      const yValue = row[graph.y!.field];
+    .map<SeriesPoint | null>((row) => {
+      const xValue = row[xField];
+      const yValue = row[yField];
       const numericY = typeof yValue === "number" && Number.isFinite(yValue) ? yValue : undefined;
       if (xValue === undefined || xValue === null || numericY === undefined) return null;
       return {
@@ -208,7 +217,7 @@ function buildSeriesPoints(graph: GraphSpec): SeriesPoint[] {
         seriesKey: graph.series ? String(row[graph.series.field] ?? "Unspecified") : "Series 1",
       };
     })
-    .filter((point): point is SeriesPoint => point !== null);
+    .filter(isSeriesPoint);
 }
 
 export function GraphRenderer({
@@ -251,6 +260,7 @@ export function GraphRenderer({
       downloadFileName,
       dataPreview: previewRows,
     });
+    // eslint-disable-next-line react-hooks/purity -- event handler, not render-time
     downloadBlob(new Blob([json], { type: "application/json;charset=utf-8" }), `${exportStem}_${Date.now()}.json`);
   };
 
@@ -310,12 +320,14 @@ export function GraphRenderer({
   const handleDownload = () => {
     if (graph.kind === "table") {
       const csv = buildCsv(columns, graph.data);
+      // eslint-disable-next-line react-hooks/purity -- event handler, not render-time
       downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), `${exportStem}_${Date.now()}.csv`);
       return;
     }
 
     if (!svgRef.current) return;
     const serialized = new XMLSerializer().serializeToString(svgRef.current);
+    // eslint-disable-next-line react-hooks/purity -- event handler, not render-time
     downloadBlob(new Blob([serialized], { type: "image/svg+xml;charset=utf-8" }), `${exportStem}_${Date.now()}.svg`);
   };
 
@@ -330,9 +342,9 @@ export function GraphRenderer({
         downloadTooltip="Download as CSV"
         icon={<span aria-hidden="true">#</span>}
       >
-        <div className="w-full overflow-x-auto p-3">
+        <div className="w-full overflow-x-auto p-(--space-3)">
           {sourceLabel ? (
-            <p className="px-1 pb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground/52" data-testid="graph-source">
+            <p className="px-(--space-1) pb-(--space-2) text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground/52" data-testid="graph-source">
               Source: {sourceLabel}
             </p>
           ) : null}
@@ -341,7 +353,7 @@ export function GraphRenderer({
               <thead>
                 <tr className="accent-fill">
                   {columns.map((column) => (
-                    <th key={column} className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider">
+                    <th key={column} className="px-(--space-inset-default) py-(--space-inset-compact) text-left text-xs font-bold uppercase tracking-wider">
                       {column}
                     </th>
                   ))}
@@ -351,7 +363,7 @@ export function GraphRenderer({
                 {graph.data.map((row, rowIndex) => (
                   <tr key={`row-${rowIndex}`} className={rowIndex % 2 === 0 ? "bg-surface" : "bg-surface-muted"}>
                     {columns.map((column) => (
-                      <td key={`${rowIndex}-${column}`} className="border-b border-border px-4 py-3 align-top">
+                      <td key={`${rowIndex}-${column}`} className="border-b border-border px-(--space-inset-default) py-(--space-inset-compact) align-top">
                         {formatValue(row[column] ?? null)}
                       </td>
                     ))}
@@ -448,10 +460,17 @@ export function GraphRenderer({
         })),
       }))
     : [];
-  const heatmapXDomain = graph.kind === "heatmap" && graph.x ? getCategoricalDomain(graph.data, graph.x.field, graph.x.type) : [];
-  const heatmapYDomain = graph.kind === "heatmap" && graph.y ? getCategoricalDomain(graph.data, graph.y.field, graph.y.type) : [];
-  const heatmapColorValues = graph.kind === "heatmap" && graph.color
-    ? graph.data.map((row) => Number(row[graph.color!.field] ?? 0)).filter((value) => Number.isFinite(value))
+  const heatmapFields = graph.kind === "heatmap" && graph.x && graph.y && graph.color
+    ? {
+        xField: graph.x.field,
+        yField: graph.y.field,
+        colorField: graph.color.field,
+      }
+    : null;
+  const heatmapXDomain = heatmapFields ? getCategoricalDomain(graph.data, heatmapFields.xField, graph.x?.type) : [];
+  const heatmapYDomain = heatmapFields ? getCategoricalDomain(graph.data, heatmapFields.yField, graph.y?.type) : [];
+  const heatmapColorValues = heatmapFields
+    ? graph.data.map((row) => Number(row[heatmapFields.colorField] ?? 0)).filter((value) => Number.isFinite(value))
     : [];
   const [heatmapMin, heatmapMax] = getContinuousDomain(heatmapColorValues);
   const heatmapColor = (value: number) => {
@@ -477,38 +496,38 @@ export function GraphRenderer({
       downloadTooltip="Download as SVG"
       icon={<span aria-hidden="true">/</span>}
     >
-      <div className="w-full p-3">
+      <div className="w-full p-(--space-3)">
         {validationIssue ? (
           <div
-            className="flex min-h-32 items-center justify-center rounded-theme border-theme bg-surface-muted/40 px-4 text-center text-sm text-foreground/74"
+            className="flex min-h-32 items-center justify-center rounded-theme border-theme bg-surface-muted/40 px-(--space-inset-default) text-center text-sm text-foreground/74"
             data-testid="graph-invalid-state"
           >
             {validationIssue}
           </div>
         ) : hasRows && hasRenderableGraph ? (
-          <div className="space-y-3">
+          <div className="space-y-(--space-stack-default)">
             {sourceLabel ? (
-              <p className="px-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground/52" data-testid="graph-source">
+              <p className="px-(--space-2) text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground/52" data-testid="graph-source">
                 Source: {sourceLabel}
               </p>
             ) : null}
             {graph.series ? (
-              <div className="flex flex-wrap gap-3 px-2 text-[11px] uppercase tracking-wider text-foreground/65" data-testid="graph-legend">
+              <div className="flex flex-wrap gap-(--space-3) px-(--space-2) text-[11px] uppercase tracking-wider text-foreground/65" data-testid="graph-legend">
                 {seriesKeys.map((seriesKey) => (
-                  <span key={seriesKey} className="inline-flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: getSeriesColor(seriesKeys, seriesKey) }} />
+                  <span key={seriesKey} className="inline-flex items-center gap-(--space-2)">
+                    <span className="h-(--space-2) w-(--space-2) rounded-full" style={{ backgroundColor: getSeriesColor(seriesKeys, seriesKey) }} />
                     {seriesKey}
                   </span>
                 ))}
               </div>
             ) : null}
             {summary ? (
-              <p className="px-2 text-sm leading-6 text-foreground/78" data-testid="graph-summary">
+              <p className="px-(--space-2) text-sm leading-6 text-foreground/78" data-testid="graph-summary">
                 {summary}
               </p>
             ) : null}
             <div className="overflow-x-auto" data-testid="graph-scroll-region">
-              <div className="min-w-[40rem] sm:min-w-0">
+              <div className="min-w-160 sm:min-w-0">
                 <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} className="w-full overflow-visible" data-testid="graph-svg" data-graph-kind={graph.kind}>
                   <rect x="0" y="0" width={width} height={height} fill="transparent" />
                   {yTicks.map((tick) => (
@@ -688,15 +707,15 @@ export function GraphRenderer({
                   ))
                 : null}
 
-              {graph.kind === "heatmap" && graph.x && graph.y && graph.color
+              {graph.kind === "heatmap" && heatmapFields
                 ? graph.data.map((row, index) => {
-                    const xIndex = heatmapXDomain.findIndex((entry) => entry === row[graph.x!.field]);
-                    const yIndex = heatmapYDomain.findIndex((entry) => entry === row[graph.y!.field]);
+                    const xIndex = heatmapXDomain.findIndex((entry) => entry === row[heatmapFields.xField]);
+                    const yIndex = heatmapYDomain.findIndex((entry) => entry === row[heatmapFields.yField]);
                     const cellWidth = innerWidth / Math.max(heatmapXDomain.length, 1);
                     const cellHeight = innerHeight / Math.max(heatmapYDomain.length, 1);
                     const x = margin.left + xIndex * cellWidth;
                     const y = margin.top + yIndex * cellHeight;
-                    const value = Number(row[graph.color!.field] ?? 0);
+                    const value = Number(row[heatmapFields.colorField] ?? 0);
                     return (
                       <rect
                         key={`heat-${index}`}
@@ -715,15 +734,15 @@ export function GraphRenderer({
               </div>
             </div>
             {previewRows.length > 0 && isPreviewVisible ? (
-              <div className="overflow-x-auto rounded-theme border-theme bg-surface-muted/45 p-2" data-testid="graph-data-preview">
-                <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground/52">
+              <div className="overflow-x-auto rounded-theme border-theme bg-surface-muted/45 p-(--space-2)" data-testid="graph-data-preview">
+                <p className="px-(--space-2) pb-(--space-2) text-[11px] font-semibold uppercase tracking-[0.16em] text-foreground/52">
                   Data preview
                 </p>
                 <table className="w-full border-collapse text-xs">
                   <thead>
                     <tr className="text-foreground/58">
                       {previewColumns.map((column) => (
-                        <th key={column} className="px-3 py-2 text-left font-semibold uppercase tracking-wider">
+                        <th key={column} className="px-(--space-3) py-(--space-2) text-left font-semibold uppercase tracking-wider">
                           {column}
                         </th>
                       ))}
@@ -733,7 +752,7 @@ export function GraphRenderer({
                     {previewRows.map((row, rowIndex) => (
                       <tr key={`preview-${rowIndex}`} className={rowIndex % 2 === 0 ? "bg-surface/70" : "bg-transparent"}>
                         {previewColumns.map((column) => (
-                          <td key={`${rowIndex}-${column}`} className="border-t border-border/60 px-3 py-2 align-top text-foreground/78">
+                          <td key={`${rowIndex}-${column}`} className="border-t border-border/60 px-(--space-3) py-(--space-2) align-top text-foreground/78">
                             {formatValue(row[column] ?? null, column === graph.x?.field ? graph.x?.type : column === graph.y?.field ? graph.y?.type : undefined)}
                           </td>
                         ))}

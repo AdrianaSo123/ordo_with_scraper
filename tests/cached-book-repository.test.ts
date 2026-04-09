@@ -13,7 +13,7 @@ function createMockRepo(): CorpusRepository & { callCounts: Record<string, numbe
     getSection: 0,
   };
 
-  const document: Document = { slug: "book-1", title: "Book One", number: "1" };
+  const document: Document = { slug: "book-1", title: "Book One", number: "1", audience: "public" };
   const section = new Section("book-1", "ch-1", "Chapter One", "Content", [], [], []);
 
   return {

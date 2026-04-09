@@ -19,7 +19,15 @@ export function addColumnIfNotExists(
   const columns = db.pragma(`table_info(${safeTable})`) as Array<{ name: string }>;
 
   if (!columns.some((current) => current.name === safeColumn)) {
-    db.exec(`ALTER TABLE ${safeTable} ADD COLUMN ${safeColumn} ${definition}`);
+    try {
+      db.exec(`ALTER TABLE ${safeTable} ADD COLUMN ${safeColumn} ${definition}`);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes(`duplicate column name: ${safeColumn}`)) {
+        return;
+      }
+
+      throw error;
+    }
   }
 }
 
@@ -77,7 +85,35 @@ export function runMigrations(db: Database.Database): void {
     "lane_last_analyzed_at",
     "TEXT DEFAULT NULL",
   );
+  addColumnIfNotExists(db, "conversations", "referral_id", "TEXT DEFAULT NULL");
   addColumnIfNotExists(db, "conversations", "referral_source", "TEXT DEFAULT NULL");
+  addColumnIfNotExists(db, "conversations", "deleted_at", "TEXT DEFAULT NULL");
+  addColumnIfNotExists(db, "conversations", "deleted_by_user_id", "TEXT DEFAULT NULL");
+  addColumnIfNotExists(db, "conversations", "delete_reason", "TEXT DEFAULT NULL");
+  addColumnIfNotExists(db, "conversations", "purge_after", "TEXT DEFAULT NULL");
+  addColumnIfNotExists(db, "conversations", "restored_at", "TEXT DEFAULT NULL");
+  addColumnIfNotExists(db, "conversations", "imported_at", "TEXT DEFAULT NULL");
+  addColumnIfNotExists(db, "conversations", "import_source_conversation_id", "TEXT DEFAULT NULL");
+  addColumnIfNotExists(db, "conversations", "imported_from_exported_at", "TEXT DEFAULT NULL");
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_conv_referral_id ON conversations(referral_id)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_conv_user_status_deleted ON conversations(user_id, status, deleted_at)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_conv_deleted_at ON conversations(deleted_at)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_conv_purge_after ON conversations(purge_after)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_conv_imported_at ON conversations(imported_at)`);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS conversation_purge_audits (
+      id TEXT PRIMARY KEY,
+      conversation_id TEXT NOT NULL,
+      actor_user_id TEXT NOT NULL,
+      actor_role TEXT NOT NULL,
+      purge_reason TEXT NOT NULL,
+      metadata_json TEXT NOT NULL DEFAULT '{}',
+      purged_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_conv_purge_audits_purged_at ON conversation_purge_audits(purged_at)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_conv_purge_audits_reason ON conversation_purge_audits(purge_reason)`);
 
   addColumnIfNotExists(
     db,
@@ -85,6 +121,15 @@ export function runMigrations(db: Database.Database): void {
     "token_estimate",
     "INTEGER NOT NULL DEFAULT 0",
   );
+
+  addColumnIfNotExists(db, "job_requests", "failure_class", "TEXT DEFAULT NULL");
+  addColumnIfNotExists(db, "job_requests", "next_retry_at", "TEXT DEFAULT NULL");
+  addColumnIfNotExists(db, "job_requests", "recovery_mode", "TEXT DEFAULT NULL");
+  addColumnIfNotExists(db, "job_requests", "last_checkpoint_id", "TEXT DEFAULT NULL");
+  addColumnIfNotExists(db, "job_requests", "replayed_from_job_id", "TEXT DEFAULT NULL");
+  addColumnIfNotExists(db, "job_requests", "superseded_by_job_id", "TEXT DEFAULT NULL");
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_job_requests_replayed_from ON job_requests(replayed_from_job_id)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_job_requests_superseded_by ON job_requests(superseded_by_job_id)`);
 
   addColumnIfNotExists(
     db,
@@ -127,6 +172,9 @@ export function runMigrations(db: Database.Database): void {
   );
   db.exec(`CREATE INDEX IF NOT EXISTS idx_lead_records_triage_state ON lead_records(triage_state)`);
 
+  addColumnIfNotExists(db, "lead_records", "follow_up_at", "TEXT DEFAULT NULL");
+  addColumnIfNotExists(db, "deal_records", "follow_up_at", "TEXT DEFAULT NULL");
+
   addColumnIfNotExists(
     db,
     "users",
@@ -136,4 +184,162 @@ export function runMigrations(db: Database.Database): void {
   addColumnIfNotExists(db, "users", "referral_code", "TEXT DEFAULT NULL");
   addColumnIfNotExists(db, "users", "credential", "TEXT DEFAULT NULL");
   db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_referral_code ON users(referral_code)`);
+
+  addColumnIfNotExists(db, "referrals", "referred_user_id", "TEXT DEFAULT NULL");
+  addColumnIfNotExists(db, "referrals", "visit_id", "TEXT DEFAULT NULL");
+  addColumnIfNotExists(db, "referrals", "status", "TEXT NOT NULL DEFAULT 'visited'");
+  addColumnIfNotExists(db, "referrals", "credit_status", "TEXT NOT NULL DEFAULT 'tracked'");
+  addColumnIfNotExists(db, "referrals", "last_validated_at", "TEXT DEFAULT NULL");
+  addColumnIfNotExists(db, "referrals", "last_event_at", "TEXT DEFAULT NULL");
+  addColumnIfNotExists(db, "referrals", "metadata_json", "TEXT NOT NULL DEFAULT '{}'"
+  );
+  db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_referrals_visit_id ON referrals(visit_id) WHERE visit_id IS NOT NULL`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_referrals_referred_user ON referrals(referred_user_id)`);
+  db.exec(`
+    UPDATE referrals
+    SET last_validated_at = COALESCE(last_validated_at, scanned_at, converted_at, created_at)
+    WHERE last_validated_at IS NULL
+  `);
+  db.exec(`
+    UPDATE referrals
+    SET last_event_at = COALESCE(last_event_at, converted_at, scanned_at, created_at)
+    WHERE last_event_at IS NULL
+  `);
+  db.exec(`
+    UPDATE conversations
+    SET referral_id = (
+      SELECT r.id
+      FROM referrals r
+      WHERE r.conversation_id = conversations.id
+      ORDER BY r.created_at DESC
+      LIMIT 1
+    )
+    WHERE referral_id IS NULL
+      AND EXISTS (
+        SELECT 1
+        FROM referrals r
+        WHERE r.conversation_id = conversations.id
+      )
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS referral_events (
+      id TEXT PRIMARY KEY,
+      referral_id TEXT NOT NULL,
+      conversation_id TEXT DEFAULT NULL,
+      event_type TEXT NOT NULL,
+      idempotency_key TEXT NOT NULL,
+      payload_json TEXT NOT NULL DEFAULT '{}',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (referral_id) REFERENCES referrals(id) ON DELETE CASCADE,
+      FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE SET NULL
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_referral_events_referral ON referral_events(referral_id)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_referral_events_type ON referral_events(event_type)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_referral_events_conversation ON referral_events(conversation_id)`);
+  db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_referral_events_dedupe ON referral_events(referral_id, idempotency_key)`);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS blog_assets (
+      id TEXT PRIMARY KEY,
+      post_id TEXT,
+      kind TEXT NOT NULL,
+      storage_path TEXT NOT NULL,
+      mime_type TEXT NOT NULL,
+      width INTEGER,
+      height INTEGER,
+      alt_text TEXT NOT NULL DEFAULT '',
+      source_prompt TEXT,
+      provider TEXT,
+      provider_model TEXT,
+      visibility TEXT NOT NULL DEFAULT 'draft',
+      selection_state TEXT NOT NULL DEFAULT 'candidate',
+      variation_group_id TEXT DEFAULT NULL,
+      created_by_user_id TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (post_id) REFERENCES blog_posts(id) ON DELETE SET NULL,
+      FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_blog_assets_post ON blog_assets(post_id);
+    CREATE INDEX IF NOT EXISTS idx_blog_assets_visibility ON blog_assets(visibility);
+    CREATE INDEX IF NOT EXISTS idx_blog_assets_created_by ON blog_assets(created_by_user_id);
+  `);
+  addColumnIfNotExists(
+    db,
+    "blog_assets",
+    "selection_state",
+    "TEXT NOT NULL DEFAULT 'candidate'",
+  );
+  addColumnIfNotExists(
+    db,
+    "blog_assets",
+    "variation_group_id",
+    "TEXT DEFAULT NULL",
+  );
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_blog_assets_selection_state ON blog_assets(selection_state)`);
+  db.exec(`
+    UPDATE blog_assets
+    SET selection_state = 'selected'
+    WHERE id IN (
+      SELECT hero_image_asset_id
+      FROM blog_posts
+      WHERE hero_image_asset_id IS NOT NULL
+    )
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS blog_post_artifacts (
+      id TEXT PRIMARY KEY,
+      post_id TEXT NOT NULL,
+      artifact_type TEXT NOT NULL,
+      payload_json TEXT NOT NULL,
+      created_by_user_id TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (post_id) REFERENCES blog_posts(id) ON DELETE CASCADE,
+      FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_blog_post_artifacts_post ON blog_post_artifacts(post_id);
+    CREATE INDEX IF NOT EXISTS idx_blog_post_artifacts_type ON blog_post_artifacts(artifact_type);
+  `);
+
+  addColumnIfNotExists(
+    db,
+    "blog_posts",
+    "standfirst",
+    "TEXT DEFAULT NULL",
+  );
+  addColumnIfNotExists(
+    db,
+    "blog_posts",
+    "section",
+    "TEXT DEFAULT NULL",
+  );
+  addColumnIfNotExists(
+    db,
+    "blog_posts",
+    "hero_image_asset_id",
+    "TEXT DEFAULT NULL REFERENCES blog_assets(id)",
+  );
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_blog_posts_hero_image_asset ON blog_posts(hero_image_asset_id)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_blog_posts_section ON blog_posts(section)`);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS blog_post_revisions (
+      id TEXT PRIMARY KEY,
+      post_id TEXT NOT NULL,
+      snapshot_json TEXT NOT NULL,
+      change_note TEXT DEFAULT NULL,
+      created_by_user_id TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (post_id) REFERENCES blog_posts(id) ON DELETE CASCADE,
+      FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_blog_post_revisions_post ON blog_post_revisions(post_id);
+    CREATE INDEX IF NOT EXISTS idx_blog_post_revisions_created_at ON blog_post_revisions(created_at);
+  `);
 }

@@ -1,7 +1,18 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { checkOrigin } from "@/lib/security/origin-check";
+import { buildReferralPath } from "@/lib/referrals/referral-links";
+import { LEGACY_REFERRAL_COOKIE_NAME } from "@/lib/referrals/referral-visit";
+import { createRequestId } from "@/lib/observability/logger";
 
 const SESSION_COOKIE = "lms_session_token";
+const BASE_SECURITY_HEADERS = {
+  "Content-Security-Policy": "frame-ancestors 'none'",
+  "Permissions-Policy": "camera=(), geolocation=(), microphone=()",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+} as const;
 
 const ANONYMOUS_CONVERSATION_ROUTES = new Set([
   "/api/conversations/active",
@@ -33,43 +44,73 @@ function isProtectedRoute(pathname: string): boolean {
   return PROTECTED_API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
-export function captureReferral(request: NextRequest, response: NextResponse): void {
-  const refCode = request.nextUrl.searchParams.get("ref");
-  if (refCode && refCode.length > 0 && refCode.length <= 30) {
-    // This cookie is attribution-only and never authorizes requests, so we keep SameSite=Lax
-    // to preserve referral capture on first-party landing navigations while accepting that
-    // the server must treat the value as advisory input rather than a CSRF defense boundary.
-    response.cookies.set("lms_referral_code", refCode, {
-      path: "/",
-      maxAge: 30 * 24 * 60 * 60, // 30 days
-      httpOnly: false,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-    });
+function captureReferral(request: NextRequest): NextResponse | null {
+  if (request.nextUrl.pathname !== "/") {
+    return null;
   }
+
+  const refCode = request.nextUrl.searchParams.get("ref")?.trim();
+  if (!refCode) {
+    return null;
+  }
+
+  const redirectUrl = new URL(buildReferralPath(refCode), request.url);
+  request.nextUrl.searchParams.forEach((value, key) => {
+    if (key !== "ref") {
+      redirectUrl.searchParams.set(key, value);
+    }
+  });
+
+  const response = NextResponse.redirect(redirectUrl);
+  if (request.cookies.get(LEGACY_REFERRAL_COOKIE_NAME)?.value) {
+    response.cookies.delete(LEGACY_REFERRAL_COOKIE_NAME);
+  }
+  return applySecurityHeaders(response);
+}
+
+function applySecurityHeaders(response: NextResponse): NextResponse {
+  for (const [header, value] of Object.entries(BASE_SECURITY_HEADERS)) {
+    response.headers.set(header, value);
+  }
+
+  return response;
 }
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const requestId = createRequestId(request.headers);
 
-  // Referral code capture: set cookie on any page route with ?ref= param
+  function applyHeaders(response: NextResponse): NextResponse {
+    response.headers.set("x-request-id", requestId);
+    return applySecurityHeaders(response);
+  }
+
+  // CSRF: Origin check on state-mutating API requests
+  if (pathname.startsWith("/api/")) {
+    const originResult = checkOrigin(request);
+    if (originResult) return applyHeaders(originResult);
+  }
+
   if (!pathname.startsWith("/api/")) {
-    const response = NextResponse.next();
-    captureReferral(request, response);
-    return response;
+    const legacyReferralRedirect = captureReferral(request);
+    if (legacyReferralRedirect) {
+      return applyHeaders(legacyReferralRedirect);
+    }
+
+    return applyHeaders(NextResponse.next());
   }
 
   if (isProtectedRoute(pathname)) {
     const token = request.cookies.get(SESSION_COOKIE)?.value;
     if (!token) {
-      return NextResponse.json(
+      return applyHeaders(NextResponse.json(
         { error: "Authentication required" },
         { status: 401 },
-      );
+      ));
     }
   }
 
-  return NextResponse.next();
+  return applyHeaders(NextResponse.next());
 }
 
 export const config = {

@@ -1,5 +1,6 @@
 import type { ConsultationRequest } from "../entities/consultation-request";
 import type { LeadRecord } from "../entities/lead-record";
+import { NotFoundError, ValidationError, ConflictError } from "../common/errors";
 import type {
   ApprenticeshipInterest,
   TrainingPathRecommendation,
@@ -10,6 +11,7 @@ import type { ConsultationRequestRepository } from "./ConsultationRequestReposit
 import type { ConversationRepository } from "./ConversationRepository";
 import type { ConversationEventRecorder } from "./ConversationEventRecorder";
 import type { LeadRecordRepository } from "./LeadRecordRepository";
+import type { ReferralLifecycleRecorder } from "./ReferralLifecycleRecorder";
 import type { TrainingPathRecordRepository } from "./TrainingPathRecordRepository";
 
 function normalizeText(value: string | null | undefined): string | null {
@@ -114,6 +116,7 @@ export class CreateTrainingPathFromWorkflowInteractor {
     private readonly leadRecordRepo: LeadRecordRepository,
     private readonly conversationRepo: ConversationRepository,
     private readonly eventRecorder?: ConversationEventRecorder,
+    private readonly referralRecorder?: ReferralLifecycleRecorder,
   ) {}
 
   async createFromQualifiedLead(
@@ -265,26 +268,18 @@ export class CreateTrainingPathFromWorkflowInteractor {
       sourceId,
       sourceStatus,
     });
+    await this.referralRecorder?.recordTrainingPathCreated({
+      conversationId: trainingPathRecord.conversationId,
+      trainingPathId: trainingPathRecord.id,
+      recommendedPath: trainingPathRecord.recommendedPath,
+      sourceType,
+      sourceId,
+    });
   }
 }
 
-export class WorkflowSourceNotFoundError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "WorkflowSourceNotFoundError";
-  }
-}
+export class WorkflowSourceNotFoundError extends NotFoundError {}
 
-export class TrainingPathCreationEligibilityError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "TrainingPathCreationEligibilityError";
-  }
-}
+export class TrainingPathCreationEligibilityError extends ValidationError {}
 
-export class TrainingPathAlreadyExistsError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "TrainingPathAlreadyExistsError";
-  }
-}
+export class TrainingPathAlreadyExistsError extends ConflictError {}

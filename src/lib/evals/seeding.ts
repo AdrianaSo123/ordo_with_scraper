@@ -359,6 +359,117 @@ export function resolveDeterministicSeedPack(scenarioId: string): DeterministicE
           },
         ],
       };
+    case "integrity-canonical-corpus-reference-deterministic":
+      return {
+        scenarioId,
+        seedSetId: "seed-integrity-canonical-corpus-v1",
+        refs: {
+          primaryConversationId: "conv_eval_integrity_corpus",
+          authenticatedUserId: "usr_eval_integrity_corpus",
+        },
+        users: [
+          { id: "usr_eval_integrity_corpus", email: "integrity.corpus@example.com", name: "Integrity Corpus Auditor" },
+        ],
+        conversations: [
+          buildAuthConversation({
+            id: "conv_eval_integrity_corpus",
+            userId: "usr_eval_integrity_corpus",
+            title: "Auditor asks for canonical corpus references",
+            lane: "individual",
+            confidence: 0.78,
+            recommendedNextStep: "Use the structured corpus search contract and cite canonical paths.",
+            detectedNeedSummary: "Auditor wants grounded corpus references instead of prose-only summaries.",
+            messages: [
+              {
+                id: "msg_eval_integrity_corpus_1",
+                role: "user",
+                content: "Find the section about the Sage and make sure the reference is canonical.",
+                createdAt: "2026-03-20T13:20:00.000Z",
+              },
+            ],
+          }),
+        ],
+        conversationEvents: [],
+        leads: [],
+        consultationRequests: [],
+        deals: [],
+        trainingPaths: [],
+        toolFixtures: [],
+      };
+    case "integrity-audio-recovery-deterministic":
+      return {
+        scenarioId,
+        seedSetId: "seed-integrity-audio-recovery-v1",
+        refs: {
+          primaryConversationId: "conv_eval_integrity_audio",
+          authenticatedUserId: "usr_eval_integrity_audio",
+        },
+        users: [
+          { id: "usr_eval_integrity_audio", email: "integrity.audio@example.com", name: "Integrity Audio Auditor" },
+        ],
+        conversations: [
+          buildAuthConversation({
+            id: "conv_eval_integrity_audio",
+            userId: "usr_eval_integrity_audio",
+            title: "Auditor checks audio fallback behavior",
+            lane: "individual",
+            confidence: 0.74,
+            recommendedNextStep: "Preserve the transcript and explain the retry path if audio delivery fails.",
+            detectedNeedSummary: "Auditor wants the spoken version without losing the text fallback.",
+            messages: [
+              {
+                id: "msg_eval_integrity_audio_1",
+                role: "user",
+                content: "Generate audio for this answer, but tell me what happens if the stream fails.",
+                createdAt: "2026-03-20T13:30:00.000Z",
+              },
+            ],
+          }),
+        ],
+        conversationEvents: [],
+        leads: [],
+        consultationRequests: [],
+        deals: [],
+        trainingPaths: [],
+        toolFixtures: [],
+      };
+    case "integrity-malformed-ui-tags-deterministic":
+      return {
+        scenarioId,
+        seedSetId: "seed-integrity-ui-tags-v1",
+        refs: {
+          primaryConversationId: "conv_eval_integrity_ui_tags",
+          authenticatedUserId: "usr_eval_integrity_ui_tags",
+        },
+        users: [
+          { id: "usr_eval_integrity_ui_tags", email: "integrity.ui@example.com", name: "Integrity UI Auditor" },
+        ],
+        conversations: [
+          buildAuthConversation({
+            id: "conv_eval_integrity_ui_tags",
+            userId: "usr_eval_integrity_ui_tags",
+            title: "Auditor sends malformed UI tags",
+            lane: "uncertain",
+            confidence: 0.66,
+            recommendedNextStep: "Repair malformed suggestions and normalize action params.",
+            detectedNeedSummary: "Auditor is testing whether malformed chat tags break the surface.",
+            messages: [
+              {
+                id: "msg_eval_integrity_ui_tags_1",
+                role: "user",
+                content: "Show me the repaired suggestions and actions even if the raw tags are malformed.",
+                createdAt: "2026-03-20T13:40:00.000Z",
+              },
+            ],
+          }),
+        ],
+        conversationEvents: [],
+        leads: [],
+        consultationRequests: [],
+        deals: [],
+        trainingPaths: [],
+        toolFixtures: [],
+      };
     case "organization-buyer-deterministic":
       return {
         scenarioId,
@@ -504,6 +615,337 @@ export function resolveDeterministicSeedPack(scenarioId: string): DeterministicE
             founderNote: "High-signal learner with strong apprenticeship interest.",
           },
         ],
+        consultationRequests: [],
+        deals: [],
+        trainingPaths: [],
+        toolFixtures: [],
+      };
+    case "blog-job-status-continuity-deterministic":
+      return {
+        scenarioId,
+        seedSetId: "seed-blog-job-status-continuity-v1",
+        refs: {
+          primaryConversationId: "conv_eval_blog_status_continuity",
+          authenticatedUserId: "usr_eval_blog_admin",
+        },
+        users: [
+          { id: "usr_eval_blog_admin", email: "blog.admin@example.com", name: "Blog Admin" },
+        ],
+        conversations: [
+          buildAuthConversation({
+            id: "conv_eval_blog_status_continuity",
+            userId: "usr_eval_blog_admin",
+            title: "Admin asks whether the blog production job is still running",
+            lane: "organization",
+            confidence: 0.93,
+            recommendedNextStep: "Check the existing job before issuing any new production command.",
+            detectedNeedSummary: "Deferred blog job status should be inspected, not rerun.",
+            messages: [
+              {
+                id: "msg_eval_blog_status_continuity_1",
+                role: "user",
+                content: "Is the existing blog production job done yet?",
+                createdAt: "2026-03-20T16:01:00.000Z",
+              },
+            ],
+          }),
+        ],
+        conversationEvents: [],
+        leads: [],
+        consultationRequests: [],
+        deals: [],
+        trainingPaths: [],
+        toolFixtures: [],
+      };
+    case "member-job-status-summary-deterministic":
+      return {
+        scenarioId,
+        seedSetId: "seed-member-job-status-summary-v1",
+        refs: {
+          primaryConversationId: "conv_eval_member_job_summary",
+          authenticatedUserId: "usr_eval_member_jobs",
+        },
+        users: [
+          { id: "usr_eval_member_jobs", email: "member.jobs@example.com", name: "Member Jobs" },
+        ],
+        conversations: [
+          buildAuthConversation({
+            id: "conv_eval_member_job_summary",
+            userId: "usr_eval_member_jobs",
+            title: "Signed-in member asks what jobs are happening",
+            lane: "organization",
+            confidence: 0.91,
+            recommendedNextStep: "Summarize the active job in plain language and avoid rerunning work.",
+            detectedNeedSummary: "Member wants a plain-language update on current deferred work.",
+            messages: [
+              {
+                id: "msg_eval_member_job_summary_1",
+                role: "user",
+                content: "what jobs are happening?",
+                createdAt: "2026-03-20T16:31:00.000Z",
+              },
+            ],
+          }),
+        ],
+        conversationEvents: [],
+        leads: [],
+        consultationRequests: [],
+        deals: [],
+        trainingPaths: [],
+        toolFixtures: [],
+      };
+    case "member-explicit-job-status-deterministic":
+      return {
+        scenarioId,
+        seedSetId: "seed-member-explicit-job-status-v1",
+        refs: {
+          primaryConversationId: "conv_eval_member_explicit_job",
+          authenticatedUserId: "usr_eval_member_jobs",
+        },
+        users: [
+          { id: "usr_eval_member_jobs", email: "member.jobs@example.com", name: "Member Jobs" },
+        ],
+        conversations: [
+          buildAuthConversation({
+            id: "conv_eval_member_explicit_job",
+            userId: "usr_eval_member_jobs",
+            title: "Signed-in member asks for one job by id",
+            lane: "organization",
+            confidence: 0.91,
+            recommendedNextStep: "Inspect the named job and explain its status in plain language.",
+            detectedNeedSummary: "Member wants the current state of one named deferred job.",
+            messages: [
+              {
+                id: "msg_eval_member_explicit_job_1",
+                role: "user",
+                content: "what is job job_member_explicit doing?",
+                createdAt: "2026-03-20T16:35:00.000Z",
+              },
+            ],
+          }),
+        ],
+        conversationEvents: [],
+        leads: [],
+        consultationRequests: [],
+        deals: [],
+        trainingPaths: [],
+        toolFixtures: [],
+      };
+    case "member-all-jobs-list-deterministic":
+      return {
+        scenarioId,
+        seedSetId: "seed-member-all-jobs-list-v1",
+        refs: {
+          primaryConversationId: "conv_eval_member_all_jobs",
+          authenticatedUserId: "usr_eval_member_jobs",
+        },
+        users: [
+          { id: "usr_eval_member_jobs", email: "member.jobs@example.com", name: "Member Jobs" },
+        ],
+        conversations: [
+          buildAuthConversation({
+            id: "conv_eval_member_all_jobs",
+            userId: "usr_eval_member_jobs",
+            title: "Signed-in member explicitly asks for all jobs",
+            lane: "organization",
+            confidence: 0.92,
+            recommendedNextStep: "Return a concise list of current and recent jobs.",
+            detectedNeedSummary: "Member wants a compact list of all jobs, not just prose status.",
+            messages: [
+              {
+                id: "msg_eval_member_all_jobs_1",
+                role: "user",
+                content: "show me all jobs",
+                createdAt: "2026-03-20T16:40:00.000Z",
+              },
+            ],
+          }),
+        ],
+        conversationEvents: [],
+        leads: [],
+        consultationRequests: [],
+        deals: [],
+        trainingPaths: [],
+        toolFixtures: [],
+      };
+    case "anonymous-job-status-guidance-deterministic":
+      return {
+        scenarioId,
+        seedSetId: "seed-anonymous-job-status-guidance-v1",
+        refs: {
+          primaryConversationId: "conv_eval_anon_job_guidance",
+          anonymousUserId: "anon_eval_job_guidance",
+        },
+        users: [
+          { id: "anon_eval_job_guidance", email: "anon.job.guidance@example.com", name: "Anonymous Job Guidance" },
+        ],
+        conversations: [
+          buildAnonymousConversation({
+            id: "conv_eval_anon_job_guidance",
+            userId: "anon_eval_job_guidance",
+            title: "Anonymous visitor asks for job status",
+            recommendedNextStep: "Explain the limitation without pushing the user to the signed-in jobs page.",
+            detectedNeedSummary: "Anonymous job status guidance should stay inside the chat surface.",
+            messages: [
+              {
+                id: "msg_eval_anon_job_guidance_1",
+                role: "user",
+                content: "what jobs are happening?",
+                createdAt: "2026-03-20T16:45:00.000Z",
+              },
+            ],
+          }),
+        ],
+        conversationEvents: [],
+        leads: [],
+        consultationRequests: [],
+        deals: [],
+        trainingPaths: [],
+        toolFixtures: [],
+      };
+    case "blog-explicit-status-check-deterministic":
+      return {
+        scenarioId,
+        seedSetId: "seed-blog-explicit-status-check-v1",
+        refs: {
+          primaryConversationId: "conv_eval_blog_explicit_status",
+          authenticatedUserId: "usr_eval_blog_admin",
+        },
+        users: [
+          { id: "usr_eval_blog_admin", email: "blog.admin@example.com", name: "Blog Admin" },
+        ],
+        conversations: [
+          buildAuthConversation({
+            id: "conv_eval_blog_explicit_status",
+            userId: "usr_eval_blog_admin",
+            title: "Admin explicitly asks for the status of a known blog job id",
+            lane: "organization",
+            confidence: 0.94,
+            recommendedNextStep: "Read the existing job state and explain it plainly instead of rerunning production.",
+            detectedNeedSummary: "Explicit deferred job status checks should stay visible and understandable even without assistant prose deltas.",
+            messages: [
+              {
+                id: "msg_eval_blog_explicit_status_1",
+                role: "user",
+                content: "Produce a blog post on my capabilities",
+                createdAt: "2026-03-20T16:20:00.000Z",
+              },
+            ],
+          }),
+        ],
+        conversationEvents: [],
+        leads: [],
+        consultationRequests: [],
+        deals: [],
+        trainingPaths: [],
+        toolFixtures: [],
+      };
+    case "blog-job-dedupe-clarity-deterministic":
+      return {
+        scenarioId,
+        seedSetId: "seed-blog-job-dedupe-clarity-v1",
+        refs: {
+          primaryConversationId: "conv_eval_blog_dedupe_clarity",
+          authenticatedUserId: "usr_eval_blog_admin",
+        },
+        users: [
+          { id: "usr_eval_blog_admin", email: "blog.admin@example.com", name: "Blog Admin" },
+        ],
+        conversations: [
+          buildAuthConversation({
+            id: "conv_eval_blog_dedupe_clarity",
+            userId: "usr_eval_blog_admin",
+            title: "Admin asks to rerun while the same blog job is already active",
+            lane: "organization",
+            confidence: 0.93,
+            recommendedNextStep: "Reuse the active production job and explain that it is already in progress.",
+            detectedNeedSummary: "Deferred blog dedupe copy should state reuse clearly.",
+            messages: [
+              {
+                id: "msg_eval_blog_dedupe_clarity_1",
+                role: "user",
+                content: "Run the full blog pipeline now.",
+                createdAt: "2026-03-20T16:05:00.000Z",
+              },
+            ],
+          }),
+        ],
+        conversationEvents: [],
+        leads: [],
+        consultationRequests: [],
+        deals: [],
+        trainingPaths: [],
+        toolFixtures: [],
+      };
+    case "blog-produce-publish-handoff-deterministic":
+      return {
+        scenarioId,
+        seedSetId: "seed-blog-produce-publish-handoff-v1",
+        refs: {
+          primaryConversationId: "conv_eval_blog_publish_handoff",
+          authenticatedUserId: "usr_eval_blog_admin",
+        },
+        users: [
+          { id: "usr_eval_blog_admin", email: "blog.admin@example.com", name: "Blog Admin" },
+        ],
+        conversations: [
+          buildAuthConversation({
+            id: "conv_eval_blog_publish_handoff",
+            userId: "usr_eval_blog_admin",
+            title: "Admin wants to publish the produced blog draft",
+            lane: "organization",
+            confidence: 0.95,
+            recommendedNextStep: "Publish the completed draft using the preserved post id.",
+            detectedNeedSummary: "Completed blog production should hand directly into publish.",
+            messages: [
+              {
+                id: "msg_eval_blog_publish_handoff_1",
+                role: "user",
+                content: "The draft is ready, publish it now.",
+                createdAt: "2026-03-20T16:10:00.000Z",
+              },
+            ],
+          }),
+        ],
+        conversationEvents: [],
+        leads: [],
+        consultationRequests: [],
+        deals: [],
+        trainingPaths: [],
+        toolFixtures: [],
+      };
+    case "blog-missed-sse-recovery-deterministic":
+      return {
+        scenarioId,
+        seedSetId: "seed-blog-missed-sse-recovery-v1",
+        refs: {
+          primaryConversationId: "conv_eval_blog_sse_recovery",
+          authenticatedUserId: "usr_eval_blog_admin",
+        },
+        users: [
+          { id: "usr_eval_blog_admin", email: "blog.admin@example.com", name: "Blog Admin" },
+        ],
+        conversations: [
+          buildAuthConversation({
+            id: "conv_eval_blog_sse_recovery",
+            userId: "usr_eval_blog_admin",
+            title: "Admin reloads after missing the final blog job event",
+            lane: "organization",
+            confidence: 0.92,
+            recommendedNextStep: "Recover the completed blog draft through the snapshot path.",
+            detectedNeedSummary: "Missed SSE should not hide terminal blog job results.",
+            messages: [
+              {
+                id: "msg_eval_blog_sse_recovery_1",
+                role: "user",
+                content: "Check whether the blog draft finished while I was away.",
+                createdAt: "2026-03-20T16:15:00.000Z",
+              },
+            ],
+          }),
+        ],
+        conversationEvents: [],
+        leads: [],
         consultationRequests: [],
         deals: [],
         trainingPaths: [],

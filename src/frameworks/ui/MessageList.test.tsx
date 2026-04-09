@@ -26,6 +26,7 @@ function makeMessage(overrides: Partial<PresentedMessage>): PresentedMessage {
     actions: overrides.actions ?? [],
     attachments: overrides.attachments ?? [],
     failedSend: overrides.failedSend,
+    generationStatus: overrides.generationStatus,
     timestamp: overrides.timestamp ?? "12:00",
   };
 }
@@ -181,17 +182,16 @@ describe("MessageList", () => {
       />,
     );
 
-      const list = screen.getByText("Bring me the workflow.").closest("[data-message-list-mode]");
+      const list = screen.getByText("Bring the mess. We'll make it move.").closest("[data-message-list-mode]");
     expect(list).toHaveAttribute("data-chat-fold-buffer", "true");
     expect(list).toHaveAttribute("data-message-list-state", "hero");
-    expect(list).toHaveStyle({
-      paddingBottom: "var(--hero-composer-offset)",
-    });
+    expect(list?.className).toContain("ui-chat-message-stack");
+    expect(list).toHaveAttribute("data-chat-suggestion-tail", "absent");
   });
 
   it("hides the seeded assistant bubble on the first-screen hero state", () => {
     const messages = [
-      makeMessage({ id: "assistant-1", role: "assistant", rawContent: "Describe the workflow problem, orchestration gap, or training goal.", suggestions: ["Fix a bottleneck"] }),
+      makeMessage({ id: "assistant-1", role: "assistant", rawContent: "Bring me the messy workflow, bold idea, or half-finished handoff. I can help you map it, search the library, turn it into visuals, or explain the QR referral system.", suggestions: ["Fix a bottleneck"] }),
     ];
 
     render(
@@ -207,8 +207,8 @@ describe("MessageList", () => {
       />,
     );
 
-    expect(screen.queryByText("Describe the workflow problem, orchestration gap, or training goal.")).not.toBeInTheDocument();
-    expect(screen.getByText("Bring me the workflow.")).toBeInTheDocument();
+    expect(screen.queryByText("Bring me the messy workflow, bold idea, or half-finished handoff. I can help you map it, search the library, turn it into visuals, or explain the QR referral system.")).not.toBeInTheDocument();
+    expect(screen.getByText("Bring the mess. We'll make it move.")).toBeInTheDocument();
   });
 
   it("falls back to conversation state when the single message is not the seeded hero", () => {
@@ -231,9 +231,8 @@ describe("MessageList", () => {
 
     const list = screen.getByText("Ready with next steps").closest("[data-message-list-mode]");
     expect(list).toHaveAttribute("data-message-list-state", "conversation");
-    expect(list).toHaveStyle({
-      paddingBottom: "calc(var(--chat-fold-gutter) + var(--chat-composer-gap) + 0px)",
-    });
+    expect(list).toHaveAttribute("data-chat-suggestion-tail", "absent");
+    expect(list?.className).toContain("ui-chat-message-stack");
   });
 
   it("centers the initial suggestion chips as part of the hero stack", () => {
@@ -255,6 +254,69 @@ describe("MessageList", () => {
     );
 
     expect(screen.getByRole("button", { name: "Stress-test this AI plan" }).closest("div")?.className).toContain("justify-center");
+  });
+
+  it("surfaces imported attachment placeholders instead of rendering a broken link", () => {
+    render(
+      <MessageList
+        messages={[
+          makeMessage({
+            id: "user-imported-attachment-context",
+            role: "user",
+            rawContent: "Context message",
+          }),
+          makeMessage({
+            id: "assistant-imported-attachment",
+            role: "assistant",
+            rawContent: "Imported attachment summary.",
+            attachments: [
+              {
+                kind: "imported",
+                type: "imported_attachment",
+                fileName: "handoff.pdf",
+                mimeType: "application/pdf",
+                fileSize: 2048,
+                availability: "unavailable",
+                note: "The original attachment is unavailable in this workspace and could not be restored.",
+              },
+            ],
+          }),
+        ]}
+        isSending={false}
+        dynamicSuggestions={[]}
+        isHeroState={false}
+        onSuggestionClick={vi.fn()}
+        onLinkClick={vi.fn()}
+        searchQuery=""
+        isEmbedded
+      />,
+    );
+
+    expect(screen.getByText("Imported attachment")).toBeInTheDocument();
+    expect(screen.getByText("The original attachment is unavailable in this workspace and could not be restored.")).toBeInTheDocument();
+  });
+
+  it("applies semantic chat surface classes to assistant and user bubbles", () => {
+    const messages = [
+      makeMessage({ id: "assistant-1", role: "assistant", rawContent: "Assistant note" }),
+      makeMessage({ id: "user-1", role: "user", rawContent: "User reply" }),
+    ];
+
+    const { container } = render(
+      <MessageList
+        messages={messages}
+        isSending={false}
+        dynamicSuggestions={[]}
+        isHeroState={false}
+        onSuggestionClick={vi.fn()}
+        onLinkClick={vi.fn()}
+        searchQuery=""
+        isEmbedded
+      />,
+    );
+
+    expect(container.querySelector('[data-chat-message-role="assistant"] [data-chat-bubble-surface="true"]')?.className).toContain("ui-chat-message-assistant");
+    expect(container.querySelector('[data-chat-message-role="user"] [data-chat-bubble-surface="true"]')?.className).toContain("ui-chat-message-user");
   });
 
   it("disables suggestion chips while a send is in flight", () => {
@@ -369,11 +431,11 @@ describe("MessageList", () => {
       />,
     );
 
-      expect(screen.getAllByText("Studio Ordo")).toHaveLength(1);
-    expect(screen.getByText("Strategic AI Advisory")).toBeInTheDocument();
-    expect(screen.getByText("Orchestration Training")).toBeInTheDocument();
-    expect(screen.getByText("Bring me the workflow.")).toBeInTheDocument();
-      expect(screen.getByText(/Paste a workflow, AI plan, or team handoff/i)).toBeInTheDocument();
+    expect(screen.getByText("Conversation-First Workspaces")).toBeInTheDocument();
+    expect(screen.getByText("Trusted Library Search")).toBeInTheDocument();
+    expect(screen.getByText("QR Referrals")).toBeInTheDocument();
+    expect(screen.getByText("Bring the mess. We'll make it move.")).toBeInTheDocument();
+      expect(screen.getByText(/Studio Ordo is a conversation-first workspace for teams working with AI/i)).toBeInTheDocument();
       expect(screen.queryByText("Try asking")).not.toBeInTheDocument();
   });
 
@@ -396,8 +458,8 @@ describe("MessageList", () => {
       />,
     );
 
-    expect(screen.queryByText("Strategic AI Advisory")).not.toBeInTheDocument();
-    expect(screen.queryByText("Teams")).not.toBeInTheDocument();
+    expect(screen.queryByText("Conversation-First Workspaces")).not.toBeInTheDocument();
+    expect(screen.queryByText("Trusted Library Search")).not.toBeInTheDocument();
   });
 
   it("renders MessageActionChips when an assistant message has actions", () => {
@@ -586,5 +648,74 @@ describe("MessageList", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     expect(onRetryClick).toHaveBeenCalledWith("user-1");
+  });
+
+  it("labels interrupted assistant messages and keeps retry available", () => {
+    render(
+      <MessageList
+        messages={[
+          makeMessage({ id: "user-1", role: "user", rawContent: "Audit this workflow" }),
+          makeMessage({
+            id: "assistant-1",
+            role: "assistant",
+            rawContent: "Partial answer",
+            generationStatus: {
+              status: "interrupted",
+              actor: "system",
+              reason: "Connection lost during streaming.",
+              partialContentRetained: true,
+            },
+            failedSend: {
+              retryKey: "user-1",
+              failedUserMessageId: "user-1",
+            },
+          }),
+        ]}
+        isSending={false}
+        dynamicSuggestions={[]}
+        isHeroState={false}
+        onSuggestionClick={vi.fn()}
+        onLinkClick={vi.fn()}
+        onRetryClick={vi.fn()}
+        searchQuery=""
+        isEmbedded
+      />,
+    );
+
+    expect(screen.getByText("Response interrupted")).toBeInTheDocument();
+    expect(screen.getByText("Connection lost during streaming.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+  });
+
+  it("labels stopped assistant messages without showing retry", () => {
+    render(
+      <MessageList
+        messages={[
+          makeMessage({
+            id: "assistant-1",
+            role: "assistant",
+            rawContent: "Partial answer",
+            generationStatus: {
+              status: "stopped",
+              actor: "user",
+              reason: "Stopped by user.",
+              partialContentRetained: true,
+            },
+          }),
+        ]}
+        isSending={false}
+        dynamicSuggestions={[]}
+        isHeroState={false}
+        onSuggestionClick={vi.fn()}
+        onLinkClick={vi.fn()}
+        onRetryClick={vi.fn()}
+        searchQuery=""
+        isEmbedded
+      />,
+    );
+
+    expect(screen.getByText("Response stopped")).toBeInTheDocument();
+    expect(screen.getByText("Stopped by user.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
   });
 });

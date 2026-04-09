@@ -1,24 +1,58 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { login } from "@/lib/auth";
-import { InvalidCredentialsError } from "@/core/use-cases/AuthenticateUserInteractor";
+import { mapErrorToResponse } from "@/core/common/errors";
 import { migrateAnonymousConversationsToUser } from "@/lib/chat/migrate-anonymous-conversations";
+import {
+  evaluatePublicFormRequest,
+  PUBLIC_FORM_HONEYPOT_FIELD_NAME,
+  PUBLIC_FORM_STARTED_AT_FIELD_NAME,
+} from "@/lib/security/public-form-protection";
+
+function buildProtectedResponse(error: string, status: number, retryAfterSeconds?: number) {
+  return NextResponse.json(
+    { error },
+    {
+      status,
+      headers: retryAfterSeconds ? { "Retry-After": String(retryAfterSeconds) } : undefined,
+    },
+  );
+}
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { email, password } = body;
+    const body = await req.json() as Record<string, unknown>;
+    const email = typeof body.email === "string" ? body.email.trim() : "";
+    const password = typeof body.password === "string" ? body.password : "";
+
+    const protectionResult = evaluatePublicFormRequest({
+      surface: "auth-login",
+      headers: req.headers,
+      identifier: email,
+      honeypotValue: body[PUBLIC_FORM_HONEYPOT_FIELD_NAME],
+      startedAt: body[PUBLIC_FORM_STARTED_AT_FIELD_NAME],
+    });
+
+    if (!protectionResult.ok) {
+      return buildProtectedResponse(
+        protectionResult.error,
+        protectionResult.status,
+        protectionResult.retryAfterSeconds,
+      );
+    }
 
     if (!email || !password) {
       return NextResponse.json(
-        { error: "email and password are required" },
+        { error: "email and password are required", errorCode: "VALIDATION_ERROR" },
         { status: 400 },
       );
     }
 
     const result = await login({ email, password });
 
-    // Set session cookie
+    const migration = await migrateAnonymousConversationsToUser(result.user.id, "login");
+
+    // Set session cookie only after anonymous migration succeeds.
     const cookieStore = await cookies();
     cookieStore.set("lms_session_token", result.sessionToken, {
       path: "/",
@@ -28,20 +62,12 @@ export async function POST(req: Request) {
       maxAge: 7 * 24 * 60 * 60, // 7 days
     });
 
-    await migrateAnonymousConversationsToUser(result.user.id, "login");
-
-    return NextResponse.json({ user: result.user });
+    return NextResponse.json({
+      user: result.user,
+      migratedConversations: migration.migratedConversationIds.length,
+    });
   } catch (error) {
-    if (error instanceof InvalidCredentialsError) {
-      return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 },
-      );
-    }
-    console.error("Login error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    const { status, body } = mapErrorToResponse(error);
+    return NextResponse.json(body, { status });
   }
 }
