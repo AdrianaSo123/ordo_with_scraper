@@ -280,6 +280,13 @@ export function runMigrations(db: Database.Database): void {
     "TEXT DEFAULT NULL",
   );
   db.exec(`CREATE INDEX IF NOT EXISTS idx_blog_assets_selection_state ON blog_assets(selection_state)`);
+  addColumnIfNotExists(
+    db,
+    "blog_posts",
+    "hero_image_asset_id",
+    "TEXT DEFAULT NULL REFERENCES blog_assets(id)",
+  );
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_blog_posts_hero_image_asset ON blog_posts(hero_image_asset_id)`);
   db.exec(`
     UPDATE blog_assets
     SET selection_state = 'selected'
@@ -318,13 +325,6 @@ export function runMigrations(db: Database.Database): void {
     "section",
     "TEXT DEFAULT NULL",
   );
-  addColumnIfNotExists(
-    db,
-    "blog_posts",
-    "hero_image_asset_id",
-    "TEXT DEFAULT NULL REFERENCES blog_assets(id)",
-  );
-  db.exec(`CREATE INDEX IF NOT EXISTS idx_blog_posts_hero_image_asset ON blog_posts(hero_image_asset_id)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_blog_posts_section ON blog_posts(section)`);
 
   db.exec(`

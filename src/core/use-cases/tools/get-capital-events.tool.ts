@@ -43,7 +43,7 @@ export function createGetCapitalEventsTool(): ToolDescriptor<
     name: "get_capital_events",
     schema: {
       description:
-        "Retrieve recent capital intelligence events (funding rounds, acquisitions, partnerships, contracts, restructuring). Returns structured event data. Admin only.",
+        "Retrieve recent capital investment intelligence from the internal tracking system: funding rounds, acquisitions, partnerships, contracts, and restructuring events. Use this tool — not web search — when asked about the current state of capital investments, recent funding activity, or deal flow. CRITICAL: Report ONLY the exact events returned by this tool. Never add, infer, or supplement with events from training knowledge. If the tool returns 3 events, show exactly 3 events. Admin only.",
       input_schema: {
         type: "object",
         properties: {

@@ -3,6 +3,7 @@ import { createAdminWebSearchTool } from "@/core/use-cases/tools/admin-web-searc
 import { createAdminPrioritizeLeadsTool } from "@/core/use-cases/tools/admin-prioritize-leads.tool";
 import { createAdminPrioritizeOfferTool } from "@/core/use-cases/tools/admin-prioritize-offer.tool";
 import { createAdminTriageRoutingRiskTool } from "@/core/use-cases/tools/admin-triage-routing-risk.tool";
+import { createGetCapitalEventsTool } from "@/core/use-cases/tools/get-capital-events.tool";
 import {
   loadOperatorLeadQueue,
   loadOperatorFunnelRecommendations,
@@ -17,4 +18,5 @@ export function registerAdminTools(registry: ToolRegistry): void {
     createAdminPrioritizeOfferTool(loadOperatorFunnelRecommendations, loadOperatorAnonymousOpportunities, loadOperatorLeadQueue),
   );
   registry.register(createAdminTriageRoutingRiskTool(loadOperatorRoutingReview));
+  registry.register(createGetCapitalEventsTool());
 }

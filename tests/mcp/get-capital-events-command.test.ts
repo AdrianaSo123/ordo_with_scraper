@@ -53,9 +53,13 @@ describe("GetCapitalEventsCommand", () => {
 
   it("accepts valid event_type values", async () => {
     (mockExecutor as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ results: [] });
-    await expect(
-      command.execute({ limit: 10, event_type: "funding" }, ADMIN_CONTEXT),
-    ).resolves.toEqual({ ok: true, results: [] });
+    const result = await command.execute({ limit: 10, event_type: "funding" }, ADMIN_CONTEXT);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.results).toEqual([]);
+      expect(result._total).toBe(0);
+      expect(result._grounding).toContain("0 events found");
+    }
   });
 
   // --- Default limit ---
@@ -77,7 +81,11 @@ describe("GetCapitalEventsCommand", () => {
     );
 
     expect(mockExecutor).toHaveBeenCalledWith({ limit: 25, event_type: "acquisition" });
-    expect(result).toEqual({ ok: true, results: [{ id: "e1" }] });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.results).toEqual([{ id: "e1" }]);
+      expect(result._total).toBe(1);
+    }
   });
 
   // --- Error handling (Graceful degradation) ---
@@ -129,6 +137,10 @@ describe("GetCapitalEventsCommand", () => {
   it("returns { results: [] } for empty data", async () => {
     (mockExecutor as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ results: [] });
     const result = await command.execute({ limit: 5 }, ADMIN_CONTEXT);
-    expect(result).toEqual({ ok: true, results: [] });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.results).toEqual([]);
+      expect(result._total).toBe(0);
+    }
   });
 });

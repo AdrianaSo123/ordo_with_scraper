@@ -31,8 +31,8 @@ export interface GetCapitalEventsInput {
 }
 
 export type GetCapitalEventsOutput =
-  | { ok: true; results: CapitalEvent[] }
-  | { ok: false; error: string };
+  | { ok: true; results: CapitalEvent[]; _total: number; _grounding: string }
+  | { ok: false; error: string; _grounding: string };
 
 // ---------------------------------------------------------------------------
 // Executor port — Dependency Inversion Principle
@@ -122,7 +122,12 @@ export class GetCapitalEventsCommand
 
     try {
       const { results } = await this.executor(args);
-      return { ok: true, results };
+      return {
+        ok: true,
+        results,
+        _total: results.length,
+        _grounding: `Exactly ${results.length} events found. Show ONLY these events. Do NOT add any others.`,
+      };
     } catch (err) {
       // Infrastructure/MCP errors degrade gracefully.
       // OCP: isPermanent is classified by the transport layer (McpInvocationError.isPermanent).
@@ -138,6 +143,7 @@ export class GetCapitalEventsCommand
       return {
         ok: false,
         error: `Capital intelligence unavailable: ${message}. ${advice}`,
+        _grounding: "DO NOT fabricate events. Report this error to the user exactly as-is. Do not supplement with training knowledge.",
       };
     }
   }

@@ -49,10 +49,12 @@ export function prepareChatSend(
   return {
     assistantIndex: nextMessages.length,
     optimisticMessages: [...nextMessages, MessageFactory.createAssistantMessage()],
-    historyForBackend: nextMessages.map((message) => ({
-      role: message.role,
-      content: message.content,
-    })),
+    historyForBackend: nextMessages
+      .filter((message) => message.content.trim().length > 0)
+      .map((message) => ({
+        role: message.role,
+        content: message.content,
+      })),
   };
 }
 

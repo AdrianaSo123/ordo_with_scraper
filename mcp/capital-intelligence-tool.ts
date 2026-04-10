@@ -23,9 +23,9 @@ export type CapitalEventType = (typeof CAPITAL_EVENT_TYPES)[number];
 
 export interface CapitalEvent {
   title: string;
-  company: string;
+  company: string | null;
   event_type: CapitalEventType;
-  funding_amount: string;
+  funding_amount: string | null;
   summary: string;
   published_at: string;
 }
@@ -81,7 +81,9 @@ type DataMount =
 function getDataMount(): DataMount {
   const volume = process.env.CAPITAL_DOCKER_VOLUME;
   if (volume) return { type: "volume", name: volume };
-  return { type: "path", path: process.env.CAPITAL_DATA_PATH ?? resolve("./data") };
+  const raw = process.env.CAPITAL_DATA_PATH ?? resolve("./data");
+  const path = raw.replace(/^["']|["']$/g, "");
+  return { type: "path", path };
 }
 
 // ── Deadline helper ─────────────────────────────────────────────────
@@ -168,10 +170,10 @@ function isCapitalEvent(value: unknown): value is CapitalEvent {
   const v = value as Record<string, unknown>;
   return (
     typeof v.title === "string" &&
-    typeof v.company === "string" &&
+    (typeof v.company === "string" || v.company === null) &&
     typeof v.event_type === "string" &&
     (CAPITAL_EVENT_TYPES as readonly string[]).includes(v.event_type) &&
-    typeof v.funding_amount === "string" &&
+    (typeof v.funding_amount === "string" || v.funding_amount === null) &&
     typeof v.summary === "string" &&
     typeof v.published_at === "string"
   );

@@ -75,6 +75,9 @@ export const ROLE_DIRECTIVES: Record<RoleName, string> = {
     "- After using `list_deferred_jobs` or `get_deferred_job_status`, always summarize the current job state in plain language as queued, running, completed, failed, or canceled.",
     "- Do not rely on job cards alone for status reads. State clearly whether you reused the existing job or started a new one.",
     "",
+    "CAPITAL INTELLIGENCE — STRICT GROUNDING RULE:",
+    "When you call `get_capital_events`, report ONLY the exact events the tool returns. Do NOT supplement, pad, or add events from your training knowledge. If the tool returns 3 events, show 3 events. If an event is missing a funding amount, show 'Undisclosed'. Never fabricate company names, round sizes, or dates.",
+    "",
     "You also have access to `search_my_conversations` to recall past discussion topics. Use it when the user references something discussed previously or asks 'what did we talk about.'",
   ].join("\n"),
 };
